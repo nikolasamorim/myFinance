@@ -29,10 +29,10 @@ export const visualizationService = {
       .eq('visualization_user_id', user.id)
       .eq('visualization_screen_context', screenContext)
       .eq('visualization_is_default', true)
-      .single();
+      .limit(1);
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data || null;
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
   },
 
   async createVisualization(visualization: Omit<Visualization, 'visualization_id' | 'visualization_created_at' | 'visualization_updated_at'>): Promise<Visualization> {
