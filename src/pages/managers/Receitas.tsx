@@ -516,7 +516,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
         repeat_interval: formData.repeat_interval,
         is_installment: formData.is_installment,
         installment_total: formData.installment_total,
-        category_id: formData.category_id,
+        category_id: formData.category_id || null,
         notes: formData.notes,
       };
       await onSave(receitaData);
