@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Dropdown } from '../ui/Dropdown';
-import { ThemeToggle } from '../ui/ThemeToggle';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -48,14 +47,14 @@ export function Navbar() {
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3">
+    <nav className="bg-white border-b border-gray-200 px-4 md:px-6 py-3">
       <div className="flex items-center justify-between">
         {/* Left side - Logo and Workspace Selector */}
         <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
           {/* Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <img src="/logo-black.png" width="24" height="24" alt="Logo" className="md:w-7 md:h-7" />
-            <h1 className="text-base md:text-lg font-bold text-gray-900 dark:text-white hidden sm:block">Azami</h1>
+            <h1 className="text-base md:text-lg font-bold text-gray-900 hidden sm:block">Azami</h1>
           </div>
           
           {/* Workspace Selector */}
@@ -80,7 +79,7 @@ export function Navbar() {
           <div className="relative">
             <button 
               onClick={handleNotificationClick}
-              className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors relative"
+              className="p-2 text-gray-400 hover:text-gray-600 transition-colors relative"
               title="Notificações"
             >
               <Bell className="w-5 h-5" />
@@ -90,12 +89,12 @@ export function Navbar() {
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
-                <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notificações</h3>
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div className="p-4 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
                 </div>
                 <div className="p-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Nenhuma notificação no momento</p>
+                  <p className="text-sm text-gray-500 text-center">Nenhuma notificação no momento</p>
                 </div>
               </div>
             )}
@@ -105,27 +104,27 @@ export function Navbar() {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 p-1 md:p-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="flex items-center gap-2 p-1 md:p-2 text-gray-700 hover:text-gray-900 transition-colors"
             >
               {/* Avatar */}
-              <div className="w-7 h-7 md:w-8 md:h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+              <div className="w-7 h-7 md:w-8 md:h-8 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                 <User className="w-4 h-4 md:w-5 md:h-5" />
               </div>
               
               {/* User info - only show on desktop */}
               <div className="hidden md:block text-left">
-                <span className="text-sm font-medium block text-gray-900 dark:text-white">{user?.name}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</span>
+                <span className="text-sm font-medium block">{user?.name}</span>
+                <span className="text-xs text-gray-500">{user?.email}</span>
               </div>
             </button>
 
             {/* User Dropdown Menu */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                 {/* Mobile-only user info */}
-                <div className="md:hidden px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+                <div className="md:hidden px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                  <p className="text-xs text-gray-500">{user?.email}</p>
                 </div>
                 
                 <button 
@@ -133,18 +132,17 @@ export function Navbar() {
                     navigate('/settings');
                     setShowUserMenu(false);
                   }}
-                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   <Settings className="w-4 h-4 mr-3" />
                   Configurações
                 </button>
-                <ThemeToggle />
                 <button
                   onClick={() => {
                     logout();
                     setShowUserMenu(false);
                   }}
-                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   <LogOut className="w-4 h-4 mr-3" />
                   Sair

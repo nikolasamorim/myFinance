@@ -20,8 +20,7 @@ export const userService = {
         marital_status,
         permanent_address,
         current_address,
-        two_factor_enabled,
-        theme
+        two_factor_enabled
       `)
       .eq('user_id', userId)
       .single();
@@ -45,7 +44,7 @@ export const userService = {
     const directFields = [
       'avatar_url', 'tags', 'description', 'gender', 'birth_date',
       'hometown', 'nationality', 'languages', 'marital_status',
-      'permanent_address', 'current_address', 'two_factor_enabled', 'theme'
+      'permanent_address', 'current_address', 'two_factor_enabled'
     ];
     
     directFields.forEach(field => {
