@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Menu, X, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, Building, Wallet, FolderOpen, Tag, Target } from 'lucide-react';
+import { ChevronDown, ChevronRight, Menu, X, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, Building, Wallet, FolderOpen, Tag, Target, CreditCard } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebar } from '../../context/SidebarContext';
 
