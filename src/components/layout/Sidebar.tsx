@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Menu, X, TrendingUp, TrendingDown, CreditCard, PiggyBank } from 'lucide-react';
+import { ChevronDown, ChevronRight, Menu, X, TrendingUp, TrendingDown, CreditCard, PiggyBank, Building, Wallet, FolderOpen, Tag, Target } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebar } from '../../context/SidebarContext';
 
@@ -104,6 +104,34 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
     },
   ];
 
+  const organizadorItems = [
+    {
+      to: '/organizadores/instituicoes',
+      icon: <Building className="w-5 h-5 text-blue-600" />,
+      label: 'Instituições',
+    },
+    {
+      to: '/organizadores/cartoes',
+      icon: <CreditCard className="w-5 h-5 text-purple-600" />,
+      label: 'Cartões de Crédito',
+    },
+    {
+      to: '/organizadores/contas',
+      icon: <Wallet className="w-5 h-5 text-green-600" />,
+      label: 'Caixa / Conta',
+    },
+    {
+      to: '/organizadores/categorias',
+      icon: <Tag className="w-5 h-5 text-yellow-600" />,
+      label: 'Categoria',
+    },
+    {
+      to: '/organizadores/centros-de-custo',
+      icon: <Target className="w-5 h-5 text-indigo-600" />,
+      label: 'Centro de Custo',
+    },
+  ];
+
   return (
     <div className={cn(
       'flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300',
@@ -127,6 +155,19 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
       <nav className={cn('flex-1 space-y-6 overflow-y-auto', isCollapsed ? 'p-2' : 'p-4')}>
         <SidebarGroup title="Gerenciadores" isCollapsed={isCollapsed}>
           {managerItems.map((item) => (
+            <SidebarItem
+              key={item.to}
+              to={item.to}
+              icon={item.icon}
+              label={item.label}
+              isActive={location.pathname === item.to}
+              isCollapsed={isCollapsed}
+            />
+          ))}
+        </SidebarGroup>
+
+        <SidebarGroup title="Organizadores" isCollapsed={isCollapsed}>
+          {organizadorItems.map((item) => (
             <SidebarItem
               key={item.to}
               to={item.to}

@@ -14,6 +14,11 @@ import { Receitas } from './pages/managers/Receitas';
 import { Despesas } from './pages/managers/Despesas';
 import { Dividas } from './pages/managers/Dividas';
 import { Investimentos } from './pages/managers/Investimentos';
+import { Instituicoes } from './pages/organizadores/Instituicoes';
+import { Cartoes } from './pages/organizadores/Cartoes';
+import { Contas } from './pages/organizadores/Contas';
+import { Categorias } from './pages/organizadores/Categorias';
+import { CentrosDeCusto } from './pages/organizadores/CentrosDeCusto';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -76,6 +81,56 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <Investimentos />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/organizadores/instituicoes"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Instituicoes />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/organizadores/cartoes"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Cartoes />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/organizadores/contas"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Contas />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/organizadores/categorias"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Categorias />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/organizadores/centros-de-custo"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <CentrosDeCusto />
                         </Layout>
                       </ProtectedRoute>
                     }
