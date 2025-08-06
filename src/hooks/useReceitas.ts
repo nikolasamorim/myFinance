@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { receitaService } from '../services/receita.service';
+import type { ReceitaData } from '../services/receita.service';
 import { useWorkspace } from '../context/WorkspaceContext';
 
 interface ReceitaFilters {
@@ -25,7 +26,7 @@ export function useReceitas(filters: ReceitaFilters) {
   });
 
   const createReceita = useMutation({
-    mutationFn: (data: any) => receitaService.createReceita(currentWorkspace!.workspace_id, data),
+    mutationFn: (data: ReceitaData) => receitaService.createReceita(currentWorkspace!.workspace_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
@@ -33,7 +34,7 @@ export function useReceitas(filters: ReceitaFilters) {
   });
 
   const updateReceita = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<ReceitaData> }) =>
       receitaService.updateReceita(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });

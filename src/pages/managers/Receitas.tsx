@@ -8,6 +8,7 @@ import { Modal } from '../../components/ui/Modal';
 import { useReceitas } from '../../hooks/useReceitas';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { cn } from '../../lib/utils';
+import type { ReceitaData } from '../../services/receita.service';
 
 interface ReceitaFilters {
   status: string;
@@ -23,7 +24,7 @@ interface ReceitaFormData {
   subtitle: string;
   amount: number;
   transaction_date: string;
-  is_received: boolean;
+  status: 'pending' | 'received';
   repeat_type: 'avulsa' | 'fixa' | 'recorrente';
   repeat_interval: string;
   is_installment: boolean;
@@ -90,8 +91,8 @@ export function Receitas() {
     const currentYear = new Date().getFullYear();
     
     const currentMonthReceitas = receitas.filter(r => {
-      const dueDate = new Date(r.transaction_date);
-      return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
+      const transactionDate = new Date(r.transaction_date);
+      return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
     });
 
     const totalPrevisto = currentMonthReceitas.reduce((acc, r) => acc + Number(r.amount), 0);
@@ -168,26 +169,13 @@ export function Receitas() {
 
   // Group installments by installment_group_id
   const groupedReceitas = useMemo(() => {
-    const groups: { [key: string]: any[] } = {};
     const standalone: any[] = [];
 
     receitas.forEach(receita => {
-      if (receita.installment_group_id) {
-        if (!groups[receita.installment_group_id]) {
-          groups[receita.installment_group_id] = [];
-        }
-        groups[receita.installment_group_id].push(receita);
-      } else {
-        standalone.push(receita);
-      }
+      standalone.push(receita);
     });
 
-    // Sort installments within groups
-    Object.keys(groups).forEach(groupId => {
-      groups[groupId].sort((a, b) => a.installment_number - b.installment_number);
-    });
-
-    return { groups, standalone };
+    return { groups: {}, standalone };
   }, [receitas]);
 
   return (
@@ -385,7 +373,7 @@ export function Receitas() {
                           {formatDate(receita.transaction_date)}
                         </td>
                         <td className="py-3 px-4 text-center text-sm text-gray-600">
-                          {receita.paid_date ? formatDate(receita.paid_date) : '-'}
+                          {receita.status === 'received' ? formatDate(receita.transaction_date) : '-'}
                         </td>
                         <td className="py-3 px-4 text-center text-sm text-gray-600">
                           {getTypeLabel(receita.repeat_type)}
@@ -421,78 +409,6 @@ export function Receitas() {
                           </div>
                         </td>
                       </tr>
-                    ))}
-
-                    {/* Grouped installments */}
-                    {Object.entries(groupedReceitas.groups).map(([groupId, installments]) => (
-                      <React.Fragment key={groupId}>
-                        {installments.map((receita, index) => (
-                          <tr key={receita.id} className={cn(
-                            "border-b border-gray-100 hover:bg-gray-50",
-                            index === 0 && "border-t-2 border-blue-200"
-                          )}>
-                            <td className="py-3 px-4">
-                              <div className={cn(index > 0 && "pl-4")}>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {index === 0 ? receita.title : receita.subtitle || receita.title}
-                                </p>
-                                {index === 0 && receita.subtitle && (
-                                  <p className="text-xs text-gray-500">{receita.subtitle}</p>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-right text-sm font-medium text-gray-900">
-                              {formatCurrency(Number(receita.amount))}
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(receita.status)}`}>
-                                {getStatusLabel(receita.status)}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-center text-sm text-gray-600">
-                              {formatDate(receita.transaction_date)}
-                            </td>
-                            <td className="py-3 px-4 text-center text-sm text-gray-600">
-                              {receita.paid_date ? formatDate(receita.paid_date) : '-'}
-                            </td>
-                            <td className="py-3 px-4 text-center text-sm text-gray-600">
-                              {getTypeLabel(receita.repeat_type)}
-                            </td>
-                            <td className="py-3 px-4 text-center text-sm text-gray-600">
-                              <span className="font-medium text-blue-600">
-                                {receita.installment_number}/{receita.installment_total}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex justify-center space-x-2">
-                                {receita.status === 'pending' && (
-                                  <button
-                                    onClick={() => handleMarkAsReceived(receita.id)}
-                                    className="p-1 text-gray-400 hover:text-green-600 transition-colors"
-                                    title="Marcar como recebida"
-                                  >
-                                    <CheckCircle className="w-4 h-4" />
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => handleEditReceita(receita)}
-                                  className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                  title="Editar"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteReceita(receita.id)}
-                                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                                  title="Excluir"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -542,7 +458,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
     subtitle: '',
     amount: 0,
     transaction_date: new Date().toISOString().split('T')[0],
-    is_received: false,
+    status: 'pending',
     repeat_type: 'avulsa',
     repeat_interval: 'monthly',
     is_installment: false,
@@ -560,7 +476,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
         subtitle: receita.subtitle || '',
         amount: Number(receita.amount) || 0,
         transaction_date: receita.transaction_date || new Date().toISOString().split('T')[0],
-        is_received: receita.status === 'received',
+        status: receita.status || 'pending',
         repeat_type: receita.repeat_type || 'avulsa',
         repeat_interval: receita.repeat_interval || 'monthly',
         is_installment: receita.is_installment || false,
@@ -574,7 +490,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
         subtitle: '',
         amount: 0,
       transaction_date: new Date().toISOString().split('T')[0],
-        is_received: false,
+        status: 'pending',
         repeat_type: 'avulsa',
         repeat_interval: 'monthly',
         is_installment: false,
@@ -590,7 +506,20 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
     setIsLoading(true);
     
     try {
-      await onSave(formData);
+      const receitaData: ReceitaData = {
+        title: formData.title,
+        subtitle: formData.subtitle,
+        amount: formData.amount,
+        transaction_date: formData.transaction_date,
+        status: formData.status,
+        repeat_type: formData.repeat_type,
+        repeat_interval: formData.repeat_interval,
+        is_installment: formData.is_installment,
+        installment_total: formData.installment_total,
+        category_id: formData.category_id,
+        notes: formData.notes,
+      };
+      await onSave(receitaData);
     } catch (error) {
       console.error('Error saving receita:', error);
     } finally {
@@ -674,8 +603,8 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
           <label className="flex items-center">
             <input
               type="checkbox"
-              checked={formData.is_received}
-              onChange={(e) => handleInputChange('is_received', e.target.checked)}
+              checked={formData.status === 'received'}
+              onChange={(e) => handleInputChange('status', e.target.checked ? 'received' : 'pending')}
               className="mr-2"
             />
             <span className="text-sm text-gray-700">Já foi recebida?</span>
