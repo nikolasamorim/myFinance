@@ -32,6 +32,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     console.log('🔄 AuthContext: Initializing auth listener');
 
+    // In development/Bolt environment, check for existing session first
+    const checkInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('❌ AuthContext: Error getting initial session:', error);
+          setLoading(false);
+          return;
+        }
+        
+        if (session?.user) {
+          console.log('✅ AuthContext: Found existing session');
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name || session.user.email || '',
+          };
+          setUser(userData);
+          setIsAuthenticated(true);
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('❌ AuthContext: Error checking initial session:', error);
+        setLoading(false);
+      }
+    };
+
+    // Check for existing session immediately
+    checkInitialSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔄 AuthContext: Auth state changed:', event);
