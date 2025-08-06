@@ -301,7 +301,13 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
         visualization_type: type,
         visualization_screen_context: screenContext,
         visualization_config: {},
-        visualization_is_default: true, // New visualizations become default
+        visualization_is_default: false, // Create as non-default first
+      });
+
+      // Set as default after creation to avoid constraint violation
+      await setDefaultVisualization.mutateAsync({
+        screenContext,
+        visualizationId: newVisualization.visualization_id,
       });
 
       onVisualizationChange(newVisualization);
