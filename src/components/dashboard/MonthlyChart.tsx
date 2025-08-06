@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { ViewSelector } from './ViewSelector';
 import { IncomeExpenseCards } from './IncomeExpenseCards';
@@ -30,13 +30,14 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
   const screenContext = 'income_expense_summary';
   const { data: defaultVisualization } = useDefaultVisualization(screenContext);
   const [selectedVisualization, setSelectedVisualization] = useState<Visualization | null>(null);
+  const hasInitialVizBeenSet = useRef(false);
 
   // Set visualization from default query result
   useEffect(() => {
-    // Only update if we don't have a visualization yet, or if the default changed
-    if (!selectedVisualization || 
-        (defaultVisualization && selectedVisualization.visualization_id !== defaultVisualization.visualization_id)) {
+    // Only set initial visualization once
+    if (!hasInitialVizBeenSet.current) {
       setSelectedVisualization(defaultVisualization || FALLBACK_VISUALIZATION);
+      hasInitialVizBeenSet.current = true;
     }
   }, [defaultVisualization]);
 
