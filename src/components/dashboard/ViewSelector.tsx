@@ -55,29 +55,6 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Create default visualization if none exists
-  useEffect(() => {
-    if (!currentWorkspace || visualizations.length > 0 || currentVisualization) return;
-
-    const createDefaultVisualization = async () => {
-      try {
-        const defaultViz = await createVisualization.mutateAsync({
-          visualization_workspace_id: currentWorkspace.workspace_id,
-          visualization_name: 'Visualização padrão',
-          visualization_type: 'cards',
-          visualization_screen_context: screenContext,
-          visualization_config: {},
-          visualization_is_default: true,
-        });
-        onVisualizationChange(defaultViz);
-      } catch (error) {
-        console.error('Error creating default visualization:', error);
-      }
-    };
-
-    createDefaultVisualization();
-  }, [currentWorkspace, visualizations.length, currentVisualization, createVisualization, screenContext, onVisualizationChange]);
-
   const handleVisualizationSelect = async (visualization: Visualization) => {
     onVisualizationChange(visualization);
     
