@@ -55,6 +55,8 @@ export function useReceitas(filters: ReceitaFilters) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
+      // Force refetch of receitas data
+      queryClient.refetchQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
     },
   });
 

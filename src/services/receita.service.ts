@@ -167,8 +167,16 @@ export const receitaService = {
   },
 
   async markAsReceived(id: string) {
-    // For now, just return success since we don't have a status field
-    // This can be implemented when the status field is added to the database
-    return { success: true };
+    // Since we don't have a status field in the database yet,
+    // we'll use a simple approach - just return success for now
+    // In a real implementation, you would update a status field
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('transaction_id')
+      .eq('transaction_id', id)
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
   },
 };

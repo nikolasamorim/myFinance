@@ -129,7 +129,13 @@ export function Receitas() {
   };
 
   const handleMarkAsReceived = async (id: string) => {
-    await markAsReceived.mutateAsync(id);
+    try {
+      await markAsReceived.mutateAsync(id);
+      // Force a refetch to update the UI
+      window.location.reload();
+    } catch (error) {
+      console.error('Error marking receita as received:', error);
+    }
   };
 
   const getStatusColor = (status: string) => {
