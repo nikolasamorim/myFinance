@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Check, User, Users, Building2, Lock, UserPlus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useOnboarding } from '../../context/OnboardingContext';
-import { useAuth } from '../../context/AuthContext';
+import { useWorkspace } from '../../context/WorkspaceContext';
 import { workspaceService } from '../../services/workspace.service';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,7 +26,7 @@ const getTypeLabel = (type: string) => {
 
 export function Step6Review() {
   const { data, prevStep, resetOnboarding } = useOnboarding();
-  const { refetchUserWorkspaces } = useAuth();
+  const { refetchWorkspaces } = useWorkspace();
   const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
 
@@ -48,7 +48,7 @@ export function Step6Review() {
       console.log('Workspace created successfully');
       
       // Recarrega os workspaces do usuário
-      await refetchUserWorkspaces();
+      await refetchWorkspaces();
       
       console.log('Workspaces recarregados, resetando onboarding');
       resetOnboarding();

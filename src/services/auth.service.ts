@@ -1,23 +1,8 @@
 import { supabase } from '../lib/supabase';
 
-interface LoginResponse {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
-  token: string;
-}
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
-
 export const authService = {
-  // Fazer login e salvar token
-  async login(email: string, password: string): Promise<LoginResponse> {
+  // Make login (deprecated - use AuthContext instead)
+  async login(email: string, password: string) {
     console.log('🔐 AuthService: Attempting login for:', email);
     
     try {
@@ -35,30 +20,15 @@ export const authService = {
         throw new Error('No access token received');
       }
 
-      const user = {
-        id: data.user.id,
-        email: data.user.email || '',
-        name: data.user.user_metadata?.name || data.user.email || '',
-      };
-
-      const loginResponse = {
-        user,
-        token: data.session.access_token,
-      };
-
-      // Salvar token no localStorage
-      localStorage.setItem('auth_token', data.session.access_token);
-      localStorage.setItem('user_data', JSON.stringify(user));
-
       console.log('✅ AuthService: Login successful');
-      return loginResponse;
+      return data;
     } catch (error) {
       console.error('❌ AuthService: Login failed:', error);
       throw error;
     }
   },
 
-  // Registrar usuário
+  // Register user (deprecated - use AuthContext instead)
   async register(email: string, password: string, name: string): Promise<void> {
     console.log('📝 AuthService: Attempting registration for:', email);
     
@@ -85,45 +55,39 @@ export const authService = {
     }
   },
 
-  // Logout
+  // Logout (deprecated - use AuthContext instead)
   logout(): void {
     console.log('🚪 AuthService: Logging out');
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
     supabase.auth.signOut();
   },
 
-  // Verificar se está autenticado
+  // Check if authenticated (deprecated - use AuthContext instead)
   isAuthenticated(): boolean {
-    const token = localStorage.getItem('auth_token');
-    return !!token;
+    // This is now handled by AuthContext
+    return false;
   },
 
-  // Obter token atual
+  // Get current token (deprecated - use Supabase session instead)
   getToken(): string | null {
-    return localStorage.getItem('auth_token');
+    // This is now handled by Supabase session
+    return null;
   },
 
-  // Obter dados do usuário
-  getCurrentUser(): User | null {
-    const userData = localStorage.getItem('user_data');
-    if (!userData) return null;
-    
-    try {
-      return JSON.parse(userData);
-    } catch {
-      return null;
-    }
+  // Get current user (deprecated - use AuthContext instead)
+  getCurrentUser() {
+    // This is now handled by AuthContext
+    return null;
   },
 
-  // Verificar se o usuário tem workspaces
+  // Check if user has workspaces (deprecated - use AuthContext instead)
   async hasWorkspaces(): Promise<boolean> {
     console.log('🏢 AuthService: Checking user workspaces');
     
     try {
-      const token = this.getToken();
-      if (!token) {
-        throw new Error('No auth token');
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('No authenticated user');
       }
 
       const { data, error } = await supabase

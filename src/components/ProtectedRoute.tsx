@@ -9,24 +9,35 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, checkWorkspaces } = useAuth();
+  const { isAuthenticated, loading: authLoading, checkWorkspaces } = useAuth();
   const { currentWorkspace } = useWorkspace();
   const { resetOnboarding } = useOnboarding();
   const location = useLocation();
 
   // Always call useEffect before any conditional returns
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !authLoading) {
       console.log('🏢 ProtectedRoute: Checking workspaces for authenticated user');
       
       checkWorkspaces().catch((error) => {
         console.error('❌ ProtectedRoute: Error checking workspaces:', error);
       });
     }
-  }, [isAuthenticated, checkWorkspaces]);
+  }, [isAuthenticated, authLoading, checkWorkspaces]);
 
   console.log('🛡️ ProtectedRoute: Current path:', location.pathname);
   console.log('🛡️ ProtectedRoute: Is authenticated:', isAuthenticated);
+  console.log('🛡️ ProtectedRoute: Auth loading:', authLoading);
+
+  // Show loading while auth state is being determined
+  if (authLoading) {
+    console.log('⏳ ProtectedRoute: Auth loading, showing spinner');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   // Now safe to return early after all hooks are called
   if (!isAuthenticated) {
