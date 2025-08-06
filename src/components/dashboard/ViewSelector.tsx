@@ -284,8 +284,7 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
           </div>
         </div>
       </div>
-      </div>
-    </FloatingPortal>
+    </div>
   );
 
   // Desktop dropdown component
@@ -295,98 +294,99 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
         ref={refs.setFloating}
         style={floatingStyles}
         {...getFloatingProps()}
-      className="bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-72"
-    >
-      {/* Current visualization editing */}
-      <div className="p-3 border-b border-gray-100">
-        {isEditing ? (
-          <div className="flex items-center space-x-2">
-            <Input
-              value={editingName}
-              onChange={(e) => setEditingName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSaveEdit();
-                if (e.key === 'Escape') setIsEditing(false);
-              }}
-              className="flex-1 text-sm"
-              autoFocus
-            />
-            <Button
-              size="sm"
-              onClick={handleSaveEdit}
-              disabled={!editingName.trim()}
-            >
-              Salvar
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between">
+        className="bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-72"
+      >
+        {/* Current visualization editing */}
+        <div className="p-3 border-b border-gray-100">
+          {isEditing ? (
             <div className="flex items-center space-x-2">
-              <CurrentIcon className="w-4 h-4 text-gray-600" />
-              <span className="font-medium text-sm">
-                {currentVisualization?.visualization_name}
-              </span>
+              <Input
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveEdit();
+                  if (e.key === 'Escape') setIsEditing(false);
+                }}
+                className="flex-1 text-sm"
+                autoFocus
+              />
+              <Button
+                size="sm"
+                onClick={handleSaveEdit}
+                disabled={!editingName.trim()}
+              >
+                Salvar
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleStartEditing}
-              className="p-1"
-            >
-              <Edit2 className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Visualizations list */}
-      <div className="py-1 max-h-48 overflow-y-auto">
-        {visualizations.map((visualization) => {
-          const Icon = getVisualizationIcon(visualization.visualization_type);
-          const isActive = currentVisualization?.visualization_id === visualization.visualization_id;
-          
-          return (
-            <button
-              key={visualization.visualization_id}
-              onClick={() => handleVisualizationSelect(visualization)}
-              className={cn(
-                'w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-gray-50 transition-colors',
-                isActive && 'bg-blue-50 text-blue-700'
-              )}
-            >
-              <Icon className="w-4 h-4 text-gray-500" />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">
-                  {visualization.visualization_name}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {visualizationTypes.find(t => t.value === visualization.visualization_type)?.label}
-                </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CurrentIcon className="w-4 h-4 text-gray-600" />
+                <span className="font-medium text-sm">
+                  {currentVisualization?.visualization_name}
+                </span>
               </div>
-              {isActive && (
-                <div className="w-2 h-2 bg-blue-600 rounded-full" />
-              )}
-            </button>
-          );
-        })}
-      </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleStartEditing}
+                className="p-1"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
 
-      {/* Create new button */}
-      <div className="border-t border-gray-100 p-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setShowCreateModal(true);
-            setIsOpen(false);
-          }}
-          className="w-full flex items-center space-x-2 justify-start"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nova visualização</span>
-        </Button>
+        {/* Visualizations list */}
+        <div className="py-1 max-h-48 overflow-y-auto">
+          {visualizations.map((visualization) => {
+            const Icon = getVisualizationIcon(visualization.visualization_type);
+            const isActive = currentVisualization?.visualization_id === visualization.visualization_id;
+            
+            return (
+              <button
+                key={visualization.visualization_id}
+                onClick={() => handleVisualizationSelect(visualization)}
+                className={cn(
+                  'w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-gray-50 transition-colors',
+                  isActive && 'bg-blue-50 text-blue-700'
+                )}
+              >
+                <Icon className="w-4 h-4 text-gray-500" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">
+                    {visualization.visualization_name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {visualizationTypes.find(t => t.value === visualization.visualization_type)?.label}
+                  </div>
+                </div>
+                {isActive && (
+                  <div className="w-2 h-2 bg-blue-600 rounded-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Create new button */}
+        <div className="border-t border-gray-100 p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setShowCreateModal(true);
+              setIsOpen(false);
+            }}
+            className="w-full flex items-center space-x-2 justify-start"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova visualização</span>
+          </Button>
+        </div>
       </div>
-    </div>
+    </FloatingPortal>
   );
 
   return (
