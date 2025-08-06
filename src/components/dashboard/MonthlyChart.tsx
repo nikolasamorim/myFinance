@@ -38,7 +38,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
         (defaultVisualization && selectedVisualization.visualization_id !== defaultVisualization.visualization_id)) {
       setSelectedVisualization(defaultVisualization || FALLBACK_VISUALIZATION);
     }
-  }, [defaultVisualization, selectedVisualization]);
+  }, [defaultVisualization]);
 
   const handleVisualizationChange = (visualization: Visualization) => {
     setSelectedVisualization(visualization);
