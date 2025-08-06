@@ -22,7 +22,7 @@ interface ReceitaFormData {
   title: string;
   subtitle: string;
   amount: number;
-  due_date: string;
+  transaction_date: string;
   is_received: boolean;
   repeat_type: 'avulsa' | 'fixa' | 'recorrente';
   repeat_interval: string;
@@ -90,13 +90,13 @@ export function Receitas() {
     const currentYear = new Date().getFullYear();
     
     const currentMonthReceitas = receitas.filter(r => {
-      const dueDate = new Date(r.due_date);
+      const dueDate = new Date(r.transaction_date);
       return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
     });
 
     const totalPrevisto = currentMonthReceitas.reduce((acc, r) => acc + Number(r.amount), 0);
     const totalRecebido = currentMonthReceitas.filter(r => r.status === 'received').reduce((acc, r) => acc + Number(r.amount), 0);
-    const aReceber = currentMonthReceitas.filter(r => r.status === 'pending' && new Date(r.due_date) <= new Date()).reduce((acc, r) => acc + Number(r.amount), 0);
+    const aReceber = currentMonthReceitas.filter(r => r.status === 'pending' && new Date(r.transaction_date) <= new Date()).reduce((acc, r) => acc + Number(r.amount), 0);
     const receitasFixas = currentMonthReceitas.filter(r => r.repeat_type === 'fixa').reduce((acc, r) => acc + Number(r.amount), 0);
 
     return {
@@ -382,7 +382,7 @@ export function Receitas() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center text-sm text-gray-600">
-                          {formatDate(receita.due_date)}
+                          {formatDate(receita.transaction_date)}
                         </td>
                         <td className="py-3 px-4 text-center text-sm text-gray-600">
                           {receita.paid_date ? formatDate(receita.paid_date) : '-'}
@@ -450,7 +450,7 @@ export function Receitas() {
                               </span>
                             </td>
                             <td className="py-3 px-4 text-center text-sm text-gray-600">
-                              {formatDate(receita.due_date)}
+                              {formatDate(receita.transaction_date)}
                             </td>
                             <td className="py-3 px-4 text-center text-sm text-gray-600">
                               {receita.paid_date ? formatDate(receita.paid_date) : '-'}
@@ -541,7 +541,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
     title: '',
     subtitle: '',
     amount: 0,
-    due_date: new Date().toISOString().split('T')[0],
+    transaction_date: new Date().toISOString().split('T')[0],
     is_received: false,
     repeat_type: 'avulsa',
     repeat_interval: 'monthly',
@@ -559,7 +559,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
         title: receita.title || '',
         subtitle: receita.subtitle || '',
         amount: Number(receita.amount) || 0,
-        due_date: receita.due_date || new Date().toISOString().split('T')[0],
+        transaction_date: receita.transaction_date || new Date().toISOString().split('T')[0],
         is_received: receita.status === 'received',
         repeat_type: receita.repeat_type || 'avulsa',
         repeat_interval: receita.repeat_interval || 'monthly',
@@ -573,7 +573,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
         title: '',
         subtitle: '',
         amount: 0,
-        due_date: new Date().toISOString().split('T')[0],
+      transaction_date: new Date().toISOString().split('T')[0],
         is_received: false,
         repeat_type: 'avulsa',
         repeat_interval: 'monthly',
@@ -640,8 +640,8 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
           <Input
             label="Data de vencimento"
             type="date"
-            value={formData.due_date}
-            onChange={(e) => handleInputChange('due_date', e.target.value)}
+            value={formData.transaction_date}
+            onChange={(e) => handleInputChange('transaction_date', e.target.value)}
             required
           />
 

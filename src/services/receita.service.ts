@@ -14,7 +14,7 @@ interface ReceitaData {
   title: string;
   subtitle?: string;
   amount: number;
-  due_date: string;
+  transaction_date: string;
   is_received: boolean;
   repeat_type: 'avulsa' | 'fixa' | 'recorrente';
   repeat_interval?: string;
@@ -34,7 +34,7 @@ export const receitaService = {
       .select('*')
       .eq('transaction_workspace_id', workspaceId)
       .eq('transaction_type', 'income')
-      .order('due_date', { ascending: false });
+      .order('transaction_date', { ascending: false });
 
     // Apply filters
     if (filters.status !== 'all') {
@@ -60,16 +60,16 @@ export const receitaService = {
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       
       query = query
-        .gte('due_date', startOfMonth.toISOString().split('T')[0])
-        .lte('due_date', endOfMonth.toISOString().split('T')[0]);
+        .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
+        .lte('transaction_date', endOfMonth.toISOString().split('T')[0]);
     } else if (filters.period === 'last_month') {
       const now = new Date();
       const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
       
       query = query
-        .gte('due_date', startOfLastMonth.toISOString().split('T')[0])
-        .lte('due_date', endOfLastMonth.toISOString().split('T')[0]);
+        .gte('transaction_date', startOfLastMonth.toISOString().split('T')[0])
+        .lte('transaction_date', endOfLastMonth.toISOString().split('T')[0]);
     }
 
     const { data, error } = await query;
@@ -88,7 +88,7 @@ export const receitaService = {
       transaction_type: 'income',
       transaction_description: receitaData.title,
       transaction_amount: receitaData.amount,
-      transaction_date: receitaData.due_date,
+      transaction_date: receitaData.transaction_date,
       transaction_category_id: receitaData.category_id || null,
     };
 
@@ -98,7 +98,7 @@ export const receitaService = {
       const installments = [];
 
       for (let i = 1; i <= receitaData.installment_total; i++) {
-        const installmentDate = new Date(receitaData.due_date);
+        const installmentDate = new Date(receitaData.transaction_date);
         installmentDate.setMonth(installmentDate.getMonth() + (i - 1));
 
         installments.push({
@@ -135,7 +135,7 @@ export const receitaService = {
 
     if (updates.title !== undefined) updateData.transaction_description = updates.title;
     if (updates.amount !== undefined) updateData.transaction_amount = updates.amount;
-    if (updates.due_date !== undefined) updateData.transaction_date = updates.due_date;
+    if (updates.transaction_date !== undefined) updateData.transaction_date = updates.transaction_date;
     if (updates.category_id !== undefined) updateData.transaction_category_id = updates.category_id;
 
     const { data, error } = await supabase
