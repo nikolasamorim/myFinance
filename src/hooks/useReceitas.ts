@@ -20,8 +20,19 @@ export function useReceitas(filters: ReceitaFilters) {
     queryKey: ['receitas', currentWorkspace?.workspace_id, filters],
     queryFn: () => receitaService.getReceitas(currentWorkspace!.workspace_id, filters),
     enabled: !!currentWorkspace?.workspace_id,
-    staleTime: 30 * 1000, // 30 seconds
-    retry: 1,
+    staleTime: 30 * 1000,
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error.message?.includes('Authentication failed') || error.message?.includes('User not authenticated')) {
+        return false;
+      }
+      // Retry network errors up to 3 times
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        return failureCount < 3;
+      }
+      return failureCount < 1;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     refetchOnWindowFocus: false,
   });
 

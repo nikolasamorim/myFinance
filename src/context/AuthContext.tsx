@@ -91,6 +91,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } catch (error) {
           console.error('❌ AuthContext: Error processing auth state:', error);
+          // Don't set user to null on network errors, keep current state
+          if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+            console.log('🌐 AuthContext: Network error detected, keeping current auth state');
+            return;
+          }
           setUser(null);
           setIsAuthenticated(false);
         } finally {
