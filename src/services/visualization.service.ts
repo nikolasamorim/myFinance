@@ -68,13 +68,15 @@ export const visualizationService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // First, remove default from all visualizations in this context
-    await supabase
+    // Use a transaction-like approach: first remove all defaults, then set the new one
+    const { error: removeError } = await supabase
       .from('visualizations')
       .update({ visualization_is_default: false })
       .eq('visualization_workspace_id', workspaceId)
       .eq('visualization_user_id', user.id)
       .eq('visualization_screen_context', screenContext);
+
+    if (removeError) throw removeError;
 
     // Then set the new default
     const { error } = await supabase

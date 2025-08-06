@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
-import { VisualizationControls } from './VisualizationControls';
+import { ViewSelector } from './ViewSelector';
 import { IncomeExpenseCards } from './IncomeExpenseCards';
 import { IncomeExpenseTable } from './IncomeExpenseTable';
 import { useDefaultVisualization } from '../../hooks/useVisualizations';
@@ -57,7 +57,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Receitas vs Despesas (Mensal)</CardTitle>
-          <VisualizationControls
+          <ViewSelector
             screenContext={screenContext}
             currentVisualization={currentVisualization}
             onVisualizationChange={setCurrentVisualization}
