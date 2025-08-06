@@ -96,7 +96,8 @@ export function Settings() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <>
+      <div className="max-w-7xl mx-auto space-y-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Configurações da Conta</h1>
           <p className="text-gray-600 mt-1">Gerencie suas informações pessoais e configurações de segurança</p>
@@ -499,7 +500,6 @@ export function Settings() {
           </div>
         </div>
       </div>
-
       {/* Email Change Modal */}
       <Modal
         isOpen={showEmailModal}
@@ -624,5 +624,6 @@ export function Settings() {
           )}
         </div>
       </Modal>
+    </>
   );
 }

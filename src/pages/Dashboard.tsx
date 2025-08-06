@@ -30,7 +30,8 @@ export function Dashboard() {
   };
 
   return (
-    <div className="space-y-8">
+    <>
+      <div className="space-y-8">
         {/* Mostrar mensagem se não há workspace, mas não bloquear */}
         {!workspaceLoading && !currentWorkspace && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -70,12 +71,12 @@ export function Dashboard() {
           onEditTransaction={handleEditTransaction}
         />
       </div>
-
       {/* Transaction Modal */}
       <TransactionModal
         isOpen={isTransactionModalOpen}
         onClose={handleCloseModal}
         transaction={editingTransaction}
       />
+    </>
   );
 }
