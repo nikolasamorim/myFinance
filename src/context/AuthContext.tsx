@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseUrl } from '../lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
@@ -52,8 +52,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(null);
             setIsAuthenticated(false);
           }
-        } catch (error) {
+        } else if (event === 'SIGNED_OUT') {
           console.error('❌ AuthContext: Error processing auth state:', error);
+          setUser(null);
+          setIsAuthenticated(false);
+        } else if (!session) {
+          console.log('⚠️ AuthContext: Invalid session detected, clearing storage');
+          // Clear invalid session from local storage
+          const storageKey = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
+          localStorage.removeItem(storageKey);
           setUser(null);
           setIsAuthenticated(false);
         } finally {
@@ -122,6 +129,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     console.log('🚪 AuthContext: Logging out');
     supabase.auth.signOut();
+    
+    // Clear local storage session data
+    const storageKey = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
+    localStorage.removeItem(storageKey);
   };
 
   const value: AuthContextType = {
