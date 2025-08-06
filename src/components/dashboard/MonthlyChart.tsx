@@ -8,6 +8,20 @@ import { useDefaultVisualization } from '../../hooks/useVisualizations';
 import { formatCurrency } from '../../lib/utils';
 import type { MonthlyData, Visualization } from '../../types';
 
+// Define fallback visualization outside component to ensure stable reference
+const FALLBACK_VISUALIZATION: Visualization = {
+  visualization_id: 'fallback',
+  visualization_workspace_id: '',
+  visualization_user_id: '',
+  visualization_name: 'Cards (Padrão)',
+  visualization_type: 'cards',
+  visualization_screen_context: 'income_expense_summary',
+  visualization_config: {},
+  visualization_is_default: false,
+  visualization_created_at: new Date().toISOString(),
+  visualization_updated_at: new Date().toISOString(),
+};
+
 interface MonthlyChartProps {
   data: MonthlyData[];
 }
@@ -16,27 +30,23 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
   const screenContext = 'income_expense_summary';
   const { data: defaultVisualization } = useDefaultVisualization(screenContext);
   const [currentVisualization, setCurrentVisualization] = useState<Visualization | null>(null);
+  const [userSelectedVisualization, setUserSelectedVisualization] = useState(false);
 
-  // Set default visualization on load
+  // Set default visualization on load only if user hasn't made a selection
   useEffect(() => {
+    if (userSelectedVisualization) return;
+
     if (defaultVisualization) {
       setCurrentVisualization(defaultVisualization);
     } else {
-      // Fallback to cards view
-      setCurrentVisualization({
-        visualization_id: 'fallback',
-        visualization_workspace_id: '',
-        visualization_user_id: '',
-        visualization_name: 'Cards (Padrão)',
-        visualization_type: 'cards',
-        visualization_screen_context: screenContext,
-        visualization_config: {},
-        visualization_is_default: false,
-        visualization_created_at: new Date().toISOString(),
-        visualization_updated_at: new Date().toISOString(),
-      });
+      setCurrentVisualization(FALLBACK_VISUALIZATION);
     }
-  }, [defaultVisualization]);
+  }, [defaultVisualization, userSelectedVisualization]);
+
+  const handleVisualizationChange = (visualization: Visualization) => {
+    setCurrentVisualization(visualization);
+    setUserSelectedVisualization(true);
+  };
 
   const renderVisualization = () => {
     if (!currentVisualization) return null;
@@ -60,7 +70,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
           <ViewSelector
             screenContext={screenContext}
             currentVisualization={currentVisualization}
-            onVisualizationChange={setCurrentVisualization}
+            onVisualizationChange={handleVisualizationChange}
           />
         </div>
       </CardHeader>
