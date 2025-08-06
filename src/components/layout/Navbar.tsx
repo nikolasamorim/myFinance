@@ -15,6 +15,19 @@ export function Navbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
+  // Detect if we're on mobile
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640); // sm breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const getWorkspaceIcon = (workspace: any) => {
     if (workspace.workspace_icon) {
       return <span className="text-lg">{workspace.workspace_icon}</span>;
@@ -71,15 +84,16 @@ export function Navbar() {
             
             {/* Workspace Selector */}
             {loading ? (
-              <div className="w-24 sm:w-32 md:w-48 h-8 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />
+              <div className="w-32 sm:w-40 md:w-48 h-8 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />
             ) : (
-              <div className="w-24 sm:w-32 md:w-48 flex-shrink-0">
+              <div className="w-32 sm:w-40 md:w-48 flex-shrink-0">
                 <Dropdown
                   options={workspaceOptions}
                   value={currentWorkspace?.workspace_id}
                   onChange={handleWorkspaceChange}
                   placeholder="Workspace"
-                  className="text-xs sm:text-sm"
+                  className="text-sm"
+                  isMobile={isMobile}
                 />
               </div>
             )}
