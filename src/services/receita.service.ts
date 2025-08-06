@@ -38,6 +38,7 @@ export const receitaService = {
         transaction_amount,
         transaction_date,
         transaction_category_id,
+        transaction_status,
         transaction_created_at,
         transaction_updated_at
       `)
@@ -78,7 +79,7 @@ export const receitaService = {
       title: item.transaction_description,
       amount: item.transaction_amount,
       transaction_date: item.transaction_date,
-      status: 'pending', // Default status since we don't have this field yet
+      status: item.transaction_status || 'pending',
       repeat_type: 'avulsa', // Default type
       is_installment: false,
       category_id: item.transaction_category_id,
@@ -107,6 +108,7 @@ export const receitaService = {
           transaction_amount: receitaData.amount,
           transaction_date: installmentDate.toISOString().split('T')[0],
           transaction_category_id: receitaData.category_id || null,
+          transaction_status: receitaData.status || 'pending',
         });
       }
 
@@ -129,6 +131,7 @@ export const receitaService = {
           transaction_amount: receitaData.amount,
           transaction_date: receitaData.transaction_date,
           transaction_category_id: receitaData.category_id || null,
+          transaction_status: receitaData.status || 'pending',
         }])
         .select()
         .single();
@@ -145,6 +148,7 @@ export const receitaService = {
     if (updates.amount !== undefined) updateData.transaction_amount = updates.amount;
     if (updates.transaction_date !== undefined) updateData.transaction_date = updates.transaction_date;
     if (updates.category_id !== undefined) updateData.transaction_category_id = updates.category_id;
+    if (updates.status !== undefined) updateData.transaction_status = updates.status;
 
     const { data, error } = await supabase
       .from('transactions')
@@ -167,16 +171,14 @@ export const receitaService = {
   },
 
   async markAsReceived(id: string) {
-    // Since we don't have a status field in the database yet,
-    // we'll use a simple approach - just return success for now
-    // In a real implementation, you would update a status field
     const { data, error } = await supabase
       .from('transactions')
-      .select('transaction_id')
+      .update({ transaction_status: 'received' })
       .eq('transaction_id', id)
+      .select()
       .single();
 
     if (error) throw error;
-    return { success: true, data };
+    return data;
   },
 };

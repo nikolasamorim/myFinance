@@ -131,8 +131,6 @@ export function Receitas() {
   const handleMarkAsReceived = async (id: string) => {
     try {
       await markAsReceived.mutateAsync(id);
-      // Force a refetch to update the UI
-      window.location.reload();
     } catch (error) {
       console.error('Error marking receita as received:', error);
     }
