@@ -4,7 +4,24 @@ export const userService = {
   async getUserProfile(userId: string) {
     const { data, error } = await supabase
       .from('users')
-      .select('*')
+      .select(`
+        user_id,
+        user_name,
+        user_email,
+        avatar_url,
+        tags,
+        description,
+        gender,
+        birth_date,
+        identification_code,
+        hometown,
+        nationality,
+        languages,
+        marital_status,
+        permanent_address,
+        current_address,
+        two_factor_enabled
+      `)
       .eq('user_id', userId)
       .single();
 
