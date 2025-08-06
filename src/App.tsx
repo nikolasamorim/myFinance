@@ -8,6 +8,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Onboarding } from './pages/Onboarding';
+import { Settings } from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 const queryClient = new QueryClient();
@@ -35,6 +36,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Onboarding />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
                     </ProtectedRoute>
                   }
                 />

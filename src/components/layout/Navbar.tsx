@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Bell, User, LogOut, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Dropdown } from '../ui/Dropdown';
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { currentWorkspace, workspaces, setCurrentWorkspace, loading } = useWorkspace();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -67,7 +69,13 @@ export function Navbar() {
 
             {showUserMenu && (
               <div className="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg border border-gray-200 py-0.5 z-10">
-                <button className="w-full flex items-center px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+                <button 
+                  onClick={() => {
+                    navigate('/settings');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full flex items-center px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                >
                   <Settings className="w-3.5 h-3.5 mr-1.5" />
                   Configurações
                 </button>
