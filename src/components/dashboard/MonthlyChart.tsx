@@ -29,29 +29,25 @@ interface MonthlyChartProps {
 export function MonthlyChart({ data }: MonthlyChartProps) {
   const screenContext = 'income_expense_summary';
   const { data: defaultVisualization } = useDefaultVisualization(screenContext);
-  const [currentVisualization, setCurrentVisualization] = useState<Visualization | null>(null);
-  const [userSelectedVisualization, setUserSelectedVisualization] = useState(false);
+  const [selectedVisualization, setSelectedVisualization] = useState<Visualization | null>(null);
 
-  // Set default visualization on load only if user hasn't made a selection
+  // Set visualization from default query result
   useEffect(() => {
-    if (userSelectedVisualization) return;
-
-    if (defaultVisualization) {
-      setCurrentVisualization(defaultVisualization);
-    } else {
-      setCurrentVisualization(FALLBACK_VISUALIZATION);
+    // Only update if we don't have a visualization yet, or if the default changed
+    if (!selectedVisualization || 
+        (defaultVisualization && selectedVisualization.visualization_id !== defaultVisualization.visualization_id)) {
+      setSelectedVisualization(defaultVisualization || FALLBACK_VISUALIZATION);
     }
-  }, [defaultVisualization, userSelectedVisualization]);
+  }, [defaultVisualization, selectedVisualization]);
 
   const handleVisualizationChange = (visualization: Visualization) => {
-    setCurrentVisualization(visualization);
-    setUserSelectedVisualization(true);
+    setSelectedVisualization(visualization);
   };
 
   const renderVisualization = () => {
-    if (!currentVisualization) return null;
+    if (!selectedVisualization) return null;
 
-    switch (currentVisualization.visualization_type) {
+    switch (selectedVisualization.visualization_type) {
       case 'cards':
         return <IncomeExpenseCards data={data} />;
       case 'table':
@@ -69,7 +65,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
           <CardTitle>Receitas vs Despesas (Mensal)</CardTitle>
           <ViewSelector
             screenContext={screenContext}
-            currentVisualization={currentVisualization}
+            currentVisualization={selectedVisualization}
             onVisualizationChange={handleVisualizationChange}
           />
         </div>
