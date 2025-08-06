@@ -27,11 +27,11 @@ export function Navbar() {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-6 py-4">
+    <nav className="bg-white border-b border-gray-200 px-6 py-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-8">
-          <div className="flex items-center">
-            <img src="logo-black.png"></img>
+          <div className="flex items-center gap-[12px]">
+            <img src="logo-black.png" width="30"></img>
             <h1 className="text-lg font-bold text-gray-900">Azami</h1>
           </div>
           
