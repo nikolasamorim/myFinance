@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Bell, User, LogOut, Settings, Building, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Bell, User, LogOut, Settings, Building, Users, X, LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, CreditCard, Wallet, Tag, Target } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Dropdown } from '../ui/Dropdown';
@@ -242,6 +242,7 @@ export function Navbar() {
                       <span>Investimentos</span>
                     </Link>
                   </div>
+                </div>
                 {/* Organizadores */}
                 <div className="space-y-2">
                   <h3 className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -295,7 +296,7 @@ export function Navbar() {
           </div>
         </div>
       )}
-                </div>
+
       {/* Click outside handlers */}
       {(showUserMenu || showNotifications) && (
         <div 
