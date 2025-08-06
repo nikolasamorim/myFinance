@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { DollarSign, TrendingDown, CreditCard } from 'lucide-react';
-import { Navbar } from '../components/layout/Navbar';
 import { StatsCard } from '../components/dashboard/StatsCard';
 import { MonthlyChart } from '../components/dashboard/MonthlyChart';
 import { TransactionTable } from '../components/transactions/TransactionTable';
@@ -31,13 +30,10 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
-      <main className="max-w-7xl mx-auto px-6 py-8">
+    <div className="space-y-8">
         {/* Mostrar mensagem se não há workspace, mas não bloquear */}
         {!workspaceLoading && !currentWorkspace && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-yellow-800 text-sm">
               Nenhum workspace encontrado. Você pode precisar criar um workspace primeiro.
             </p>
@@ -45,7 +41,7 @@ export function Dashboard() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatsCard
             title="Saldo Atual"
             value={isLoading ? 0 : (stats?.currentBalance || 0)}
@@ -64,7 +60,7 @@ export function Dashboard() {
         </div>
 
         {/* Monthly Chart */}
-        <div className="mb-8">
+        <div>
           <MonthlyChart data={isLoading ? [] : (stats?.monthlyComparison || [])} />
         </div>
 
@@ -73,7 +69,7 @@ export function Dashboard() {
           onCreateTransaction={handleCreateTransaction}
           onEditTransaction={handleEditTransaction}
         />
-      </main>
+      </div>
 
       {/* Transaction Modal */}
       <TransactionModal
@@ -81,6 +77,5 @@ export function Dashboard() {
         onClose={handleCloseModal}
         transaction={editingTransaction}
       />
-    </div>
   );
 }

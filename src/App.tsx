@@ -9,6 +9,11 @@ import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Onboarding } from './pages/Onboarding';
 import { Settings } from './pages/Settings';
+import { Receitas } from './pages/managers/Receitas';
+import { Despesas } from './pages/managers/Despesas';
+import { Dividas } from './pages/managers/Dividas';
+import { Investimentos } from './pages/managers/Investimentos';
+import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 const queryClient = new QueryClient();
@@ -27,7 +32,49 @@ function App() {
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <Layout>
+                        <Dashboard />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/gerenciadores/receitas"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Receitas />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/gerenciadores/despesas"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Despesas />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/gerenciadores/dividas"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Dividas />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/gerenciadores/investimentos"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Investimentos />
+                      </Layout>
                     </ProtectedRoute>
                   }
                 />
@@ -43,7 +90,9 @@ function App() {
                   path="/settings"
                   element={
                     <ProtectedRoute>
-                      <Settings />
+                      <Layout>
+                        <Settings />
+                      </Layout>
                     </ProtectedRoute>
                   }
                 />
