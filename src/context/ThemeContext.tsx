@@ -23,13 +23,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       try {
         if (user?.id) {
           // Try to get user's saved theme preference
-          const profile = await userService.getUserProfile(user.id);
-          const savedTheme = profile?.theme as Theme;
-          
-          if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-            setThemeState(savedTheme);
-            applyTheme(savedTheme);
-          } else {
+          try {
+            const profile = await userService.getUserProfile(user.id);
+            const savedTheme = profile?.theme as Theme;
+            
+            if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+              setThemeState(savedTheme);
+              applyTheme(savedTheme);
+            } else {
+              // Fallback to system preference
+              const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+              setThemeState(systemTheme);
+              applyTheme(systemTheme);
+            }
+          } catch (profileError) {
+            console.warn('Could not load user theme preference, using system default:', profileError);
             // Fallback to system preference
             const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
             setThemeState(systemTheme);
@@ -74,7 +82,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       try {
         await userService.updateUserProfile(user.id, { theme: newTheme });
       } catch (error) {
-        console.error('Error saving theme preference:', error);
+        console.warn('Could not save theme preference to database:', error);
+        // Continue with local theme change even if save fails
       }
     }
   };
