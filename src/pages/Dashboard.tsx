@@ -31,14 +31,14 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Mostrar mensagem se não há workspace, mas não bloquear */}
         {!workspaceLoading && !currentWorkspace && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <p className="text-yellow-800 text-sm">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+            <p className="text-yellow-800 dark:text-yellow-400 text-sm">
               Nenhum workspace encontrado. Você pode precisar criar um workspace primeiro.
             </p>
           </div>

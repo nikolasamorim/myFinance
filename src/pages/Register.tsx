@@ -63,16 +63,16 @@ export function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-2xl font-bold text-gray-900">
+        <h2 className="mt-6 text-center text-2xl font-bold text-gray-900 dark:text-white">
           Crie sua conta
         </h2>
-        <p className="mt-2 text-center text-xs text-gray-600">
+        <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
           Ou{' '}
           <Link
             to="/login"
-            className="font-medium text-black hover:text-gray-800"
+            className="font-medium text-black dark:text-white hover:text-gray-800 dark:hover:text-gray-200"
           >
             entre na sua conta existente
           </Link>
@@ -80,16 +80,16 @@ export function Register() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg">
                 <p className="text-xs font-medium">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 px-4 py-3 rounded-lg">
                 <p className="text-xs font-medium">{success}</p>
               </div>
             )}
