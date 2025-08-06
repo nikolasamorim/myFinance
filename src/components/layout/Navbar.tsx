@@ -31,7 +31,8 @@ export function Navbar() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-8">
           <div className="flex items-center">
-            <h1 className="text-lg font-bold text-gray-900">FinanceApp</h1>
+            <img src="navbar-logo.png"></img>
+            <h1 className="text-lg font-bold text-gray-900">Azami</h1>
           </div>
           
           {loading ? (

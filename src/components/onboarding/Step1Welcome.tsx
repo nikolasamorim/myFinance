@@ -14,7 +14,7 @@ export function Step1Welcome() {
         </div>
         
         <h1 className="text-3xl font-bold text-gray-900">
-          Bem-vindo ao FinanceApp
+          Bem-vindo a Azami
         </h1>
         
         <p className="text-lg text-gray-600 max-w-md mx-auto leading-relaxed">
