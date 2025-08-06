@@ -47,20 +47,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('✅ AuthContext: User authenticated:', userData.email);
             setUser(userData);
             setIsAuthenticated(true);
-          } else {
+          } else if (event === 'SIGNED_OUT') {
+            console.log('🚪 AuthContext: User signed out');
+            setUser(null);
+            setIsAuthenticated(false);
+          } else if (!session) {
             console.log('❌ AuthContext: No valid session or signed out');
+            // Clear invalid session from local storage
+            const storageKey = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
+            localStorage.removeItem(storageKey);
             setUser(null);
             setIsAuthenticated(false);
           }
-        } else if (event === 'SIGNED_OUT') {
+        } catch (error) {
           console.error('❌ AuthContext: Error processing auth state:', error);
-          setUser(null);
-          setIsAuthenticated(false);
-        } else if (!session) {
-          console.log('⚠️ AuthContext: Invalid session detected, clearing storage');
-          // Clear invalid session from local storage
-          const storageKey = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
-          localStorage.removeItem(storageKey);
           setUser(null);
           setIsAuthenticated(false);
         } finally {
