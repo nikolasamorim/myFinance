@@ -200,6 +200,14 @@ export function Sidebar() {
 
   return (
     <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileOpen(true)}
+        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200 lg:hidden"
+      >
+        <Menu className="w-5 h-5 text-gray-600" />
+      </button>
+
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0">
         <div className={cn('transition-all duration-300', isCollapsed ? 'w-16' : 'w-64')}>
