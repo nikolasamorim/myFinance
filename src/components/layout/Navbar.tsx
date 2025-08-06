@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Dropdown } from '../ui/Dropdown';
+import { SidebarToggleButton } from '../ui/SidebarToggleButton';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -51,6 +52,9 @@ export function Navbar() {
       <div className="flex items-center justify-between">
         {/* Left side - Logo and Workspace Selector */}
         <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+          {/* Sidebar Toggle Button - Desktop only */}
+          <SidebarToggleButton />
+          
           {/* Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <img src="/logo-black.png" width="24" height="24" alt="Logo" className="md:w-7 md:h-7" />

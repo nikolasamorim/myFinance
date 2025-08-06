@@ -2,27 +2,31 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Menu, X, TrendingUp, TrendingDown, CreditCard, PiggyBank } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useSidebar } from '../../context/SidebarContext';
 
 interface SidebarItemProps {
   to: string;
   icon: React.ReactNode;
   label: string;
   isActive?: boolean;
+  isCollapsed?: boolean;
 }
 
-function SidebarItem({ to, icon, label, isActive }: SidebarItemProps) {
+function SidebarItem({ to, icon, label, isActive, isCollapsed }: SidebarItemProps) {
   return (
     <Link
       to={to}
       className={cn(
-        'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+        'flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+        isCollapsed ? 'justify-center' : 'space-x-3',
         isActive
           ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700'
           : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
       )}
+      title={isCollapsed ? label : undefined}
     >
       <span className="flex-shrink-0">{icon}</span>
-      <span className="truncate">{label}</span>
+      {!isCollapsed && <span className="truncate">{label}</span>}
     </Link>
   );
 }
@@ -31,27 +35,36 @@ interface SidebarGroupProps {
   title: string;
   children: React.ReactNode;
   defaultExpanded?: boolean;
+  isCollapsed?: boolean;
 }
 
-function SidebarGroup({ title, children, defaultExpanded = true }: SidebarGroupProps) {
+function SidebarGroup({ title, children, defaultExpanded = true, isCollapsed }: SidebarGroupProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  // Always show content when collapsed (icon-only mode)
+  const shouldShowContent = isCollapsed || isExpanded;
 
   return (
     <div className="space-y-2">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
-      >
-        <span>{title}</span>
-        {isExpanded ? (
-          <ChevronDown className="w-4 h-4" />
-        ) : (
-          <ChevronRight className="w-4 h-4" />
-        )}
-      </button>
+      {!isCollapsed && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
+        >
+          <span>{title}</span>
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4" />
+          ) : (
+            <ChevronRight className="w-4 h-4" />
+          )}
+        </button>
+      )}
       
-      {isExpanded && (
-        <div className="space-y-1 pl-2">
+      {shouldShowContent && (
+        <div className={cn(
+          'space-y-1 transition-all duration-200',
+          isCollapsed ? 'pl-0' : 'pl-2'
+        )}>
           {children}
         </div>
       )}
@@ -66,6 +79,7 @@ interface SidebarProps {
 
 function SidebarContent({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
+  const { isCollapsed } = useSidebar();
 
   const managerItems = [
     {
@@ -91,10 +105,16 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200">
+    <div className={cn(
+      'flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300',
+      isCollapsed ? 'w-16' : 'w-64'
+    )}>
       {/* Mobile Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 lg:hidden">
-        <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+      <div className={cn(
+        'flex items-center border-b border-gray-200 lg:hidden',
+        isCollapsed ? 'justify-center p-2' : 'justify-between p-4'
+      )}>
+        {!isCollapsed && <h2 className="text-lg font-semibold text-gray-900">Menu</h2>}
         <button
           onClick={onClose}
           className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -104,8 +124,8 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
-        <SidebarGroup title="Gerenciadores">
+      <nav className={cn('flex-1 space-y-6 overflow-y-auto', isCollapsed ? 'p-2' : 'p-4')}>
+        <SidebarGroup title="Gerenciadores" isCollapsed={isCollapsed}>
           {managerItems.map((item) => (
             <SidebarItem
               key={item.to}
@@ -113,6 +133,7 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
               icon={item.icon}
               label={item.label}
               isActive={location.pathname === item.to}
+              isCollapsed={isCollapsed}
             />
           ))}
         </SidebarGroup>
@@ -136,7 +157,7 @@ export function Sidebar() {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0">
-        <div className="w-64">
+        <div className={cn('transition-all duration-300', isCollapsed ? 'w-16' : 'w-64')}>
           <SidebarContent isOpen={true} onClose={() => {}} />
         </div>
       </div>
