@@ -87,5 +87,8 @@ export function useDeleteVisualization() {
       queryClient.invalidateQueries({ queryKey: ['visualizations', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['default-visualization', currentWorkspace?.workspace_id] });
     },
+    onError: (error) => {
+      console.error('Error deleting visualization:', error);
+    },
   });
 }
