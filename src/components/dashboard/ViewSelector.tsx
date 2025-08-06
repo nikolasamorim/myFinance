@@ -92,7 +92,6 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
           screenContext,
           visualizationId: visualization.visualization_id,
         });
-        refetch();
       } catch (error) {
         console.error('Error setting default visualization:', error);
       }
