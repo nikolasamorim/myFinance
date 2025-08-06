@@ -32,8 +32,8 @@ export const receitaService = {
     let query = supabase
       .from('transactions')
       .select('*')
-      .eq('workspace_id', workspaceId)
-      .eq('type', 'income')
+      .eq('transaction_workspace_id', workspaceId)
+      .eq('transaction_type', 'income')
       .order('due_date', { ascending: false });
 
     // Apply filters
@@ -83,22 +83,13 @@ export const receitaService = {
     if (!user) throw new Error('User not authenticated');
 
     const baseReceita = {
-      workspace_id: workspaceId,
-      user_id: user.id,
-      type: 'income',
-      flow: 'in',
-      status: receitaData.is_received ? 'received' : 'pending',
-      title: receitaData.title,
-      subtitle: receitaData.subtitle || null,
-      amount: receitaData.amount,
-      due_date: receitaData.due_date,
-      paid_date: receitaData.is_received ? receitaData.due_date : null,
-      repeat_type: receitaData.repeat_type,
-      repeat_interval: receitaData.repeat_interval || null,
-      is_installment: receitaData.is_installment,
-      installment_total: receitaData.is_installment ? receitaData.installment_total : null,
-      category_id: receitaData.category_id || null,
-      notes: receitaData.notes || null,
+      transaction_workspace_id: workspaceId,
+      transaction_created_by_user_id: user.id,
+      transaction_type: 'income',
+      transaction_description: receitaData.title,
+      transaction_amount: receitaData.amount,
+      transaction_date: receitaData.due_date,
+      transaction_category_id: receitaData.category_id || null,
     };
 
     if (receitaData.is_installment && receitaData.installment_total && receitaData.installment_total > 1) {
@@ -112,12 +103,8 @@ export const receitaService = {
 
         installments.push({
           ...baseReceita,
-          subtitle: receitaData.subtitle || `Parcela ${i}/${receitaData.installment_total}`,
-          due_date: installmentDate.toISOString().split('T')[0],
-          paid_date: receitaData.is_received && i === 1 ? installmentDate.toISOString().split('T')[0] : null,
-          status: receitaData.is_received && i === 1 ? 'received' : 'pending',
-          installment_number: i,
-          installment_group_id: installmentGroupId,
+          transaction_description: `${receitaData.title} - Parcela ${i}/${receitaData.installment_total}`,
+          transaction_date: installmentDate.toISOString().split('T')[0],
         });
       }
 
@@ -134,8 +121,6 @@ export const receitaService = {
         .from('transactions')
         .insert([{
           ...baseReceita,
-          installment_number: null,
-          installment_group_id: null,
         }])
         .select()
         .single();
@@ -148,24 +133,15 @@ export const receitaService = {
   async updateReceita(id: string, updates: Partial<ReceitaData>) {
     const updateData: any = {};
 
-    if (updates.title !== undefined) updateData.title = updates.title;
-    if (updates.subtitle !== undefined) updateData.subtitle = updates.subtitle;
-    if (updates.amount !== undefined) updateData.amount = updates.amount;
-    if (updates.due_date !== undefined) updateData.due_date = updates.due_date;
-    if (updates.repeat_type !== undefined) updateData.repeat_type = updates.repeat_type;
-    if (updates.repeat_interval !== undefined) updateData.repeat_interval = updates.repeat_interval;
-    if (updates.category_id !== undefined) updateData.category_id = updates.category_id;
-    if (updates.notes !== undefined) updateData.notes = updates.notes;
-
-    if (updates.is_received !== undefined) {
-      updateData.status = updates.is_received ? 'received' : 'pending';
-      updateData.paid_date = updates.is_received ? (updates.due_date || new Date().toISOString().split('T')[0]) : null;
-    }
+    if (updates.title !== undefined) updateData.transaction_description = updates.title;
+    if (updates.amount !== undefined) updateData.transaction_amount = updates.amount;
+    if (updates.due_date !== undefined) updateData.transaction_date = updates.due_date;
+    if (updates.category_id !== undefined) updateData.transaction_category_id = updates.category_id;
 
     const { data, error } = await supabase
       .from('transactions')
       .update(updateData)
-      .eq('id', id)
+      .eq('transaction_id', id)
       .select()
       .single();
 
@@ -177,7 +153,7 @@ export const receitaService = {
     const { error } = await supabase
       .from('transactions')
       .delete()
-      .eq('id', id);
+      .eq('transaction_id', id);
 
     if (error) throw error;
   },
@@ -186,10 +162,9 @@ export const receitaService = {
     const { data, error } = await supabase
       .from('transactions')
       .update({
-        status: 'received',
-        paid_date: new Date().toISOString().split('T')[0],
+        transaction_type: 'income',
       })
-      .eq('id', id)
+      .eq('transaction_id', id)
       .select()
       .single();
 
