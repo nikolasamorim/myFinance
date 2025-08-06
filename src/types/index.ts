@@ -72,3 +72,16 @@ export interface WorkspaceContextType {
   loading: boolean;
   refetchWorkspaces: () => Promise<void>;
 }
+
+export interface Visualization {
+  visualization_id: string;
+  visualization_workspace_id: string;
+  visualization_user_id: string;
+  visualization_name: string;
+  visualization_type: 'cards' | 'graph' | 'table';
+  visualization_screen_context: string;
+  visualization_config: Record<string, any>;
+  visualization_is_default: boolean;
+  visualization_created_at: string;
+  visualization_updated_at: string;
+}
