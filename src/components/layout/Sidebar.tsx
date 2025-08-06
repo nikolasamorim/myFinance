@@ -144,6 +144,7 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
 
 export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { isCollapsed } = useSidebar();
 
   return (
     <>
