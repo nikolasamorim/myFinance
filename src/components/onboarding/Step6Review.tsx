@@ -47,17 +47,17 @@ export function Step6Review() {
       
       console.log('Workspace created successfully');
       
-      // Recarrega os workspaces do usuário
+      // Refetch workspaces to update the context
       await refetchWorkspaces();
       
-      console.log('Workspaces recarregados, resetando onboarding');
+      console.log('Workspaces refetched, resetting onboarding');
       resetOnboarding();
       
-      // Navega para dashboard
+      // Navigate to dashboard - ProtectedRoute will handle the redirect
       navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Error creating workspace:', error);
-      alert('Erro ao criar workspace. Tente novamente.');
+      alert('Error creating workspace. Please try again.');
     } finally {
       setIsCreating(false);
     }

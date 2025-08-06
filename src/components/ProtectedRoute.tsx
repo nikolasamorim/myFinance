@@ -1,37 +1,26 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
-import { useOnboarding } from '../context/OnboardingContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, loading: authLoading, checkWorkspaces } = useAuth();
-  const { currentWorkspace } = useWorkspace();
-  const { resetOnboarding } = useOnboarding();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { workspaces, loading: workspaceLoading } = useWorkspace();
   const location = useLocation();
 
-  // Always call useEffect before any conditional returns
-  useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      console.log('🏢 ProtectedRoute: Checking workspaces for authenticated user');
-      
-      checkWorkspaces().catch((error) => {
-        console.error('❌ ProtectedRoute: Error checking workspaces:', error);
-      });
-    }
-  }, [isAuthenticated, authLoading, checkWorkspaces]);
-
   console.log('🛡️ ProtectedRoute: Current path:', location.pathname);
-  console.log('🛡️ ProtectedRoute: Is authenticated:', isAuthenticated);
   console.log('🛡️ ProtectedRoute: Auth loading:', authLoading);
+  console.log('🛡️ ProtectedRoute: Workspace loading:', workspaceLoading);
+  console.log('🛡️ ProtectedRoute: Is authenticated:', isAuthenticated);
+  console.log('🛡️ ProtectedRoute: Workspaces count:', workspaces.length);
 
-  // Show loading while auth state is being determined
-  if (authLoading) {
-    console.log('⏳ ProtectedRoute: Auth loading, showing spinner');
+  // Show loading while auth or workspace state is being determined
+  if (authLoading || (isAuthenticated && workspaceLoading)) {
+    console.log('⏳ ProtectedRoute: Loading, showing spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -39,16 +28,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Now safe to return early after all hooks are called
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     console.log('🚫 ProtectedRoute: User not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   // Check if user has workspaces
-  const hasWorkspaces = currentWorkspace !== null;
+  const hasWorkspaces = workspaces.length > 0;
 
-  // Redirect logic based on workspaces
+  // Redirect logic based on workspaces and current path
   if (!hasWorkspaces && location.pathname !== '/onboarding') {
     console.log('🎯 ProtectedRoute: No workspaces, redirecting to onboarding');
     return <Navigate to="/onboarding" replace />;
@@ -56,7 +45,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (hasWorkspaces && location.pathname === '/onboarding') {
     console.log('🎯 ProtectedRoute: Has workspaces, redirecting to dashboard');
-    resetOnboarding();
     return <Navigate to="/dashboard" replace />;
   }
 

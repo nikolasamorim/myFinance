@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -15,8 +15,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
-  checkWorkspaces: () => Promise<boolean>;
-  refetchUserWorkspaces: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,32 +23,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const hasInitialized = useRef(false);
 
-  // Listen to auth state changes
   useEffect(() => {
-    console.log('🔄 AuthContext: Setting up auth state listener');
+    // Prevent multiple initializations
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    console.log('🔄 AuthContext: Initializing auth listener');
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔄 AuthContext: Auth state changed:', event);
         
-        if (session?.user) {
-          const userData: User = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: session.user.user_metadata?.name || session.user.email || '',
-          };
-          
-          console.log('✅ AuthContext: User authenticated:', userData.email);
-          setUser(userData);
-          setIsAuthenticated(true);
-        } else {
-          console.log('❌ AuthContext: No valid session');
+        try {
+          if (session?.user && event !== 'SIGNED_OUT') {
+            const userData: User = {
+              id: session.user.id,
+              email: session.user.email || '',
+              name: session.user.user_metadata?.name || session.user.email || '',
+            };
+            
+            console.log('✅ AuthContext: User authenticated:', userData.email);
+            setUser(userData);
+            setIsAuthenticated(true);
+          } else {
+            console.log('❌ AuthContext: No valid session or signed out');
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+        } catch (error) {
+          console.error('❌ AuthContext: Error processing auth state:', error);
           setUser(null);
           setIsAuthenticated(false);
+        } finally {
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -77,8 +85,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!data.session?.access_token) {
         throw new Error('No access token received');
       }
-      
-      // Auth state will be updated by the listener
       
       console.log('✅ AuthContext: Login successful');
     } catch (error) {
@@ -116,42 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     console.log('🚪 AuthContext: Logging out');
     supabase.auth.signOut();
-    // Auth state will be updated by the listener
   };
 
-  const checkWorkspaces = async (): Promise<boolean> => {
-    console.log('🏢 AuthContext: Checking workspaces');
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('No authenticated user');
-      }
-
-      const { data, error } = await supabase
-        .from('workspaces')
-        .select('workspace_id')
-        .limit(1);
-
-      if (error) {
-        console.error('❌ AuthContext: Error checking workspaces:', error);
-        throw error;
-      }
-
-      const hasWorkspaces = (data?.length || 0) > 0;
-      console.log('✅ AuthContext: User has workspaces:', hasWorkspaces);
-      return hasWorkspaces;
-    } catch (error) {
-      console.error('❌ AuthContext: Error checking workspaces:', error);
-      return false;
-    }
-  };
-
-  const refetchUserWorkspaces = async () => {
-    console.log('🔄 AuthContext: Refetching user workspaces');
-    // This is a placeholder - actual workspace refetching should be handled by WorkspaceContext
-    // But we keep this for backward compatibility
-  };
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -159,8 +131,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
-    checkWorkspaces,
-    refetchUserWorkspaces,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

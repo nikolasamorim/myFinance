@@ -5,12 +5,9 @@ export const workspaceService = {
   async getUserWorkspaces(): Promise<Workspace[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.log('WorkspaceService: User not authenticated');
       throw new Error('User not authenticated');
     }
 
-    console.log('WorkspaceService: Querying workspaces for user:', user.id);
-    
     const { data, error } = await supabase
       .from('workspaces')
       .select('*')
@@ -18,11 +15,9 @@ export const workspaceService = {
       .order('workspace_created_at', { ascending: false });
 
     if (error) {
-      console.error('WorkspaceService: Error fetching workspaces:', error.message);
       throw error;
     }
     
-    console.log('WorkspaceService: Query result:', data?.length || 0, 'workspaces');
     return data || [];
   },
 
@@ -34,12 +29,9 @@ export const workspaceService = {
   ): Promise<Workspace> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.log('WorkspaceService: User not authenticated for workspace creation');
       throw new Error('User not authenticated');
     }
 
-    console.log('WorkspaceService: Creating workspace:', name, 'for user:', user.id);
-    
     const { data, error } = await supabase
       .from('workspaces')
       .insert({
@@ -51,12 +43,9 @@ export const workspaceService = {
       .single();
 
     if (error) {
-      console.error('WorkspaceService: Error creating workspace:', error.message);
-      console.error('WorkspaceService: Full error object:', error);
       throw error;
     }
     
-    console.log('WorkspaceService: Workspace created successfully:', data);
     return data;
   },
 
