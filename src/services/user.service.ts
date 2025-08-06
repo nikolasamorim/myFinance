@@ -13,9 +13,32 @@ export const userService = {
   },
 
   async updateUserProfile(userId: string, updates: any) {
+    // Map frontend field names to database column names
+    const mappedUpdates: any = {};
+    
+    if (updates.name !== undefined) {
+      mappedUpdates.user_name = updates.name;
+    }
+    if (updates.email !== undefined) {
+      mappedUpdates.user_email = updates.email;
+    }
+    
+    // Copy other fields that match database schema
+    const directFields = [
+      'avatar_url', 'tags', 'description', 'gender', 'birth_date',
+      'hometown', 'nationality', 'languages', 'marital_status',
+      'permanent_address', 'current_address', 'two_factor_enabled'
+    ];
+    
+    directFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        mappedUpdates[field] = updates[field];
+      }
+    });
+
     const { data, error } = await supabase
       .from('users')
-      .update(updates)
+      .update(mappedUpdates)
       .eq('user_id', userId)
       .select()
       .single();

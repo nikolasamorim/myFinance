@@ -2,6 +2,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '../services/user.service';
 import { useAuth } from '../context/AuthContext';
 
+// Transform database user to frontend format
+const transformUser = (dbUser: any) => {
+  if (!dbUser) return null;
+  
+  return {
+    ...dbUser,
+    id: dbUser.user_id,
+    name: dbUser.user_name,
+    email: dbUser.user_email,
+  };
+};
+
 export function useUserProfile() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -10,6 +22,7 @@ export function useUserProfile() {
     queryKey: ['user-profile', user?.id],
     queryFn: () => userService.getUserProfile(user!.id),
     enabled: !!user?.id,
+    select: transformUser,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
