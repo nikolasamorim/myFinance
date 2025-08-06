@@ -61,7 +61,7 @@ export function TransactionTable({ onCreateTransaction, onEditTransaction }: Tra
           <CardTitle>Últimas Transações</CardTitle>
           <Button onClick={onCreateTransaction}>
             <Plus className="w-4 h-4 mr-2" />
-            Nova Transação
+            Transação
           </Button>
         </div>
         <div className="flex items-center space-x-4 mt-4">
