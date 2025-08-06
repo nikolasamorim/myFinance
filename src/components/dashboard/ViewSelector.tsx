@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, BarChart3, Grid3X3, Table, Plus, Edit2, X } from 'lucide-react';
-import { useFloating, autoUpdate, offset, flip, shift, useClick, useDismiss, useInteractions } from '@floating-ui/react';
+import { useFloating, autoUpdate, offset, flip, shift, useClick, useDismiss, useInteractions, FloatingPortal } from '@floating-ui/react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
@@ -42,7 +42,7 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
   const [selectedType, setSelectedType] = useState<'cards' | 'graph' | 'table'>('cards');
   const [isMobile, setIsMobile] = useState(false);
 
-  // Floating UI setup
+  // Floating UI setup with stable configuration
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
@@ -51,6 +51,7 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
       flip(),
       shift({ padding: 8 })
     ],
+    placement: 'bottom-start',
     whileElementsMounted: autoUpdate,
   });
 
@@ -60,21 +61,25 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
 
   // Check if mobile on mount and resize
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
-  // Lock body scroll when mobile menu is open
+  // Handle body scroll lock for mobile
   useEffect(() => {
-    if (isMobile && isOpen) {
+    if (!isMobile) return;
+    
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
     }
 
     return () => {
@@ -84,7 +89,7 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
 
   const handleVisualizationSelect = async (visualization: Visualization) => {
     onVisualizationChange(visualization);
-    
+    setIsOpen(false);
     // Set as default if not already
     if (!visualization.visualization_is_default) {
       try {
@@ -96,8 +101,6 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
         console.error('Error setting default visualization:', error);
       }
     }
-    
-    setIsOpen(false);
   };
 
   const handleStartEditing = () => {
@@ -116,7 +119,6 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
       });
       onVisualizationChange(updated);
       setIsEditing(false);
-      refetch();
     } catch (error) {
       console.error('Error updating visualization name:', error);
     }
@@ -140,7 +142,6 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
       setNewVisualizationName('');
       setSelectedType('cards');
       setIsOpen(false);
-      refetch();
     } catch (error) {
       console.error('Error creating visualization:', error);
     }
@@ -155,7 +156,7 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
 
   // Mobile overlay component
   const MobileOverlay = () => (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 md:hidden">
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-50">
       <div className="fixed inset-x-0 bottom-0 bg-white rounded-t-xl max-h-[80vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -283,15 +284,17 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </FloatingPortal>
   );
 
   // Desktop dropdown component
   const DesktopDropdown = () => (
-    <div
-      ref={refs.setFloating}
-      style={floatingStyles}
-      {...getFloatingProps()}
+    <FloatingPortal>
+      <div
+        ref={refs.setFloating}
+        style={floatingStyles}
+        {...getFloatingProps()}
       className="bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-72"
     >
       {/* Current visualization editing */}
