@@ -26,7 +26,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             type={inputType}
             className={cn(
-              'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent',
+              'block w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent',
               error && 'border-red-300 focus:ring-red-500',
               showPasswordToggle && 'pr-10',
               className
@@ -36,19 +36,19 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {showPasswordToggle && (
             <button
               type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              className="absolute inset-y-0 right-0 pr-2 flex items-center"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
-                <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                <EyeOff className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
               ) : (
-                <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                <Eye className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
               )}
             </button>
           )}
         </div>
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-xs text-red-600">{error}</p>
         )}
       </div>
     );

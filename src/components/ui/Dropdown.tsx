@@ -37,35 +37,35 @@ export function Dropdown({ options, value, onChange, placeholder = 'Selecione...
     <div className={cn('relative', className)} ref={dropdownRef}>
       <button
         type="button"
-        className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+        className="w-full flex items-center justify-between px-2 py-1.5 text-sm bg-white border border-gray-300 rounded-md shadow-sm text-left focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center">
           {selectedOption?.icon && (
-            <span className="mr-2">{selectedOption.icon}</span>
+            <span className="mr-1.5 text-sm">{selectedOption.icon}</span>
           )}
           <span className={cn(
-            'block truncate',
+            'block truncate text-sm',
             selectedOption ? 'text-gray-900' : 'text-gray-500'
           )}>
             {selectedOption?.label || placeholder}
           </span>
         </div>
         <ChevronDown className={cn(
-          'w-4 h-4 text-gray-400 transition-transform',
+          'w-3.5 h-3.5 text-gray-400 transition-transform',
           isOpen && 'transform rotate-180'
         )} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-          <div className="py-1 max-h-60 overflow-auto">
+        <div className="absolute z-10 w-full mt-0.5 bg-white border border-gray-300 rounded-md shadow-lg">
+          <div className="py-0.5 max-h-48 overflow-auto">
             {options.map((option) => (
               <button
                 key={option.value}
                 type="button"
                 className={cn(
-                  'w-full flex items-center px-3 py-2 text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50',
+                  'w-full flex items-center px-2 py-1.5 text-sm text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50',
                   value === option.value && 'bg-gray-50 text-black'
                 )}
                 onClick={() => {
@@ -74,9 +74,9 @@ export function Dropdown({ options, value, onChange, placeholder = 'Selecione...
                 }}
               >
                 {option.icon && (
-                  <span className="mr-2">{option.icon}</span>
+                  <span className="mr-1.5 text-sm">{option.icon}</span>
                 )}
-                <span className="block truncate">{option.label}</span>
+                <span className="block truncate text-sm">{option.label}</span>
               </button>
             ))}
           </div>

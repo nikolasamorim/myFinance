@@ -117,7 +117,7 @@ export function TransactionModal({ isOpen, onClose, transaction }: TransactionMo
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Tipo
           </label>
           <Dropdown
@@ -127,7 +127,7 @@ export function TransactionModal({ isOpen, onClose, transaction }: TransactionMo
             placeholder="Selecione o tipo"
           />
           {errors.transaction_type && (
-            <p className="text-sm text-red-600 mt-1">{errors.transaction_type.message}</p>
+            <p className="text-xs text-red-600 mt-1">{errors.transaction_type.message}</p>
           )}
         </div>
 

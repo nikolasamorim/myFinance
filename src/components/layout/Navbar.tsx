@@ -37,7 +37,7 @@ export function Navbar() {
           {loading ? (
             <div className="w-48 h-8 bg-gray-200 rounded-lg animate-pulse" />
           ) : (
-            <div className="w-48">
+            <div className="w-40">
               <Dropdown
                 options={workspaceOptions}
                 value={currentWorkspace?.workspace_id}
@@ -65,16 +65,16 @@ export function Navbar() {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
-                <button className="w-full flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-gray-50">
-                  <Settings className="w-4 h-4 mr-2" />
+              <div className="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg border border-gray-200 py-0.5 z-10">
+                <button className="w-full flex items-center px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+                  <Settings className="w-3.5 h-3.5 mr-1.5" />
                   Configurações
                 </button>
                 <button
                   onClick={logout}
-                  className="w-full flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-gray-50"
+                  className="w-full flex items-center px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
+                  <LogOut className="w-3.5 h-3.5 mr-1.5" />
                   Sair
                 </button>
               </div>

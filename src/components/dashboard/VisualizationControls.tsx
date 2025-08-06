@@ -132,7 +132,7 @@ export function VisualizationControls({
         </div>
 
         {/* Visualization Selector */}
-        <div className="w-48">
+        <div className="w-40">
           <Dropdown
             options={visualizationOptions}
             value={currentVisualization?.visualization_id || ''}
@@ -151,9 +151,9 @@ export function VisualizationControls({
             title={currentVisualization.visualization_is_default ? 'Já é padrão' : 'Definir como padrão'}
           >
             {currentVisualization.visualization_is_default ? (
-              <Check className="w-4 h-4 text-green-600" />
+              <Check className="w-3.5 h-3.5 text-green-600" />
             ) : (
-              <Star className="w-4 h-4" />
+              <Star className="w-3.5 h-3.5" />
             )}
           </Button>
         )}
