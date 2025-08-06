@@ -135,6 +135,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(storageKey);
   };
 
+  const checkWorkspaces = async (): Promise<boolean> => {
+    try {
+      console.log('🔍 AuthContext: Checking session validity');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session) {
+        console.log('❌ AuthContext: Invalid session detected, logging out');
+        logout();
+        return false;
+      }
+      
+      console.log('✅ AuthContext: Session is valid');
+      return true;
+    } catch (error) {
+      console.error('❌ AuthContext: Error checking session:', error);
+      logout();
+      return false;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -142,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    checkWorkspaces,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
