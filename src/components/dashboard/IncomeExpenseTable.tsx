@@ -35,14 +35,6 @@ export function IncomeExpenseTable({ data }: IncomeExpenseTableProps) {
                 <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-red-600 font-medium">
                   {formatCurrency(month.expenses)}
                 </td>
-                <td className={`py-3 px-4 text-sm text-right font-medium ${
-                  balance >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {formatCurrency(balance)}
-                </td>
-                <td className={`py-3 px-4 text-sm text-right font-medium ${
-                  savingsRate >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
                 <td className={`py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium ${
                   balance >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
@@ -65,12 +57,6 @@ export function IncomeExpenseTable({ data }: IncomeExpenseTableProps) {
             </td>
             <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-red-600 font-bold">
               {formatCurrency(data.reduce((acc, month) => acc + month.expenses, 0))}
-            </td>
-            <td className={`py-3 px-4 text-sm text-right font-bold ${
-              data.reduce((acc, month) => acc + (month.income - month.expenses), 0) >= 0 
-                ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {formatCurrency(data.reduce((acc, month) => acc + (month.income - month.expenses), 0))}
             </td>
             <td className={`py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-bold ${
               data.reduce((acc, month) => acc + (month.income - month.expenses), 0) >= 0 
