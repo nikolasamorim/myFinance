@@ -20,7 +20,7 @@ function SidebarItem({ to, icon, label, isActive, isCollapsed }: SidebarItemProp
         'flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
         isCollapsed ? 'justify-center' : 'space-x-3',
         isActive
-          ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700'
+          ? 'bg-blue-100 text-blue-700 border-1 border-blue-700'
           : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
       )}
       title={isCollapsed ? label : undefined}
