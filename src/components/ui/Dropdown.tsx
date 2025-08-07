@@ -39,33 +39,34 @@ export function Dropdown({ options, value, onChange, placeholder = 'Selecione...
       <button
         type="button"
         className={cn(
-          "w-full flex items-center justify-between bg-white border border-gray-300 rounded-md shadow-sm text-left focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent",
-          isMobile ? "px-2 py-2 text-sm min-h-[36px]" : "px-2 py-1.5 text-sm"
+          "w-full flex items-center justify-between bg-white border border-gray-300 rounded-md shadow-sm text-left focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent min-w-0",
+          isMobile ? "px-1.5 py-2 text-xs min-h-[32px]" : "px-2 py-1.5 text-sm"
         )}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex items-center">
+        <div className="flex items-center min-w-0 flex-1">
           {selectedOption?.icon && (
-            <span className={cn("mr-1.5", isMobile ? "text-base" : "text-sm")}>{selectedOption.icon}</span>
+            <span className={cn("mr-1 flex-shrink-0", isMobile ? "text-sm" : "text-sm")}>{selectedOption.icon}</span>
           )}
           <span className={cn(
-            'block truncate',
-            isMobile ? 'text-sm font-medium' : 'text-sm',
+            'block truncate min-w-0',
+            isMobile ? 'text-xs font-medium' : 'text-sm',
             selectedOption ? 'text-gray-900' : 'text-gray-500'
           )}>
             {selectedOption?.label || placeholder}
           </span>
         </div>
         <ChevronDown className={cn(
-          isMobile ? 'w-4 h-4 text-gray-400 transition-transform' : 'w-3.5 h-3.5 text-gray-400 transition-transform',
+          'text-gray-400 transition-transform flex-shrink-0 ml-1',
+          isMobile ? 'w-3 h-3' : 'w-3.5 h-3.5',
           isOpen && 'transform rotate-180'
         )} />
       </button>
 
       {isOpen && (
         <div className={cn(
-          "absolute z-10 w-full mt-0.5 bg-white border border-gray-300 rounded-md shadow-lg",
-          isMobile && "min-w-[200px]"
+          "absolute z-10 mt-0.5 bg-white border border-gray-300 rounded-md shadow-lg",
+          isMobile ? "w-48 right-0" : "w-full"
         )}>
           <div className="py-0.5 max-h-48 overflow-auto">
             {options.map((option) => (
@@ -73,7 +74,7 @@ export function Dropdown({ options, value, onChange, placeholder = 'Selecione...
                 key={option.value}
                 type="button"
                 className={cn(
-                  'w-full flex items-center text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50',
+                  'w-full flex items-center text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50 min-w-0',
                   isMobile ? 'px-3 py-2.5 text-sm' : 'px-2 py-1.5 text-sm',
                   value === option.value && 'bg-gray-50 text-black'
                 )}
@@ -83,9 +84,9 @@ export function Dropdown({ options, value, onChange, placeholder = 'Selecione...
                 }}
               >
                 {option.icon && (
-                  <span className={cn("mr-2", isMobile ? "text-base" : "text-sm")}>{option.icon}</span>
+                  <span className={cn("mr-2 flex-shrink-0", isMobile ? "text-sm" : "text-sm")}>{option.icon}</span>
                 )}
-                <span className={cn("block truncate", isMobile ? "text-sm font-medium" : "text-sm")}>{option.label}</span>
+                <span className={cn("block truncate min-w-0", isMobile ? "text-sm font-medium" : "text-sm")}>{option.label}</span>
               </button>
             ))}
           </div>

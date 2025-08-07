@@ -67,7 +67,7 @@ export function Navbar() {
       <nav className="bg-white border-b border-gray-200 px-4 md:px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Left side - Logo and Workspace Selector */}
-          <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
             {/* Sidebar Toggle Button */}
             <div className="lg:hidden">
               <SidebarToggleButton onMobileToggle={() => setShowMobileSidebar(true)} />
@@ -77,22 +77,22 @@ export function Navbar() {
             </div>
             
             {/* Logo */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <img src="/logo-black.png" width="24" height="24" alt="Logo" className="md:w-7 md:h-7" />
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <img src="/logo-black.png" width="20" height="20" alt="Logo" className="sm:w-6 sm:h-6 md:w-7 md:h-7" />
               <h1 className="text-base md:text-lg font-bold text-gray-900 hidden sm:block">Azami</h1>
             </div>
             
             {/* Workspace Selector */}
             {loading ? (
-              <div className="w-32 sm:w-40 md:w-48 h-8 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />
+              <div className="w-24 sm:w-32 md:w-40 lg:w-48 h-8 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />
             ) : (
-              <div className="w-32 sm:w-40 md:w-48 flex-shrink-0">
+              <div className="w-24 sm:w-32 md:w-40 lg:w-48 flex-shrink-0 min-w-0">
                 <Dropdown
                   options={workspaceOptions}
                   value={currentWorkspace?.workspace_id}
                   onChange={handleWorkspaceChange}
                   placeholder="Workspace"
-                  className="text-sm"
+                  className="text-xs sm:text-sm"
                   isMobile={isMobile}
                 />
               </div>

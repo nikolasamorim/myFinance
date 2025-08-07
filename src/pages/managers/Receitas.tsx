@@ -184,28 +184,29 @@ export function Receitas() {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 w-full min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-green-600" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg flex-shrink-0">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Receitas</h1>
-              <p className="text-gray-600">Gerencie suas fontes de renda</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Receitas</h1>
+              <p className="text-sm sm:text-base text-gray-600">Gerencie suas fontes de renda</p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setShowFilters(!showFilters)}
             >
-              <Filter className="w-4 h-4 mr-2" />
+              <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Filtros
             </Button>
-            <Button onClick={handleCreateReceita}>
-              <Plus className="w-4 h-4 mr-2" />
+            <Button onClick={handleCreateReceita} size="sm">
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Nova Receita
             </Button>
           </div>
@@ -213,11 +214,12 @@ export function Receitas() {
 
         {/* Filters */}
         {showFilters && (
-          <Card>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="px-1 sm:px-0">
+            <Card>
+              <CardContent className="p-3 sm:p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Status</label>
                   <Dropdown
                     options={statusOptions}
                     value={filters.status}
@@ -225,7 +227,7 @@ export function Receitas() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tipo</label>
                   <Dropdown
                     options={typeOptions}
                     value={filters.type}
@@ -233,7 +235,7 @@ export function Receitas() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Parceladas</label>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Parceladas</label>
                   <Dropdown
                     options={installmentOptions}
                     value={filters.installments}
@@ -241,87 +243,88 @@ export function Receitas() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Período</label>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Período</label>
                   <Dropdown
                     options={periodOptions}
                     value={filters.period}
                     onChange={(value) => handleFilterChange('period', value)}
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                  <div className="sm:col-span-2 lg:col-span-1 xl:col-span-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
                   <Input
                     placeholder="Buscar por título..."
                     value={filters.search}
                     onChange={(e) => handleFilterChange('search', e.target.value)}
                   />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 px-1 sm:px-0">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Previsto</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Previsto</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mt-1">
                     {formatCurrency(summary.totalPrevisto)}
                   </p>
                 </div>
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Calendar className="w-6 h-6 text-blue-600" />
+                <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Recebido</p>
-                  <p className="text-2xl font-bold text-green-600 mt-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Recebido</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mt-1">
                     {formatCurrency(summary.totalRecebido)}
                   </p>
                 </div>
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
+                <div className="p-2 sm:p-3 bg-green-100 rounded-lg flex-shrink-0">
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">A Receber Hoje</p>
-                  <p className="text-2xl font-bold text-yellow-600 mt-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">A Receber Hoje</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-600 mt-1">
                     {formatCurrency(summary.aReceber)}
                   </p>
                 </div>
-                <div className="p-3 bg-yellow-100 rounded-lg">
-                  <Clock className="w-6 h-6 text-yellow-600" />
+                <div className="p-2 sm:p-3 bg-yellow-100 rounded-lg flex-shrink-0">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-yellow-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Receitas Fixas</p>
-                  <p className="text-2xl font-bold text-purple-600 mt-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Receitas Fixas</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600 mt-1">
                     {formatCurrency(summary.receitasFixas)}
                   </p>
                 </div>
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <DollarSign className="w-6 h-6 text-purple-600" />
+                <div className="p-2 sm:p-3 bg-purple-100 rounded-lg flex-shrink-0">
+                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
                 </div>
               </div>
             </CardContent>
@@ -329,86 +332,87 @@ export function Receitas() {
         </div>
 
         {/* Receitas Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Lançamentos de Receitas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Título</th>
-                      <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Valor</th>
-                      <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                      <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Vencimento</th>
-                      <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Recebimento</th>
-                      <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Tipo</th>
-                      <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Parcela</th>
-                      <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Ações</th>
+        <div className="px-1 sm:px-0">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg sm:text-xl">Lançamentos de Receitas</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 sm:p-6">
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
+                </div>
+              ) : (
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full min-w-[800px]">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Título</th>
+                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Valor</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Status</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Vencimento</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Recebimento</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Tipo</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Parcela</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {/* Standalone receitas */}
                     {groupedReceitas.standalone.map((receita) => (
                       <tr key={receita.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4">
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{receita.title}</p>
+                            <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{receita.title}</p>
                             {receita.subtitle && (
-                              <p className="text-xs text-gray-500">{receita.subtitle}</p>
+                              <p className="text-xs text-gray-500 truncate">{receita.subtitle}</p>
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-right text-sm font-medium text-gray-900">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
                           {formatCurrency(Number(receita.amount))}
                         </td>
-                        <td className="py-3 px-4 text-center">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(receita.status)}`}>
+                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                          <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getStatusColor(receita.status)}`}>
                             {getStatusLabel(receita.status)}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-center text-sm text-gray-600">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                           {formatDate(receita.transaction_date)}
                         </td>
-                        <td className="py-3 px-4 text-center text-sm text-gray-600">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                           {receita.status === 'received' ? formatDate(receita.transaction_date) : '-'}
                         </td>
-                        <td className="py-3 px-4 text-center text-sm text-gray-600">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                           {getTypeLabel(receita.repeat_type)}
                         </td>
-                        <td className="py-3 px-4 text-center text-sm text-gray-600">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                           {receita.is_installment ? `${receita.installment_number}/${receita.installment_total}` : '-'}
                         </td>
-                        <td className="py-3 px-4">
-                          <div className="flex justify-center space-x-2">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4">
+                          <div className="flex justify-center space-x-1 sm:space-x-2">
                             {receita.status === 'pending' && (
                               <button
                                 onClick={() => handleMarkAsReceived(receita.id)}
-                                className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                                className="p-0.5 sm:p-1 text-gray-400 hover:text-green-600 transition-colors"
                                 title="Marcar como recebida"
                               >
-                                <CheckCircle className="w-4 h-4" />
+                                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                               </button>
                             )}
                             <button
                               onClick={() => handleEditReceita(receita)}
-                              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                              className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
                               title="Editar"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteReceita(receita.id)}
-                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                              className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
                               title="Excluir"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
                           </div>
                         </td>
@@ -418,16 +422,17 @@ export function Receitas() {
                 </table>
                 
                 {receitas.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-lg font-medium">Nenhuma receita encontrada</p>
-                    <p className="text-sm">Comece criando sua primeira receita</p>
+                    <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
+                      <TrendingUp className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                      <p className="text-base sm:text-lg font-medium">Nenhuma receita encontrada</p>
+                      <p className="text-xs sm:text-sm">Comece criando sua primeira receita</p>
                   </div>
                 )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Create/Edit Modal */}
