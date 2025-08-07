@@ -354,7 +354,7 @@ export function Dashboard() {
                       className={cn(
                         'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md',
                         month.isCurrentMonth 
-                          ? 'border-blue-500 bg-blue-50' 
+                          ? 'bg-blue-50' 
                           : 'border-gray-200 bg-white hover:border-gray-300'
                       )}
                       style={{ scrollSnapAlign: 'start' }}
