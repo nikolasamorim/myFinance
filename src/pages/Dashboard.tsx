@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Filter, Calendar, DollarSign, TrendingUp, TrendingDown, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Filter, Calendar, DollarSign, TrendingUp, TrendingDown, CreditCard, LayoutDashboard, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -197,9 +197,14 @@ export function Dashboard() {
       <div className="space-y-4 sm:space-y-6 w-full min-w-0 overflow-x-hidden">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-sm sm:text-base text-gray-600">Visão geral das suas finanças</p>
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
+              <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-sm sm:text-base text-gray-600">Visão geral das suas finanças</p>
+            </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
             <Button
