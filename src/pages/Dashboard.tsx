@@ -95,11 +95,12 @@ export function Dashboard() {
       const currentMonthCard = document.getElementById('current-month-card');
       
       if (scrollContainer && currentMonthCard) {
-        // Calculate scroll position to align current month to the left
-        const scrollLeft = currentMonthCard.offsetLeft - 16; // 16px padding
+        // Calculate scroll position to align current month to the left with proper padding
+        const containerPadding = window.innerWidth >= 640 ? 24 : 16; // sm:p-6 = 24px, p-4 = 16px
+        const scrollLeft = currentMonthCard.offsetLeft - containerPadding;
         
         scrollContainer.scrollTo({
-          left: scrollLeft,
+          left: Math.max(0, scrollLeft), // Ensure we don't scroll to negative position
           behavior: 'smooth'
         });
       }
@@ -321,12 +322,18 @@ export function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0 sm:p-6">
-              <div className="overflow-x-auto scrollbar-hide" id="monthly-scroll">
+              <div 
+                className="overflow-x-auto scrollbar-hide" 
+                id="monthly-scroll"
+                style={{ scrollBehavior: 'smooth' }}
+              >
                 <div 
-                  className="flex space-x-4 p-4 sm:p-0"
+                  className="flex space-x-4 p-4 sm:p-6"
                   style={{ 
                     width: 'max-content',
-                    scrollSnapType: 'x mandatory'
+                    scrollSnapType: 'x mandatory',
+                    paddingLeft: '0',
+                    paddingRight: '0'
                   }}
                 >
                   {monthlyData.map((month, index) => (
@@ -334,11 +341,12 @@ export function Dashboard() {
                       key={month.month}
                       id={month.isCurrentMonth ? 'current-month-card' : undefined}
                       className={cn(
-                        'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md scroll-snap-align-start',
+                        'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md',
                         month.isCurrentMonth 
                           ? 'border-blue-500 bg-blue-50' 
                           : 'border-gray-200 bg-white hover:border-gray-300'
                       )}
+                      style={{ scrollSnapAlign: 'start' }}
                     >
                       <div className="text-center mb-3">
                         <h3 className={cn(
