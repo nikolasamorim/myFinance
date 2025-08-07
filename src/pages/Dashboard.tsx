@@ -95,15 +95,21 @@ export function Dashboard() {
       const currentMonthCard = document.getElementById('current-month-card');
       
       if (scrollContainer && currentMonthCard) {
-        // Calculate scroll position to align current month to the left with proper padding
-        const containerPadding = window.innerWidth >= 640 ? 24 : 16; // sm:p-6 = 24px, p-4 = 16px
-        const scrollLeft = currentMonthCard.offsetLeft - containerPadding;
-        
+        const cs = getComputedStyle(scrollContainer);
+        const paddingLeft = parseFloat(cs.paddingLeft) || 0;
+        const extraOffset = 8; // “respiro” adicional
+      
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const cardRect = currentMonthCard.getBoundingClientRect();
+      
+        const targetLeft =
+          scrollContainer.scrollLeft + (cardRect.left - containerRect.left) - paddingLeft - extraOffset;
+      
         scrollContainer.scrollTo({
-          left: Math.max(0, scrollLeft), // Ensure we don't scroll to negative position
+          left: Math.max(0, Math.round(targetLeft)),
           behavior: 'smooth'
         });
-      }
+      }      
     }
   }, [dashboardData, monthlyData]);
 
