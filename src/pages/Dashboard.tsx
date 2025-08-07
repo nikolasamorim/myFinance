@@ -46,6 +46,26 @@ export function Dashboard() {
     recentTransactions 
   } = useDashboardData(currentWorkspace?.workspace_id, filters);
 
+  // Auto-scroll to current month when data loads
+  React.useEffect(() => {
+    if (dashboardData && monthlyData.length > 0) {
+      const scrollContainer = document.getElementById('monthly-scroll');
+      const currentMonthCard = document.getElementById('current-month-card');
+      
+      if (scrollContainer && currentMonthCard) {
+        // Calculate scroll position to align current month to the left
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const cardRect = currentMonthCard.getBoundingClientRect();
+        const scrollLeft = currentMonthCard.offsetLeft - 16; // 16px padding
+        
+        scrollContainer.scrollTo({
+          left: scrollLeft,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [dashboardData, monthlyData]);
+
   // Generate monthly data for carousel
   const monthlyData = useMemo(() => {
     const months: MonthlyData[] = [];
@@ -53,23 +73,23 @@ export function Dashboard() {
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
-    // Generate current month first, then 6 months before and 5 months after
+    // Generate months in chronological order: 6 before, current, 5 after
     const monthsToGenerate = [];
     
-    // Add current month first (index 0)
-    monthsToGenerate.push(0);
-    
-    // Add previous months (6 before)
-    for (let i = 1; i <= 6; i++) {
-      monthsToGenerate.unshift(-i);
+    // Add previous months (6 before) - from oldest to newest
+    for (let i = 6; i >= 1; i--) {
+      monthsToGenerate.push(-i);
     }
+    
+    // Add current month
+    monthsToGenerate.push(0);
     
     // Add future months (5 after)
     for (let i = 1; i <= 5; i++) {
       monthsToGenerate.push(i);
     }
 
-    monthsToGenerate.forEach((i, index) => {
+    monthsToGenerate.forEach((i) => {
       const date = new Date(currentYear, currentMonth + i, 1);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
@@ -303,9 +323,9 @@ export function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0 sm:p-6">
-              <div className="overflow-x-auto scrollbar-hide">
+              <div className="overflow-x-auto scrollbar-hide" id="monthly-scroll">
                 <div 
-                  className="flex space-x-4 p-4 sm:p-0" 
+                  className="flex space-x-4 p-4 sm:p-0"
                   style={{ 
                     width: 'max-content',
                     scrollSnapType: 'x mandatory'
@@ -314,13 +334,13 @@ export function Dashboard() {
                   {monthlyData.map((month, index) => (
                     <div
                       key={month.month}
+                      id={month.isCurrentMonth ? 'current-month-card' : undefined}
                       className={cn(
                         'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md scroll-snap-align-start',
                         month.isCurrentMonth 
                           ? 'border-blue-500 bg-blue-50' 
                           : 'border-gray-200 bg-white hover:border-gray-300'
                       )}
-                      style={{ scrollSnapAlign: 'start' }}
                     >
                       <div className="text-center mb-3">
                         <h3 className={cn(
