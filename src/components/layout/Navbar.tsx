@@ -136,12 +136,6 @@ export function Navbar() {
                 <div className="w-7 h-7 md:w-8 md:h-8 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                   <User className="w-4 h-4 md:w-5 md:h-5" />
                 </div>
-                
-                {/* User info - only show on desktop */}
-                <div className="hidden md:block text-left">
-                  <span className="text-sm font-medium block">{user?.name}</span>
-                  <span className="text-xs text-gray-500">{user?.email}</span>
-                </div>
               </button>
 
               {/* User Dropdown Menu */}
