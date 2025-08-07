@@ -213,7 +213,7 @@ export const despesaService = {
         .eq('transaction_type', 'expense')
         .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
         .lte('transaction_date', endOfMonth.toISOString().split('T')[0])
-        .not('transaction_description', 'ilike', '%/%'); // Exclude installments
+        .ilike('transaction_description', '%fixa%'); // Only include expenses with "fixa" in description
 
       if (error) throw new Error('Failed to fetch fixed expenses: ' + error.message);
 
