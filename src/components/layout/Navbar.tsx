@@ -64,7 +64,7 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="bg-white border-b border-gray-200 px-4 md:px-6 py-3">
+      <nav className="bg-white border-b border-gray-200 px-4 md:px-6 py-2">
         <div className="flex items-center justify-between">
           {/* Left side - Logo and Workspace Selector */}
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
