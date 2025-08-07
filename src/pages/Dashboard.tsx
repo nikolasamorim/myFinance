@@ -46,26 +46,6 @@ export function Dashboard() {
     recentTransactions 
   } = useDashboardData(currentWorkspace?.workspace_id, filters);
 
-  // Auto-scroll to current month when data loads
-  React.useEffect(() => {
-    if (dashboardData && monthlyData.length > 0) {
-      const scrollContainer = document.getElementById('monthly-scroll');
-      const currentMonthCard = document.getElementById('current-month-card');
-      
-      if (scrollContainer && currentMonthCard) {
-        // Calculate scroll position to align current month to the left
-        const containerRect = scrollContainer.getBoundingClientRect();
-        const cardRect = currentMonthCard.getBoundingClientRect();
-        const scrollLeft = currentMonthCard.offsetLeft - 16; // 16px padding
-        
-        scrollContainer.scrollTo({
-          left: scrollLeft,
-          behavior: 'smooth'
-        });
-      }
-    }
-  }, [dashboardData, monthlyData]);
-
   // Generate monthly data for carousel
   const monthlyData = useMemo(() => {
     const months: MonthlyData[] = [];
@@ -107,6 +87,24 @@ export function Dashboard() {
 
     return months;
   }, [dashboardData?.monthlyBreakdown]);
+
+  // Auto-scroll to current month when data loads
+  React.useEffect(() => {
+    if (dashboardData && monthlyData.length > 0) {
+      const scrollContainer = document.getElementById('monthly-scroll');
+      const currentMonthCard = document.getElementById('current-month-card');
+      
+      if (scrollContainer && currentMonthCard) {
+        // Calculate scroll position to align current month to the left
+        const scrollLeft = currentMonthCard.offsetLeft - 16; // 16px padding
+        
+        scrollContainer.scrollTo({
+          left: scrollLeft,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [dashboardData, monthlyData]);
 
   const handleFilterChange = (key: keyof DashboardFilters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
