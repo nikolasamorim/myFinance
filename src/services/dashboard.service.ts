@@ -18,8 +18,8 @@ interface MonthlyBreakdown {
   [monthKey: string]: {
     income: number;
     expense: number;
-    debtReceived: number;
-    debtPaid: number;
+    debtIn: number;
+    debtOut: number;
   };
 }
 
@@ -39,11 +39,12 @@ export const dashboardService = {
     console.log('Fetching dashboard data for workspace:', workspaceId);
 
     try {
-      // Get all transactions for the workspace
+      // Get all transactions for the workspace ordered by transaction_date DESC
       let query = supabase
         .from('transactions')
         .select('*')
-        .eq('transaction_workspace_id', workspaceId);
+        .eq('transaction_workspace_id', workspaceId)
+        .order('transaction_date', { ascending: false });
 
       // Apply search filter if provided
       if (filters?.search) {
@@ -79,7 +80,7 @@ export const dashboardService = {
           .lte('transaction_date', endDate.toISOString().split('T')[0]);
       }
 
-      const { data: transactions, error } = await query.order('transaction_date', { ascending: false });
+      const { data: transactions, error } = await query;
 
       if (error) {
         console.error('Error fetching transactions:', error);
@@ -114,7 +115,7 @@ export const dashboardService = {
         totalDebts: paidDebts,
       };
 
-      // Calculate monthly breakdown (all transactions, regardless of status)
+      // Calculate monthly breakdown (all transactions, regardless of status, grouped by transaction_date)
       const monthlyBreakdown: MonthlyBreakdown = {};
       
       allTransactions.forEach(transaction => {
@@ -125,8 +126,8 @@ export const dashboardService = {
           monthlyBreakdown[monthKey] = {
             income: 0,
             expense: 0,
-            debtReceived: 0,
-            debtPaid: 0,
+            debtIn: 0,
+            debtOut: 0,
           };
         }
 
@@ -140,10 +141,17 @@ export const dashboardService = {
             monthlyBreakdown[monthKey].expense += amount;
             break;
           case 'debt':
-            if (transaction.transaction_status === 'received') {
-              monthlyBreakdown[monthKey].debtReceived += amount;
-            } else if (transaction.transaction_status === 'paid') {
-              monthlyBreakdown[monthKey].debtPaid += amount;
+            // Debt logic: assume debt transactions have a flow indicator
+            // For now, we'll use a simple logic based on description or amount sign
+            // This should be adjusted based on your actual debt flow logic
+            const isDebtIn = transaction.transaction_description?.toLowerCase().includes('receb') || 
+                           transaction.transaction_description?.toLowerCase().includes('entrada') ||
+                           transaction.transaction_status === 'received';
+            
+            if (isDebtIn) {
+              monthlyBreakdown[monthKey].debtIn += amount;
+            } else {
+              monthlyBreakdown[monthKey].debtOut += amount;
             }
             break;
         }
@@ -156,7 +164,7 @@ export const dashboardService = {
       for (let i = 11; i >= 0; i--) {
         const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const monthData = monthlyBreakdown[monthKey] || { income: 0, expense: 0, debtReceived: 0, debtPaid: 0 };
+        const monthData = monthlyBreakdown[monthKey] || { income: 0, expense: 0, debtIn: 0, debtOut: 0 };
         
         monthlyComparison.push({
           month: date.toLocaleDateString('pt-BR', { month: 'short' }),

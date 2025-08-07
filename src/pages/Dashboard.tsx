@@ -53,8 +53,23 @@ export function Dashboard() {
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
-    // Generate 6 months before, current month, and 5 months after
-    for (let i = -6; i <= 5; i++) {
+    // Generate current month first, then 6 months before and 5 months after
+    const monthsToGenerate = [];
+    
+    // Add current month first (index 0)
+    monthsToGenerate.push(0);
+    
+    // Add previous months (6 before)
+    for (let i = 1; i <= 6; i++) {
+      monthsToGenerate.unshift(-i);
+    }
+    
+    // Add future months (5 after)
+    for (let i = 1; i <= 5; i++) {
+      monthsToGenerate.push(i);
+    }
+
+    monthsToGenerate.forEach((i, index) => {
       const date = new Date(currentYear, currentMonth + i, 1);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
@@ -64,11 +79,11 @@ export function Dashboard() {
         year: date.getFullYear(),
         income: dashboardData?.monthlyBreakdown?.[monthKey]?.income || 0,
         expense: dashboardData?.monthlyBreakdown?.[monthKey]?.expense || 0,
-        debtReceived: dashboardData?.monthlyBreakdown?.[monthKey]?.debtReceived || 0,
-        debtPaid: dashboardData?.monthlyBreakdown?.[monthKey]?.debtPaid || 0,
+        debtReceived: dashboardData?.monthlyBreakdown?.[monthKey]?.debtIn || 0,
+        debtPaid: dashboardData?.monthlyBreakdown?.[monthKey]?.debtOut || 0,
         isCurrentMonth: i === 0,
       });
-    }
+    });
 
     return months;
   }, [dashboardData?.monthlyBreakdown]);
@@ -288,17 +303,24 @@ export function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0 sm:p-6">
-              <div className="overflow-x-auto">
-                <div className="flex space-x-4 p-4 sm:p-0" style={{ width: 'max-content' }}>
+              <div className="overflow-x-auto scrollbar-hide">
+                <div 
+                  className="flex space-x-4 p-4 sm:p-0" 
+                  style={{ 
+                    width: 'max-content',
+                    scrollSnapType: 'x mandatory'
+                  }}
+                >
                   {monthlyData.map((month, index) => (
                     <div
                       key={month.month}
                       className={cn(
-                        'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md',
+                        'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md scroll-snap-align-start',
                         month.isCurrentMonth 
                           ? 'border-blue-500 bg-blue-50' 
                           : 'border-gray-200 bg-white hover:border-gray-300'
                       )}
+                      style={{ scrollSnapAlign: 'start' }}
                     >
                       <div className="text-center mb-3">
                         <h3 className={cn(
