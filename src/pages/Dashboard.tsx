@@ -47,9 +47,10 @@ export function Dashboard() {
   // Dados principais (respeitam os filtros para cards de resumo/tabela)
   const { 
     data: dashboardData, 
-    isLoading,
-    recentTransactions 
+    isLoading
   } = useDashboardData(currentWorkspace?.workspace_id, filters);
+
+  const recentTransactions = dashboardData?.recentTransactions ?? [];
 
   // Dados "ALL" só para o carrossel de meses (ignora período do filtro)
   const {
