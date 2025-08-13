@@ -517,11 +517,11 @@ export function Dashboard() {
                 <table className="w-full min-w-[600px]">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[120px]">Descrição</th>
+                      <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[125px] sm:w-[150px]">Status</th>
+                      <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[120px]">Título</th>
+                      <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[100px]">Data</th>
                       <th className="text-right py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[80px]">Valor</th>
                       <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[70px]">Tipo</th>
-                      <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[70px]">Status</th>
-                      <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[90px]">Data</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -531,10 +531,18 @@ export function Dashboard() {
                         className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                         onClick={() => handleEditTransaction(transaction)}
                       >
+                        <td className="py-2 px-2 sm:px-3 text-left">
+                          <span className={`inline-flex px-1 sm:px-1.5 py-0.5 text-xs font-medium rounded-full ${getStatusColor(transaction.transaction_status || 'pending')}`}>
+                            {getStatusLabel(transaction.transaction_status || 'pending')}
+                          </span>
+                        </td>
                         <td className="py-2 px-2 sm:px-3 text-xs text-gray-900">
                           <span className="truncate block max-w-[100px] sm:max-w-none">
                             {transaction.transaction_description}
                           </span>
+                        </td>
+                        <td className="py-2 px-2 sm:px-3 text-center text-xs text-gray-600">
+                          {formatDate(transaction.transaction_date)}
                         </td>
                         <td className="py-2 px-2 sm:px-3 text-xs text-right font-medium">
                           {formatCurrency(Number(transaction.transaction_amount))}
@@ -543,14 +551,6 @@ export function Dashboard() {
                           <span className={`inline-flex px-1 sm:px-1.5 py-0.5 text-xs font-medium rounded-full ${getTypeColor(transaction.transaction_type)}`}>
                             {getTypeLabel(transaction.transaction_type)}
                           </span>
-                        </td>
-                        <td className="py-2 px-2 sm:px-3 text-center">
-                          <span className={`inline-flex px-1 sm:px-1.5 py-0.5 text-xs font-medium rounded-full ${getStatusColor(transaction.transaction_status || 'pending')}`}>
-                            {getStatusLabel(transaction.transaction_status || 'pending')}
-                          </span>
-                        </td>
-                        <td className="py-2 px-2 sm:px-3 text-center text-xs text-gray-600">
-                          {formatDate(transaction.transaction_date)}
                         </td>
                       </tr>
                     ))}
