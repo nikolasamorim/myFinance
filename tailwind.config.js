@@ -19,7 +19,7 @@ export default {
         '2xl': ['1.25rem', { lineHeight: '1.875rem' }],
         '3xl': ['1.5rem', { lineHeight: '2rem' }],
         '4xl': ['2rem', { lineHeight: '2.5rem' }],
-        serif: ['1.5rem'],
+        serifTitle: ['1.5rem'],
       },
     },
   },
@@ -33,7 +33,7 @@ export default {
         '.font-serifTitle': {
           fontFamily: theme('fontFamily.serif'),
           letterSpacing: theme('letterSpacing.serif'),
-          fontSize: theme('fontSize.serif'),
+          fontSize: theme('fontSize.serifTitle'),
         },
       }, ['responsive']);
     }
