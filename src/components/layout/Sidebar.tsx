@@ -105,11 +105,11 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
   ];
 
   const organizadorItems = [
-    {
-      to: '/organizadores/instituicoes',
-      icon: <Building className="w-5 h-5 text-blue-600" />,
-      label: 'Instituições',
-    },
+    // {
+    //   to: '/organizadores/instituicoes',
+    //   icon: <Building className="w-5 h-5 text-blue-600" />,
+    //   label: 'Instituições',
+    // },
     {
       to: '/organizadores/contas',
       icon: <Wallet className="w-5 h-5 text-green-600" />,
