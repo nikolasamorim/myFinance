@@ -111,14 +111,14 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
       label: 'Instituições',
     },
     {
-      to: '/organizadores/cartoes',
-      icon: <CreditCard className="w-5 h-5 text-purple-600" />,
-      label: 'Cartões de Crédito',
-    },
-    {
       to: '/organizadores/contas',
       icon: <Wallet className="w-5 h-5 text-green-600" />,
       label: 'Caixa / Conta',
+    },
+    {
+      to: '/organizadores/cartoes',
+      icon: <CreditCard className="w-5 h-5 text-purple-600" />,
+      label: 'Cartões de Crédito',
     },
     {
       to: '/organizadores/categorias',
