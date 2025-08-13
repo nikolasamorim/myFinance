@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Filter, Calendar, DollarSign, TrendingUp, TrendingDown, CreditCard, LayoutDashboard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Filter, Calendar, DollarSign, TrendingUp, TrendingDown, CreditCard, LayoutDashboard } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -13,20 +13,24 @@ import { cn } from '../lib/utils';
 import type { Transaction } from '../types';
 
 interface DashboardFilters {
-  period: string;
+  period: 'current_month' | 'last_month' | 'current_year' | 'custom' | 'all';
   category: string;
   search: string;
+  // opcionais para período personalizado (YYYY-MM-DD)
+  startDate?: string;
+  endDate?: string;
 }
 
 interface MonthlyData {
-  month: string;
-  monthName: string;
+  month: string;        // yyyy-MM
+  monthName: string;    // ex: set. de 2025
   year: number;
   income: number;
   expense: number;
   debtReceived: number;
   debtPaid: number;
   isCurrentMonth: boolean;
+  isSelected: boolean;
 }
 
 export function Dashboard() {
@@ -40,81 +44,123 @@ export function Dashboard() {
     search: '',
   });
 
+  // Dados principais (respeitam os filtros para cards de resumo/tabela)
   const { 
     data: dashboardData, 
     isLoading,
     recentTransactions 
   } = useDashboardData(currentWorkspace?.workspace_id, filters);
 
-  // Generate monthly data for carousel
-  const monthlyData = useMemo(() => {
+  // Dados "ALL" só para o carrossel de meses (ignora período do filtro)
+  const {
+    data: dashboardAllData
+  } = useDashboardData(currentWorkspace?.workspace_id, { ...filters, period: 'all' });
+
+  // Helpers de período selecionado (apenas para estilização/seleção do carrossel)
+  const getPeriodRange = React.useCallback(() => {
+    const now = new Date();
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const endOfYear = new Date(now.getFullYear(), 11, 31);
+
+    switch (filters.period) {
+      case 'current_month':
+        return { start: startOfCurrentMonth, end: new Date(now.getFullYear(), now.getMonth() + 1, 0) };
+      case 'last_month':
+        return { start: startOfLastMonth, end: endOfLastMonth };
+      case 'current_year':
+        return { start: startOfYear, end: endOfYear };
+      case 'custom': {
+        // Se vierem no filtro, usa; senão, não seleciona nada especificamente
+        if (filters.startDate && filters.endDate) {
+          return { start: new Date(filters.startDate), end: new Date(filters.endDate) };
+        }
+        return null;
+      }
+      case 'all':
+      default:
+        return null; // "all" => não destacar por período
+    }
+  }, [filters]);
+
+  const isMonthSelected = React.useCallback((date: Date) => {
+    const range = getPeriodRange();
+    if (!range) return false;
+    // seleciona o mês se qualquer dia do mês cair dentro do range
+    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    return endOfMonth >= range.start && startOfMonth <= range.end;
+  }, [getPeriodRange]);
+
+  // Geração dos meses (sempre 6 antes, atual e 5 depois) usando *dashboardAllData*
+  const monthlyData = useMemo<MonthlyData[]>(() => {
     const months: MonthlyData[] = [];
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
-    // Generate months in chronological order: 6 before, current, 5 after
-    const monthsToGenerate = [];
-    
-    // Add previous months (6 before) - from oldest to newest
-    for (let i = 6; i >= 1; i--) {
-      monthsToGenerate.push(-i);
-    }
-    
-    // Add current month
+    const monthsToGenerate: number[] = [];
+    for (let i = 6; i >= 1; i--) monthsToGenerate.push(-i);
     monthsToGenerate.push(0);
-    
-    // Add future months (5 after)
-    for (let i = 1; i <= 5; i++) {
-      monthsToGenerate.push(i);
-    }
+    for (let i = 1; i <= 5; i++) monthsToGenerate.push(i);
 
     monthsToGenerate.forEach((i) => {
       const date = new Date(currentYear, currentMonth + i, 1);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
+
+      const breakdown = dashboardAllData?.monthlyBreakdown?.[monthKey] || {};
+      const income = breakdown?.income || 0;
+      const expense = breakdown?.expense || 0;
+      const debtIn = breakdown?.debtIn || 0;
+      const debtOut = breakdown?.debtOut || 0;
+
       months.push({
         month: monthKey,
         monthName: date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
         year: date.getFullYear(),
-        income: dashboardData?.monthlyBreakdown?.[monthKey]?.income || 0,
-        expense: dashboardData?.monthlyBreakdown?.[monthKey]?.expense || 0,
-        debtReceived: dashboardData?.monthlyBreakdown?.[monthKey]?.debtIn || 0,
-        debtPaid: dashboardData?.monthlyBreakdown?.[monthKey]?.debtOut || 0,
+        income,
+        expense,
+        debtReceived: debtIn,
+        debtPaid: debtOut,
         isCurrentMonth: i === 0,
+        isSelected: isMonthSelected(date),
       });
     });
 
     return months;
-  }, [dashboardData?.monthlyBreakdown]);
+  }, [dashboardAllData?.monthlyBreakdown, isMonthSelected]);
 
-  // Auto-scroll to current month when data loads
+  // Auto-scroll: prioriza primeiro mês selecionado; se não houver, vai para o mês atual
   React.useEffect(() => {
-    if (dashboardData && monthlyData.length > 0) {
-      const scrollContainer = document.getElementById('monthly-scroll');
-      const currentMonthCard = document.getElementById('current-month-card');
-      
-      if (scrollContainer && currentMonthCard) {
-        const cs = getComputedStyle(scrollContainer);
-        const paddingLeft = parseFloat(cs.paddingLeft) || 0;
-        const extraOffset = 8; // “respiro” adicional
-      
-        const containerRect = scrollContainer.getBoundingClientRect();
-        const cardRect = currentMonthCard.getBoundingClientRect();
-      
-        const targetLeft =
-          scrollContainer.scrollLeft + (cardRect.left - containerRect.left) - paddingLeft - extraOffset;
-      
-        scrollContainer.scrollTo({
-          left: Math.max(0, Math.round(targetLeft)),
-          behavior: 'smooth'
-        });
-      }      
+    if (!dashboardAllData || monthlyData.length === 0) return;
+
+    const scrollContainer = document.getElementById('monthly-scroll');
+    const target =
+      document.getElementById('selected-month-card') ||
+      document.getElementById('current-month-card');
+
+    if (scrollContainer && target) {
+      const cs = getComputedStyle(scrollContainer);
+      const paddingLeft = parseFloat(cs.paddingLeft) || 0;
+      const extraOffset = 8;
+
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const cardRect = target.getBoundingClientRect();
+
+      const left =
+        scrollContainer.scrollLeft + (cardRect.left - containerRect.left) - paddingLeft - extraOffset;
+
+      scrollContainer.scrollTo({
+        left: Math.max(0, Math.round(left)),
+        behavior: 'smooth'
+      });
     }
-  }, [dashboardData, monthlyData]);
+  }, [dashboardAllData, monthlyData]);
 
   const handleFilterChange = (key: keyof DashboardFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters(prev => ({ ...prev, [key]: value as any }));
   };
 
   const handleCreateTransaction = () => {
@@ -188,6 +234,7 @@ export function Dashboard() {
     { value: 'last_month', label: 'Último mês' },
     { value: 'current_year', label: 'Ano atual' },
     { value: 'custom', label: 'Personalizado' },
+    { value: 'all', label: 'Tudo' },
   ];
 
   if (workspaceLoading || isLoading) {
@@ -250,6 +297,28 @@ export function Dashboard() {
                       onChange={(e) => handleFilterChange('search', e.target.value)}
                     />
                   </div>
+
+                  {/* Campos opcionais para período personalizado */}
+                  {filters.period === 'custom' && (
+                    <>
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Início</label>
+                        <Input
+                          type="date"
+                          value={filters.startDate || ''}
+                          onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Fim</label>
+                        <Input
+                          type="date"
+                          value={filters.endDate || ''}
+                          onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -347,78 +416,94 @@ export function Dashboard() {
                     paddingRight: '0'
                   }}
                 >
-                  {monthlyData.map((month, index) => (
-                    <div
-                      key={month.month}
-                      id={month.isCurrentMonth ? 'current-month-card' : undefined}
-                      className={cn(
-                        'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md',
-                        month.isCurrentMonth 
-                          ? 'bg-blue-50' 
-                          : 'border-gray-200 bg-white hover:border-gray-300'
-                      )}
-                      style={{ scrollSnapAlign: 'start' }}
-                    >
-                      <div className="text-center mb-3">
-                        <h3 className={cn(
-                          'font-semibold capitalize',
-                          month.isCurrentMonth ? 'text-blue-700' : 'text-gray-900'
-                        )}>
-                          {month.monthName}
-                        </h3>
-                        {month.isCurrentMonth && (
-                          <span className="text-xs text-blue-600 font-medium">Mês Atual</span>
+                  {monthlyData.map((month, idx) => {
+                    const idAttr =
+                      month.isSelected && !monthlyData.slice(0, idx).some(m => m.isSelected)
+                        ? 'selected-month-card'
+                        : month.isCurrentMonth
+                          ? 'current-month-card'
+                          : undefined;
+
+                    const positiveBalance = (month.income - month.expense) >= 0;
+
+                    const isHighlighted = month.isSelected; // << unifica destaque
+
+                    return (
+                      <div
+                        key={month.month}
+                        id={idAttr}
+                        className={cn(
+                          'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md',
+                          isHighlighted
+                            ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500' // << MESMA aparência para selecionados e mês atual
+                            : 'border-gray-200 bg-white hover:border-gray-300'
                         )}
+                        style={{ scrollSnapAlign: 'start' }}
+                        title={month.isSelected ? 'Selecionado pelo período' : undefined}
+                      >
+                        <div className="text-center mb-3">
+                          <h3
+                            className={cn(
+                              'font-semibold capitalize',
+                              isHighlighted ? 'text-blue-700' : 'text-gray-900' // << mesma cor no título
+                            )}
+                          >
+                            {month.monthName}
+                          </h3>
+
+                          {/* Apenas o mês atual mostra o subtítulo */}
+                          {month.isCurrentMonth && (
+                            <span className="text-xs text-blue-600 font-medium">Mês Atual</span>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Receita:</span>
+                            <span className="font-medium text-green-600">
+                              {formatCurrency(month.income)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Despesa:</span>
+                            <span className="font-medium text-red-600">
+                              {formatCurrency(month.expense)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Dívida recebida:</span>
+                            <span className="font-medium text-orange-600">
+                              {formatCurrency(month.debtReceived)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Dívida paga:</span>
+                            <span className="font-medium text-orange-800">
+                              {formatCurrency(month.debtPaid)}
+                            </span>
+                          </div>
+                          <hr className="my-2" />
+                          <div className="flex justify-between text-sm font-semibold">
+                            <span className="text-gray-900">Saldo:</span>
+                            <span className={cn('font-bold', positiveBalance ? 'text-green-600' : 'text-red-600')}>
+                              {formatCurrency(month.income - month.expense)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Receita:</span>
-                          <span className="font-medium text-green-600">
-                            {formatCurrency(month.income)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Despesa:</span>
-                          <span className="font-medium text-red-600">
-                            {formatCurrency(month.expense)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Dívida recebida:</span>
-                          <span className="font-medium text-orange-600">
-                            {formatCurrency(month.debtReceived)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Dívida paga:</span>
-                          <span className="font-medium text-orange-800">
-                            {formatCurrency(month.debtPaid)}
-                          </span>
-                        </div>
-                        <hr className="my-2" />
-                        <div className="flex justify-between text-sm font-semibold">
-                          <span className="text-gray-900">Saldo:</span>
-                          <span className={cn(
-                            'font-bold',
-                            (month.income - month.expense) >= 0 ? 'text-green-600' : 'text-red-600'
-                          )}>
-                            {formatCurrency(month.income - month.expense)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Visualizations Area */}
+        {/* Visualizations Area
         <div className="px-1 sm:px-0">
           <MonthlyChart data={dashboardData?.monthlyComparison || []} />
-        </div>
+        </div> */}
 
         {/* Recent Transactions */}
         <div className="px-1 sm:px-0">
