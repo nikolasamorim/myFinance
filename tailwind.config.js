@@ -5,6 +5,10 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['"Instrument Serif"', 'serif'],
+      },
+      letterSpacing: {
+        serif: '0.05em',
       },
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1rem' }],
@@ -15,8 +19,23 @@ export default {
         '2xl': ['1.25rem', { lineHeight: '1.875rem' }],
         '3xl': ['1.5rem', { lineHeight: '2rem' }],
         '4xl': ['2rem', { lineHeight: '2.5rem' }],
+        serif: ['1.5rem'],
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities, theme }) {
+      addUtilities({
+        '.font-serif': {
+          fontFamily: theme('fontFamily.serif'),
+          letterSpacing: theme('letterSpacing.serif'),
+        },
+        '.font-serifTitle': {
+          fontFamily: theme('fontFamily.serif'),
+          letterSpacing: theme('letterSpacing.serif'),
+          fontSize: theme('fontSize.serif'),
+        },
+      }, ['responsive']);
+    }
+  ],
 };
