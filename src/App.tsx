@@ -19,6 +19,7 @@ import { Cartoes } from './pages/organizadores/Cartoes';
 import { Contas } from './pages/organizadores/Contas';
 import { Categorias } from './pages/organizadores/Categorias';
 import { CentrosDeCusto } from './pages/organizadores/CentrosDeCusto';
+import { History } from './pages/History';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -131,6 +132,16 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <CentrosDeCusto />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/history"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <History />
                         </Layout>
                       </ProtectedRoute>
                     }
