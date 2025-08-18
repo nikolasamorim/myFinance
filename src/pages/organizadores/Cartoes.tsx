@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { CreditCard, Plus, Filter, Edit, Trash2, Calendar, DollarSign, Table, Wallet } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
