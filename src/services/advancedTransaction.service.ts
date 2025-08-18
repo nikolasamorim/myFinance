@@ -35,9 +35,7 @@ export const advancedTransactionService = {
         transaction_type: data.transaction_type,
         transaction_description: data.description,
         transaction_amount: data.amount,
-        transaction_issue_date: data.emission_date,
         transaction_date: data.due_date,
-        transaction_competence_date: data.competence_date,
         transaction_bank_id: data.account_id,
         transaction_card_id: data.credit_card_id || null,
         transaction_cost_center_id: data.cost_center_id || null,
@@ -84,15 +82,11 @@ export const advancedTransactionService = {
       transaction_type: data.transaction_type,
       transaction_description: `${data.description} - Parcela ${installment.number}/${data.installments!.length}`,
       transaction_amount: installment.amount,
-      transaction_issue_date: data.emission_date,
       transaction_date: installment.date,
-      transaction_competence_date: installment.competence,
       transaction_bank_id: data.account_id,
       transaction_card_id: data.credit_card_id || null,
       transaction_cost_center_id: installment.cost_center_id || null,
       transaction_category_id: data.category_id || null,
-      transaction_payment_method: data.payment_method,
-      transaction_is_paid: false,
       transaction_status: 'pending',
       installment_group_id: installmentGroup.id,
       installment_number: installment.number,
@@ -144,16 +138,10 @@ export const advancedTransactionService = {
         transaction_type: transactionType,
         transaction_description: data.description,
         transaction_amount: data.amount,
-        transaction_issue_date: data.emission_date,
         transaction_date: data.due_date,
-        transaction_competence_date: data.competence_date,
         transaction_bank_id: data.account_id,
         transaction_card_id: data.credit_card_id || null,
-        transaction_cost_center_id: data.cost_center_id || null,
-        transaction_category_id: data.category_id || null,
         transaction_payment_method: data.payment_method,
-        transaction_is_paid: false,
-        transaction_status: 'pending',
         recurrence_id: recurrenceRule.id,
       }])
       .select()
@@ -240,7 +228,6 @@ export const advancedTransactionService = {
     const { data, error } = await supabase
       .from('transactions')
       .update({ 
-        transaction_is_paid: true,
         transaction_status: 'paid'
       })
       .eq('transaction_id', transactionId)
