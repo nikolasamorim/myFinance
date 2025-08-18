@@ -21,7 +21,14 @@ export interface Transaction {
   transaction_type: 'expense' | 'income' | 'debt' | 'investment';
   transaction_description: string;
   transaction_amount: number;
+  transaction_issue_date: string;
+  transaction_competence_date: string;
+  transaction_payment_method: string;
+  transaction_is_paid: boolean;
   transaction_category_id?: string;
+  transaction_cost_center_id?: string;
+  transaction_bank_id?: string;
+  transaction_card_id?: string;
   transaction_date: string;
   transaction_created_at: string;
   transaction_updated_at?: string;
@@ -30,6 +37,42 @@ export interface Transaction {
   installment_number?: number;
   installment_total?: number;
   transaction_status?: 'pending' | 'paid' | 'received';
+}
+
+export interface AdvancedTransactionData {
+  description: string;
+  emission_date: string;
+  due_date: string;
+  competence_date: string;
+  amount: number;
+  account_id: string;
+  credit_card_id?: string;
+  cost_center_id?: string;
+  category_id?: string;
+  payment_method: string;
+  is_installment: boolean;
+  is_recurring: boolean;
+  installments?: InstallmentData[];
+  recurrence?: RecurrenceData;
+}
+
+export interface InstallmentData {
+  id: string;
+  number: number;
+  date: string;
+  competence: string;
+  cost_center_id: string;
+  amount: number;
+}
+
+export interface RecurrenceData {
+  enabled: boolean;
+  start_date: string;
+  end_date?: string;
+  recurrence_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  repeat_count?: number;
+  due_adjustment: 'none' | 'previous_business_day' | 'next_business_day';
+  recurrence_day?: string;
 }
 
 export interface RecurrenceRule {

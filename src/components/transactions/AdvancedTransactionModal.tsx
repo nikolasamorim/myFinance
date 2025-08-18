@@ -13,8 +13,10 @@ import { useAccounts } from '../../hooks/useAccounts';
 import { useCreditCards } from '../../hooks/useCreditCards';
 import { useCategories } from '../../hooks/useCategories';
 import { useCostCenters } from '../../hooks/useCostCenters';
+import { useAdvancedTransactions } from '../../hooks/useAdvancedTransactions';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { cn } from '../../lib/utils';
+import type { AdvancedTransactionData, InstallmentData, RecurrenceData } from '../../types';
 
 const transactionSchema = z.object({
   description: z.string().min(1, 'Descrição é obrigatória'),
@@ -32,32 +34,6 @@ const transactionSchema = z.object({
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
-
-interface Installment {
-  id: string;
-  number: number;
-  date: string;
-  competence: string;
-  cost_center_id: string;
-  amount: number;
-}
-
-interface RecurrenceData {
-  enabled: boolean;
-  start_date: string;
-  end_date?: string;
-  recurrence_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
-  repeat_count?: number;
-  due_adjustment: 'none' | 'previous_business_day' | 'next_business_day';
-  recurrence_day?: string;
-}
-
-interface AdvancedTransactionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  transactionType: 'income' | 'expense' | 'debt' | 'investment';
-  onSave: (data: any) => Promise<void>;
-}
 
 const paymentMethodOptions = [
   { value: 'cash', label: 'Dinheiro' },
@@ -128,6 +104,13 @@ const parseCurrencyInput = (value: string): number => {
   return numericValue ? parseInt(numericValue) / 100 : 0;
 };
 
+interface AdvancedTransactionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  transactionType: 'income' | 'expense' | 'debt' | 'investment';
+  onSave: (data: AdvancedTransactionData) => Promise<void>;
+}
+
 export function AdvancedTransactionModal({ 
   isOpen, 
   onClose, 
@@ -136,7 +119,7 @@ export function AdvancedTransactionModal({
 }: AdvancedTransactionModalProps) {
   const { currentWorkspace } = useWorkspace();
   const [activeTab, setActiveTab] = useState('data');
-  const [installments, setInstallments] = useState<Installment[]>([]);
+  const [installments, setInstallments] = useState<InstallmentData[]>([]);
   const [installmentInput, setInstallmentInput] = useState('');
   const [installmentsGenerated, setInstallmentsGenerated] = useState(false);
   const [validationError, setValidationError] = useState('');
@@ -157,6 +140,7 @@ export function AdvancedTransactionModal({
     search: '' 
   });
   const { data: costCenters = [] } = useCostCenters({ status: 'active', search: '' });
+  const { createAdvancedTransaction } = useAdvancedTransactions();
 
   const {
     control,
@@ -318,7 +302,7 @@ export function AdvancedTransactionModal({
     setValidationError('');
 
     const installmentAmount = mainAmount / total;
-    const newInstallments: Installment[] = [];
+    const newInstallments: InstallmentData[] = [];
 
     for (let i = 1; i <= total; i++) {
       const installmentDate = new Date(watchedValues.due_date);
@@ -338,7 +322,7 @@ export function AdvancedTransactionModal({
     setInstallmentsGenerated(true);
   };
 
-  const updateInstallment = (id: string, field: keyof Installment, value: any) => {
+  const updateInstallment = (id: string, field: keyof InstallmentData, value: any) => {
     setInstallments(prev => prev.map(inst => 
       inst.id === id ? { ...inst, [field]: value } : inst
     ));
@@ -356,7 +340,7 @@ export function AdvancedTransactionModal({
     
     lastDate.setMonth(lastDate.getMonth() + 1);
 
-    const newInstallment: Installment = {
+    const newInstallment: InstallmentData = {
       id: `installment-${Date.now()}`,
       number: newNumber,
       date: lastDate.toISOString().split('T')[0],
@@ -453,15 +437,16 @@ export function AdvancedTransactionModal({
     }
 
     try {
-      const transactionData = {
+      const transactionData: AdvancedTransactionData = {
         ...data,
-        transaction_type: transactionType,
-        transaction_workspace_id: currentWorkspace?.workspace_id,
         installments: data.is_installment ? installments : undefined,
         recurrence: data.is_recurring ? recurrenceData : undefined,
       };
 
-      await onSave(transactionData);
+      await createAdvancedTransaction.mutateAsync({ 
+        transactionType, 
+        data: transactionData 
+      });
       handleClose();
     } catch (error) {
       console.error('Error saving transaction:', error);
@@ -587,31 +572,11 @@ export function AdvancedTransactionModal({
         )}
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200">
-          <div className="flex space-x-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleTabChange(tab.id)}
-                disabled={tab.disabled}
-                className={cn(
-                  'flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-all',
-                  activeTab === tab.id
-                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
-                  tab.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-600'
-                )}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-                {tab.disabled && (
-                  <span className="text-xs text-gray-400">(Desabilitado)</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
+        <TabSelector
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={handleTabChange}
+        />
 
         {/* Tab Content */}
         <div className="min-h-[400px]">
@@ -863,7 +828,7 @@ export function AdvancedTransactionModal({
                   disabled={!installmentInput || !mainAmount || !validateInstallmentFormat(installmentInput)}
                 >
                   <Eye className="w-4 h-4 mr-2" />
-                  Ver Parcelas
+                  Visualizar Parcelas
                 </Button>
               </div>
 
@@ -1000,7 +965,7 @@ export function AdvancedTransactionModal({
                 <div className="text-center py-8 text-gray-500">
                   <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-sm font-medium">Nenhuma parcela gerada</p>
-                  <p className="text-xs">Configure o número de parcelas e clique em "Ver Parcelas"</p>
+                  <p className="text-xs">Configure o número de parcelas e clique em "Visualizar Parcelas"</p>
                 </div>
               )}
             </div>
@@ -1155,7 +1120,7 @@ export function AdvancedTransactionModal({
             </Button>
             <Button 
               type="submit" 
-              loading={isSubmitting}
+              loading={isSubmitting || createAdvancedTransaction.isPending}
               disabled={
                 (isInstallment && (!installmentsGenerated || !installmentsValid)) ||
                 (isRecurring && !recurrenceData.enabled)

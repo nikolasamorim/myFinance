@@ -7,12 +7,13 @@ import { Dropdown } from '../components/ui/Dropdown';
 import { TransactionTypeSelector } from '../components/ui/TransactionTypeSelector';
 import { TransactionModal } from '../components/transactions/TransactionModal';
 import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
+import { useAdvancedTransactions } from '../hooks/useAdvancedTransactions';
 import { MonthlyChart } from '../components/dashboard/MonthlyChart';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { cn } from '../lib/utils';
-import type { Transaction } from '../types';
+import type { Transaction, AdvancedTransactionData } from '../types';
 
 interface DashboardFilters {
   period: 'current_month' | 'last_month' | 'current_year' | 'custom' | 'all';
@@ -37,6 +38,7 @@ interface MonthlyData {
 
 export function Dashboard() {
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
+  const { createAdvancedTransaction } = useAdvancedTransactions();
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
   const [selectedTransactionType, setSelectedTransactionType] = useState<'income' | 'expense' | 'debt' | 'investment'>('expense');
@@ -586,9 +588,11 @@ export function Dashboard() {
         isOpen={isAdvancedModalOpen}
         onClose={handleCloseModal}
         transactionType={selectedTransactionType}
-        onSave={async (data) => {
-          console.log('Saving advanced transaction:', data);
-          // TODO: Implement advanced transaction saving logic
+        onSave={async (data: AdvancedTransactionData) => {
+          await createAdvancedTransaction.mutateAsync({ 
+            transactionType: selectedTransactionType, 
+            data 
+          });
           handleCloseModal();
         }}
       />
