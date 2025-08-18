@@ -34,8 +34,7 @@ export const creditCardService = {
           credit_card_workspace_id,
           credit_card_name,
           credit_card_limit,
-          initial_balance,
-          account_id,
+          current_balance,
           credit_card_closing_day,
           credit_card_due_day,
           color,
@@ -64,9 +63,7 @@ export const creditCardService = {
         title: card.credit_card_name,
         flag: 'Visa', // Default since flag column doesn't exist in schema
         limit: card.credit_card_limit,
-        initial_balance: card.initial_balance || 0,
-        account_id: card.account_id,
-        linked_account_name: null,
+        initial_balance: card.current_balance || 0,
         due_day: card.credit_card_due_day,
         closing_day: card.credit_card_closing_day,
         color: card.color,
@@ -93,8 +90,7 @@ export const creditCardService = {
           credit_card_workspace_id: workspaceId,
           credit_card_name: cardData.title,
           credit_card_limit: cardData.limit,
-          initial_balance: cardData.initial_balance,
-          account_id: cardData.account_id,
+          current_balance: cardData.initial_balance,
           credit_card_due_day: cardData.due_day,
           credit_card_closing_day: cardData.closing_day,
           color: cardData.color,
@@ -117,7 +113,7 @@ export const creditCardService = {
       const dbUpdates: any = {};
       if (updates.title) dbUpdates.credit_card_name = updates.title;
       if (updates.limit !== undefined) dbUpdates.credit_card_limit = updates.limit;
-      if (updates.initial_balance !== undefined) dbUpdates.initial_balance = updates.initial_balance;
+      if (updates.initial_balance !== undefined) dbUpdates.current_balance = updates.initial_balance;
       if (updates.due_day !== undefined) dbUpdates.credit_card_due_day = updates.due_day;
       if (updates.closing_day !== undefined) dbUpdates.credit_card_closing_day = updates.closing_day;
       if (updates.color !== undefined) dbUpdates.color = updates.color;
