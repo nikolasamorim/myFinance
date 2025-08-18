@@ -25,24 +25,24 @@ export const categoryService = {
       let query = supabase
         .from('categories')
         .select(`
-          id,
-          workspace_id,
-          title,
-          type,
+          category_id:id,
+          category_workspace_id:workspace_id,
+          category_name:title,
+          category_type:type,
           parent_id,
           description,
-          created_at,
-          updated_at
+          category_created_at:created_at,
+          category_updated_at:updated_at
         `)
-        .eq('workspace_id', workspaceId)
-        .order('title', { ascending: true });
+        .eq('category_workspace_id', workspaceId)
+        .order('category_name', { ascending: true });
 
       if (filters.search) {
-        query = query.ilike('title', `%${filters.search}%`);
+        query = query.ilike('category_name', `%${filters.search}%`);
       }
 
       if (filters.type !== 'all') {
-        query = query.eq('type', filters.type);
+        query = query.eq('category_type', filters.type);
       }
 
       const { data, error } = await query;
@@ -68,9 +68,9 @@ export const categoryService = {
       const { data, error } = await supabase
         .from('categories')
         .insert([{
-          workspace_id: workspaceId,
-          title: categoryData.title,
-          type: categoryData.type,
+          category_workspace_id: workspaceId,
+          category_name: categoryData.title,
+          category_type: categoryData.type,
           parent_id: categoryData.parent_id,
           description: categoryData.description,
         }])
@@ -89,8 +89,13 @@ export const categoryService = {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .update(updates)
-        .eq('id', id)
+        .update({
+          category_name: updates.title,
+          category_type: updates.type,
+          parent_id: updates.parent_id,
+          description: updates.description,
+        })
+        .eq('category_id', id)
         .select()
         .single();
 
@@ -107,7 +112,7 @@ export const categoryService = {
       const { error } = await supabase
         .from('categories')
         .delete()
-        .eq('id', id);
+        .eq('category_id', id);
 
       if (error) throw new Error('Failed to delete category: ' + error.message);
     } catch (error) {
