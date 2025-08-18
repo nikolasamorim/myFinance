@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, Edit, Trash2, Plus } from 'lucide-react';
+import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, Edit, Trash2, Plus, AlertCircle } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -64,6 +64,48 @@ const paymentMethodOptions = [
   { value: 'auto_debit', label: 'Débito Automático' },
 ];
 
+// Smart currency formatter
+const formatCurrencyInput = (value: string): string => {
+  // Remove all non-numeric characters
+  const numericValue = value.replace(/\D/g, '');
+  
+  if (!numericValue) return '';
+  
+  // Convert to number and format
+  const number = parseInt(numericValue) / 100;
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+  }).format(number);
+};
+
+// Smart installment formatter
+const formatInstallmentInput = (value: string): string => {
+  // Remove all non-numeric characters
+  const numericValue = value.replace(/\D/g, '');
+  
+  if (!numericValue) return '';
+  
+  // Format as NN/NN
+  if (numericValue.length <= 2) {
+    return numericValue;
+  } else if (numericValue.length <= 4) {
+    return `${numericValue.slice(0, 2)}/${numericValue.slice(2)}`;
+  } else {
+    return `${numericValue.slice(0, 2)}/${numericValue.slice(2, 4)}`;
+  }
+};
+
+// Validate installment format
+const validateInstallmentFormat = (value: string): boolean => {
+  const regex = /^\d{1,2}\/\d{1,2}$/;
+  if (!regex.test(value)) return false;
+  
+  const [current, total] = value.split('/').map(Number);
+  return current >= 1 && current <= total && total >= 1 && total <= 99;
+};
+
 export function AdvancedTransactionModal({ 
   isOpen, 
   onClose, 
@@ -76,11 +118,16 @@ export function AdvancedTransactionModal({
   const [installmentInput, setInstallmentInput] = useState('');
   const [installmentsGenerated, setInstallmentsGenerated] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const [currencyDisplayValue, setCurrencyDisplayValue] = useState('');
+  const [tabValidationErrors, setTabValidationErrors] = useState<string[]>([]);
 
   // Data hooks
   const { data: accounts = [] } = useAccounts({ type: 'all', search: '' });
   const { data: creditCards = [] } = useCreditCards({ search: '' });
-  const { data: categories = [] } = useCategories({ type: transactionType === 'income' ? 'income' : 'expense', search: '' });
+  const { data: categories = [] } = useCategories({ 
+    type: transactionType === 'income' ? 'income' : 'expense', 
+    search: '' 
+  });
   const { data: costCenters = [] } = useCostCenters({ status: 'active', search: '' });
 
   const {
@@ -90,6 +137,7 @@ export function AdvancedTransactionModal({
     setValue,
     watch,
     reset,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -100,6 +148,7 @@ export function AdvancedTransactionModal({
       is_installment: false,
       is_recurring: false,
       payment_method: 'pix',
+      amount: 0,
     },
   });
 
@@ -126,16 +175,81 @@ export function AdvancedTransactionModal({
     }
   }, [isInstallment]);
 
-  // Format currency input
-  const formatCurrencyInput = (value: string) => {
-    const numericValue = value.replace(/\D/g, '');
-    const formattedValue = (parseInt(numericValue) / 100).toFixed(2);
-    return parseFloat(formattedValue);
+  // Initialize currency display value
+  useEffect(() => {
+    if (mainAmount > 0) {
+      setCurrencyDisplayValue(formatCurrencyInput((mainAmount * 100).toString()));
+    }
+  }, [mainAmount]);
+
+  // Validate required fields for Data tab
+  const validateDataTab = async (): Promise<boolean> => {
+    const requiredFields = [
+      'description',
+      'emission_date', 
+      'due_date',
+      'competence_date',
+      'amount',
+      'account_id',
+      'payment_method'
+    ];
+
+    const isValid = await trigger(requiredFields);
+    
+    if (!isValid) {
+      const errorMessages: string[] = [];
+      requiredFields.forEach(field => {
+        if (errors[field as keyof typeof errors]) {
+          errorMessages.push(errors[field as keyof typeof errors]?.message || `${field} é obrigatório`);
+        }
+      });
+      setTabValidationErrors(errorMessages);
+      return false;
+    }
+
+    setTabValidationErrors([]);
+    return true;
+  };
+
+  // Handle tab change with validation
+  const handleTabChange = async (newTab: string) => {
+    if (newTab === 'installments' && !isInstallment) {
+      return; // Prevent access if installment is not enabled
+    }
+
+    if (activeTab === 'data' && newTab !== 'data') {
+      const isDataValid = await validateDataTab();
+      if (!isDataValid) {
+        setValidationError('Preencha todos os campos obrigatórios antes de continuar');
+        return;
+      }
+    }
+
+    setValidationError('');
+    setActiveTab(newTab);
+  };
+
+  // Handle currency input
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const formatted = formatCurrencyInput(inputValue);
+    setCurrencyDisplayValue(formatted);
+    
+    // Extract numeric value and set in form
+    const numericValue = parseFloat(inputValue.replace(/\D/g, '')) / 100;
+    setValue('amount', numericValue || 0);
+  };
+
+  // Handle installment input
+  const handleInstallmentInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const formatted = formatInstallmentInput(inputValue);
+    setInstallmentInput(formatted);
   };
 
   const generateInstallments = () => {
-    if (!installmentInput.match(/^\d{1,2}\/\d{1,2}$/)) {
-      setValidationError('Formato inválido. Use o formato 00/00');
+    if (!validateInstallmentFormat(installmentInput)) {
+      setValidationError('Formato inválido. Use o formato 00/00 (ex: 01/12)');
       return;
     }
 
@@ -198,7 +312,7 @@ export function AdvancedTransactionModal({
       date: lastDate.toISOString().split('T')[0],
       competence: lastDate.toISOString().slice(0, 7),
       cost_center_id: watchedValues.cost_center_id || '',
-      amount: mainAmount / installments.length || 0,
+      amount: mainAmount / (installments.length + 1) || 0,
     };
 
     setInstallments(prev => [...prev, newInstallment]);
@@ -221,6 +335,14 @@ export function AdvancedTransactionModal({
 
   const onSubmit = async (data: TransactionFormData) => {
     setValidationError('');
+
+    // Validate data tab first
+    const isDataValid = await validateDataTab();
+    if (!isDataValid) {
+      setValidationError('Preencha todos os campos obrigatórios');
+      setActiveTab('data');
+      return;
+    }
 
     // Validate installments if needed
     if (data.is_installment) {
@@ -260,6 +382,8 @@ export function AdvancedTransactionModal({
     setInstallmentInput('');
     setActiveTab('data');
     setValidationError('');
+    setTabValidationErrors([]);
+    setCurrencyDisplayValue('');
     onClose();
   };
 
@@ -340,20 +464,47 @@ export function AdvancedTransactionModal({
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Error Display */}
-        {validationError && (
+        {(validationError || tabValidationErrors.length > 0) && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-            <p className="text-sm font-medium">{validationError}</p>
+            <div className="flex items-start space-x-2">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div className="space-y-1">
+                {validationError && (
+                  <p className="text-sm font-medium">{validationError}</p>
+                )}
+                {tabValidationErrors.map((error, index) => (
+                  <p key={index} className="text-xs">{error}</p>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
         {/* Tab Navigation */}
         <div className="border-b border-gray-200">
-          <TabSelector
-            tabs={tabs.filter(tab => !tab.disabled)}
-            activeTab={activeTab}
-            onChange={setActiveTab}
-            className="mb-0"
-          />
+          <div className="flex space-x-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                disabled={tab.disabled}
+                className={cn(
+                  'flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-all',
+                  activeTab === tab.id
+                    ? 'bg-white text-gray-900 border-b-2 border-blue-500'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                  tab.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-600'
+                )}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+                {tab.disabled && (
+                  <span className="text-xs text-gray-400">(Desabilitado)</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -367,7 +518,7 @@ export function AdvancedTransactionModal({
                 </h3>
                 
                 <Input
-                  label="Descrição"
+                  label="Descrição *"
                   {...register('description')}
                   placeholder="Ex: Salário, Conta de luz, Freelance..."
                   error={errors.description?.message}
@@ -376,7 +527,7 @@ export function AdvancedTransactionModal({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Input
-                    label="Data de Emissão"
+                    label="Data de Emissão *"
                     type="date"
                     {...register('emission_date')}
                     error={errors.emission_date?.message}
@@ -384,7 +535,7 @@ export function AdvancedTransactionModal({
                   />
 
                   <Input
-                    label="Data de Vencimento"
+                    label="Data de Vencimento *"
                     type="date"
                     {...register('due_date')}
                     error={errors.due_date?.message}
@@ -392,7 +543,7 @@ export function AdvancedTransactionModal({
                   />
 
                   <Input
-                    label="Data de Competência"
+                    label="Data de Competência *"
                     type="month"
                     {...register('competence_date')}
                     error={errors.competence_date?.message}
@@ -401,22 +552,25 @@ export function AdvancedTransactionModal({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Controller
-                    name="amount"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        label="Valor"
-                        type="number"
-                        step="0.01"
-                        placeholder="0,00"
-                        value={field.value || ''}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        error={errors.amount?.message}
-                        required
-                      />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Valor *
+                    </label>
+                    <input
+                      type="text"
+                      value={currencyDisplayValue}
+                      onChange={handleCurrencyChange}
+                      placeholder="R$ 0,00"
+                      className={cn(
+                        'block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent',
+                        errors.amount && 'border-red-300 focus:ring-red-500'
+                      )}
+                      required
+                    />
+                    {errors.amount && (
+                      <p className="text-xs text-red-600 mt-1">{errors.amount.message}</p>
                     )}
-                  />
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -583,12 +737,15 @@ export function AdvancedTransactionModal({
               {/* Installment Input */}
               <div className="flex items-end space-x-3">
                 <div className="flex-1 max-w-xs">
-                  <Input
-                    label="Parcelas"
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Parcelas
+                  </label>
+                  <input
+                    type="text"
                     value={installmentInput}
-                    onChange={(e) => setInstallmentInput(e.target.value)}
+                    onChange={handleInstallmentInputChange}
                     placeholder="01/12"
-                    pattern="\d{1,2}/\d{1,2}"
+                    className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Formato: parcela atual/total (ex: 01/12)
@@ -597,7 +754,7 @@ export function AdvancedTransactionModal({
                 <Button
                   type="button"
                   onClick={generateInstallments}
-                  disabled={!installmentInput || !mainAmount}
+                  disabled={!installmentInput || !mainAmount || !validateInstallmentFormat(installmentInput)}
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Ver Parcelas
@@ -646,7 +803,7 @@ export function AdvancedTransactionModal({
                                   type="date"
                                   value={installment.date}
                                   onChange={(e) => updateInstallment(installment.id, 'date', e.target.value)}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full"
+                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
                               </td>
                               <td className="py-2 px-3">
@@ -654,14 +811,14 @@ export function AdvancedTransactionModal({
                                   type="month"
                                   value={installment.competence}
                                   onChange={(e) => updateInstallment(installment.id, 'competence', e.target.value)}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full"
+                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
                               </td>
                               <td className="py-2 px-3">
                                 <select
                                   value={installment.cost_center_id}
                                   onChange={(e) => updateInstallment(installment.id, 'cost_center_id', e.target.value)}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full"
+                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 >
                                   <option value="">Nenhum</option>
                                   {costCenters.map(center => (
@@ -677,7 +834,7 @@ export function AdvancedTransactionModal({
                                   step="0.01"
                                   value={installment.amount}
                                   onChange={(e) => updateInstallment(installment.id, 'amount', Number(e.target.value))}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full text-right"
+                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full text-right focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
                               </td>
                               <td className="py-2 px-3">
@@ -748,7 +905,9 @@ export function AdvancedTransactionModal({
         <div className="flex justify-between items-center pt-6 border-t border-gray-200">
           <div className="text-sm text-gray-600">
             {isInstallment && (
-              <span>
+              <span className={cn(
+                installmentsGenerated ? 'text-green-600' : 'text-yellow-600'
+              )}>
                 Parcelas: {installmentsGenerated ? `${installments.length} geradas` : 'Não geradas'}
               </span>
             )}
@@ -761,7 +920,7 @@ export function AdvancedTransactionModal({
             <Button 
               type="submit" 
               loading={isSubmitting}
-              disabled={isInstallment && !installmentsValid}
+              disabled={isInstallment && (!installmentsGenerated || !installmentsValid)}
             >
               Salvar {getTransactionTypeLabel()}
             </Button>
