@@ -42,8 +42,7 @@ export const creditCardService = {
           color,
           icon,
           credit_card_created_at,
-          credit_card_updated_at,
-          accounts!inner(id, title)
+          credit_card_updated_at
         `)
         .eq('credit_card_workspace_id', workspaceId)
         .order('credit_card_created_at', { ascending: false });
@@ -68,7 +67,7 @@ export const creditCardService = {
         limit: card.credit_card_limit,
         initial_balance: card.initial_balance || 0,
         account_id: card.account_id,
-        linked_account_name: card.accounts?.title || null,
+        linked_account_name: null,
         due_day: card.credit_card_due_day,
         closing_day: card.credit_card_closing_day,
         color: card.color,
