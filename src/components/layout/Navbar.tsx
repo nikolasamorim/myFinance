@@ -111,12 +111,6 @@ export function Navbar() {
                   // This would need to be handled by the Dashboard component
                   // For now, we'll just navigate to dashboard
                 }}
-                trigger={
-                  <button className="flex items-center space-x-1 px-2 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                    <Plus className="w-4 h-4" />
-                    <span className="hidden lg:inline">Nova</span>
-                  </button>
-                }
               />
             </div>
 
