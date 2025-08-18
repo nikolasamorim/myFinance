@@ -79,7 +79,7 @@ export function Navbar() {
             {/* Logo */}
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <img src="/logo-black.png" width="20" height="20" alt="Logo" className="sm:w-6 sm:h-6 md:w-7 md:h-7" />
-              <h1 className="font-serifTitle font-bold text-gray-900 hidden sm:block mr-3">Azami</h1>
+              <h1 className="font-serifTitle font-bold text-gray-900 hidden sm:block mr-3">Azami</h1> 
             </div>
             
             {/* Workspace Selector */}
