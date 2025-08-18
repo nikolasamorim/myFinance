@@ -8,9 +8,13 @@ export interface CreditCardData {
   title: string;
   flag: string;
   limit: number;
+  current_balance: number;
   linked_account_id?: string | null;
   due_day: number;
   closing_day: number;
+  last_four_digits?: string;
+  color?: string;
+  icon?: string;
   description?: string;
 }
 
@@ -31,8 +35,12 @@ export const creditCardService = {
           credit_card_workspace_id,
           credit_card_name,
           credit_card_limit,
+          current_balance,
           credit_card_closing_day,
           credit_card_due_day,
+          last_four_digits,
+          color,
+          icon,
           credit_card_created_at,
           credit_card_updated_at
         `)
@@ -57,9 +65,13 @@ export const creditCardService = {
         title: card.credit_card_name,
         flag: 'Visa', // Default since flag column doesn't exist in schema
         limit: card.credit_card_limit,
+        current_balance: card.current_balance || 0,
         linked_account_id: null, // Not in current schema
         due_day: card.credit_card_due_day,
         closing_day: card.credit_card_closing_day,
+        last_four_digits: card.last_four_digits,
+        color: card.color,
+        icon: card.icon,
         description: null, // Not in current schema
         created_at: card.credit_card_created_at,
         updated_at: card.credit_card_updated_at,
@@ -82,8 +94,12 @@ export const creditCardService = {
           credit_card_workspace_id: workspaceId,
           credit_card_name: cardData.title,
           credit_card_limit: cardData.limit,
+          current_balance: cardData.current_balance,
           credit_card_due_day: cardData.due_day,
           credit_card_closing_day: cardData.closing_day,
+          last_four_digits: cardData.last_four_digits,
+          color: cardData.color,
+          icon: cardData.icon,
         }])
         .select()
         .single();
@@ -102,8 +118,12 @@ export const creditCardService = {
       const dbUpdates: any = {};
       if (updates.title) dbUpdates.credit_card_name = updates.title;
       if (updates.limit !== undefined) dbUpdates.credit_card_limit = updates.limit;
+      if (updates.current_balance !== undefined) dbUpdates.current_balance = updates.current_balance;
       if (updates.due_day !== undefined) dbUpdates.credit_card_due_day = updates.due_day;
       if (updates.closing_day !== undefined) dbUpdates.credit_card_closing_day = updates.closing_day;
+      if (updates.last_four_digits !== undefined) dbUpdates.last_four_digits = updates.last_four_digits;
+      if (updates.color !== undefined) dbUpdates.color = updates.color;
+      if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
 
       const { data, error } = await supabase
         .from('credit_cards')

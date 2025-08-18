@@ -5,6 +5,8 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
+import { ColorPicker } from '../../components/ui/ColorPicker';
+import { IconPicker } from '../../components/ui/IconPicker';
 import { useAccounts } from '../../hooks/useAccounts';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { cn } from '../../lib/utils';
@@ -21,6 +23,8 @@ interface AccountFormData {
   initial_balance: number;
   opened_at: string;
   cost_center_id: string;
+  color: string;
+  icon: string;
   description: string;
 }
 

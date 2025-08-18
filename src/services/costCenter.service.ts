@@ -13,6 +13,8 @@ export interface CostCenterData {
   accounting_code?: string | null;
   sort_order?: number;
   status: 'active' | 'inactive';
+  color?: string;
+  icon?: string;
   description?: string | null;
 }
 
@@ -38,6 +40,8 @@ export const costCenterService = {
           status,
           code,
           accounting_code,
+          color,
+          icon,
           description,
           cost_center_created_at,
           cost_center_updated_at,
@@ -68,6 +72,8 @@ export const costCenterService = {
         parent_name: item.parent?.cost_center_name || null,
         accounting_code: item.accounting_code,
         status: item.status || 'active',
+        color: item.color,
+        icon: item.icon,
         description: item.description,
         created_at: item.cost_center_created_at,
         updated_at: item.cost_center_updated_at,
@@ -94,6 +100,8 @@ export const costCenterService = {
           parent_id: costCenterData.parent_id,
           accounting_code: costCenterData.accounting_code,
           status: costCenterData.status,
+          color: costCenterData.color,
+          icon: costCenterData.icon,
           description: costCenterData.description,
           sort_order: costCenterData.sort_order || 0,
         }])
@@ -117,6 +125,8 @@ export const costCenterService = {
       if (updates.parent_id !== undefined) updateData.parent_id = updates.parent_id;
       if (updates.accounting_code !== undefined) updateData.accounting_code = updates.accounting_code;
       if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.color !== undefined) updateData.color = updates.color;
+      if (updates.icon !== undefined) updateData.icon = updates.icon;
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.sort_order !== undefined) updateData.sort_order = updates.sort_order;
 

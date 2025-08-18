@@ -9,6 +9,8 @@ export interface CategoryData {
   title: string;
   type: 'income' | 'expense';
   parent_id?: string | null;
+  color?: string;
+  icon?: string;
   description?: string;
   sort_order?: number;
 }
@@ -32,6 +34,8 @@ export const categoryService = {
           category_type,
           parent_id,
           sort_order,
+          color,
+          icon,
           description,
           category_created_at,
           category_updated_at,
@@ -63,6 +67,8 @@ export const categoryService = {
         category_type: item.category_type,
         parent_id: item.parent_id,
         sort_order: item.sort_order,
+        color: item.color,
+        icon: item.icon,
         description: item.description,
         parent_name: item.parent?.category_name || null,
         category_created_at: item.category_created_at,
@@ -87,6 +93,8 @@ export const categoryService = {
           category_name: categoryData.title,
           category_type: categoryData.type,
           parent_id: categoryData.parent_id,
+          color: categoryData.color,
+          icon: categoryData.icon,
           description: categoryData.description,
           sort_order: categoryData.sort_order || 0,
         }])
@@ -109,6 +117,8 @@ export const categoryService = {
           category_name: updates.title,
           category_type: updates.type,
           parent_id: updates.parent_id,
+          color: updates.color,
+          icon: updates.icon,
           description: updates.description,
           sort_order: updates.sort_order,
         })

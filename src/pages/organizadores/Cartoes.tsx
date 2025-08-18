@@ -1,10 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { CreditCard, Plus, Filter, Edit, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { CreditCard, Plus, Filter, Edit, Trash2, Calendar, DollarSign, Table, Wallet } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
+import { TabSelector } from '../../components/ui/TabSelector';
+import { ColorPicker } from '../../components/ui/ColorPicker';
+import { IconPicker } from '../../components/ui/IconPicker';
+import { CreditCardWallet } from '../../components/creditCards/CreditCardWallet';
 import { useCreditCards } from '../../hooks/useCreditCards';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { cn } from '../../lib/utils';
@@ -18,9 +22,13 @@ interface CreditCardFormData {
   title: string;
   flag: string;
   limit: number;
+  current_balance: number;
   linked_account_id: string;
   due_day: number;
   closing_day: number;
+  last_four_digits: string;
+  color: string;
+  icon: string;
   description: string;
 }
 
@@ -35,6 +43,7 @@ const flagOptions = [
 ];
 
 export function Cartoes() {
+  const [activeTab, setActiveTab] = useState('wallet');
   const [filters, setFilters] = useState<CreditCardFilters>({
     search: '',
   });
@@ -91,6 +100,11 @@ export function Cartoes() {
     }
   };
 
+  const tabs = [
+    { id: 'wallet', label: 'Carteira', icon: <Wallet className="w-4 h-4" /> },
+    { id: 'table', label: 'Tabela', icon: <Table className="w-4 h-4" /> },
+  ];
+
   return (
     <>
       <div className="space-y-4 sm:space-y-6 w-full min-w-0 overflow-x-hidden">
@@ -106,6 +120,11 @@ export function Cartoes() {
             </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
+            <TabSelector
+              tabs={tabs}
+              activeTab={activeTab}
+              onChange={setActiveTab}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -141,93 +160,127 @@ export function Cartoes() {
           </div>
         )}
 
-        {/* Credit Cards Table */}
+        {/* Content based on active tab */}
         <div className="px-1 sm:px-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Cartões Cadastrados</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 sm:p-6">
-              {isLoading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
-                </div>
-              ) : (
-                <div className="w-full overflow-x-auto">
-                  <table className="w-full min-w-[800px]">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Nome</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Bandeira</th>
-                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Limite</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Fechamento</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Vencimento</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Conta Vinculada</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {creditCards.map((card) => (
-                        <tr key={card.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-2 sm:py-3 px-2 sm:px-4">
-                            <div>
-                              <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{card.title}</p>
-                              {card.description && (
-                                <p className="text-xs text-gray-500 truncate">{card.description}</p>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
-                            <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getFlagColor(card.flag)}`}>
-                              {getFlagLabel(card.flag)}
-                            </span>
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
-                            {formatCurrency(Number(card.limit))}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            Dia {card.closing_day}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            Dia {card.due_day}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            {card.linked_account_name || '-'}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4">
-                            <div className="flex justify-center space-x-1 sm:space-x-2">
-                              <button
-                                onClick={() => handleEditCard(card)}
-                                className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                title="Editar"
-                              >
-                                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCard(card.id)}
-                                className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  
-                  {creditCards.length === 0 && (
-                    <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                      <CreditCard className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
-                      <p className="text-base sm:text-lg font-medium">Nenhum cartão encontrado</p>
-                      <p className="text-xs sm:text-sm">Comece criando seu primeiro cartão</p>
-                    </div>
-                  )}
-                </div>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+            </div>
+          ) : (
+            <>
+              {activeTab === 'wallet' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg sm:text-xl">Meus Cartões</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-6">
+                    <CreditCardWallet
+                      cards={creditCards}
+                      onEdit={handleEditCard}
+                      onDelete={handleDeleteCard}
+                    />
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-          </Card>
+
+              {activeTab === 'table' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg sm:text-xl">Cartões Cadastrados</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0 sm:p-6">
+                    <div className="w-full overflow-x-auto">
+                      <table className="w-full min-w-[900px]">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Nome</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Bandeira</th>
+                            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Limite</th>
+                            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Saldo Atual</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Fechamento</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Vencimento</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Conta Vinculada</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {creditCards.map((card) => (
+                            <tr key={card.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex items-center space-x-2">
+                                  <div 
+                                    className="w-6 h-6 rounded flex items-center justify-center text-white"
+                                    style={{ backgroundColor: card.color || '#6366F1' }}
+                                  >
+                                    {card.icon && React.createElement(
+                                      LucideIcons[card.icon as keyof typeof LucideIcons] as React.ComponentType<any>,
+                                      { className: 'w-3 h-3' }
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{card.title}</p>
+                                    {card.description && (
+                                      <p className="text-xs text-gray-500 truncate">{card.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getFlagColor(card.flag)}`}>
+                                  {getFlagLabel(card.flag)}
+                                </span>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
+                                {formatCurrency(Number(card.limit))}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
+                                {formatCurrency(Number(card.current_balance || 0))}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                                Dia {card.closing_day}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                                Dia {card.due_day}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                                {card.linked_account_name || '-'}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex justify-center space-x-1 sm:space-x-2">
+                                  <button
+                                    onClick={() => handleEditCard(card)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCard(card.id)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      
+                      {creditCards.length === 0 && (
+                        <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
+                          <CreditCard className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                          <p className="text-base sm:text-lg font-medium">Nenhum cartão encontrado</p>
+                          <p className="text-xs sm:text-sm">Comece criando seu primeiro cartão</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -262,9 +315,13 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
     title: '',
     flag: 'visa',
     limit: 0,
+    current_balance: 0,
     linked_account_id: '',
     due_day: 10,
     closing_day: 5,
+    last_four_digits: '',
+    color: '#6366F1',
+    icon: 'CreditCard',
     description: '',
   });
 
@@ -276,9 +333,13 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
         title: card.title || '',
         flag: card.flag || 'visa',
         limit: Number(card.limit) || 0,
+        current_balance: Number(card.current_balance) || 0,
         linked_account_id: card.linked_account_id || '',
         due_day: card.due_day || 10,
         closing_day: card.closing_day || 5,
+        last_four_digits: card.last_four_digits || '',
+        color: card.color || '#6366F1',
+        icon: card.icon || 'CreditCard',
         description: card.description || '',
       });
     } else {
@@ -286,9 +347,13 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
         title: '',
         flag: 'visa',
         limit: 0,
+        current_balance: 0,
         linked_account_id: '',
         due_day: 10,
         closing_day: 5,
+        last_four_digits: '',
+        color: '#6366F1',
+        icon: 'CreditCard',
         description: '',
       });
     }
@@ -303,9 +368,13 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
         title: formData.title,
         flag: formData.flag,
         limit: formData.limit,
+        current_balance: formData.current_balance,
         linked_account_id: formData.linked_account_id || null,
         due_day: formData.due_day,
         closing_day: formData.closing_day,
+        last_four_digits: formData.last_four_digits,
+        color: formData.color,
+        icon: formData.icon,
         description: formData.description,
       };
       await onSave(cardData);
@@ -319,6 +388,11 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
   const handleInputChange = (field: keyof CreditCardFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const typeOptions = [
+    { value: 'bank', label: 'Banco' },
+    { value: 'cash', label: 'Dinheiro' },
+  ];
 
   return (
     <Modal
@@ -351,12 +425,28 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
           </div>
 
           <Input
+            label="Últimos 4 dígitos"
+            value={formData.last_four_digits}
+            onChange={(e) => handleInputChange('last_four_digits', e.target.value)}
+            placeholder="1234"
+            maxLength={4}
+          />
+
+          <Input
             label="Limite"
             type="number"
             step="0.01"
             value={formData.limit}
             onChange={(e) => handleInputChange('limit', Number(e.target.value))}
             required
+          />
+
+          <Input
+            label="Saldo atual"
+            type="number"
+            step="0.01"
+            value={formData.current_balance}
+            onChange={(e) => handleInputChange('current_balance', Number(e.target.value))}
           />
 
           <Input
@@ -377,6 +467,18 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
             value={formData.due_day}
             onChange={(e) => handleInputChange('due_day', Number(e.target.value))}
             required
+          />
+
+          <ColorPicker
+            label="Cor do cartão"
+            value={formData.color}
+            onChange={(value) => handleInputChange('color', value)}
+          />
+
+          <IconPicker
+            label="Ícone do cartão"
+            value={formData.icon}
+            onChange={(value) => handleInputChange('icon', value)}
           />
 
           <div className="md:col-span-2">

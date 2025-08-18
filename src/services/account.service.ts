@@ -11,6 +11,8 @@ export interface AccountData {
   initial_balance: number;
   opened_at: string;
   cost_center_id?: string | null;
+  color?: string;
+  icon?: string;
   description?: string;
 }
 
@@ -34,6 +36,8 @@ export const accountService = {
           initial_balance,
           opened_at,
           cost_center_id,
+          color,
+          icon,
           description,
           created_at,
           updated_at
@@ -78,6 +82,8 @@ export const accountService = {
           initial_balance: accountData.initial_balance,
           opened_at: accountData.opened_at,
           cost_center_id: accountData.cost_center_id,
+          color: accountData.color,
+          icon: accountData.icon,
           description: accountData.description,
         }])
         .select()
