@@ -24,6 +24,8 @@ interface CostCenterFormData {
   parent_id: string;
   accounting_code: string;
   status: 'active' | 'inactive';
+  color: string;
+  icon: string;
   description: string;
 }
 

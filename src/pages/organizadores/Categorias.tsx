@@ -20,8 +20,6 @@ interface CategoryFormData {
   title: string;
   type: 'income' | 'expense';
   parent_id: string;
-  color: string;
-  icon: string;
   description: string;
 }
 
@@ -441,6 +439,18 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
               placeholder="Selecione uma categoria pai"
             />
           </div>
+
+          <ColorPicker
+            label="Cor da categoria"
+            value={formData.color}
+            onChange={(value) => handleInputChange('color', value)}
+          />
+
+          <IconPicker
+            label="Ícone da categoria"
+            value={formData.icon}
+            onChange={(value) => handleInputChange('icon', value)}
+          />
         </div>
 
         <div>
