@@ -41,7 +41,7 @@ export const accountService = {
           description,
           created_at,
           updated_at,
-          credit_cards!credit_cards_account_id_fkey(credit_card_id, credit_card_name)
+          credit_cards(credit_card_id, credit_card_name)
         `)
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false });
