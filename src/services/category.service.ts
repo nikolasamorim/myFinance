@@ -25,14 +25,14 @@ export const categoryService = {
       let query = supabase
         .from('categories')
         .select(`
-          category_id:id,
-          category_workspace_id:workspace_id,
-          category_name:title,
-          category_type:type,
+          category_id,
+          category_workspace_id,
+          category_name,
+          category_type,
           parent_id,
           description,
-          category_created_at:created_at,
-          category_updated_at:updated_at
+          category_created_at,
+          category_updated_at
         `)
         .eq('category_workspace_id', workspaceId)
         .order('category_name', { ascending: true });
