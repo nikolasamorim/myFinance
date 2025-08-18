@@ -10,16 +10,16 @@ export const advancedTransactionService = {
 
       // Handle installment transactions
       if (data.is_installment && data.installments && data.installments.length > 0) {
-        return await this.createInstallmentTransaction(workspaceId, user.id, transactionType, data);
+        return await this.createInstallmentTransaction(workspaceId, user.id, data.transaction_type, data);
       }
 
       // Handle recurring transactions
       if (data.is_recurring && data.recurrence) {
-        return await this.createRecurringTransaction(workspaceId, user.id, transactionType, data);
+        return await this.createRecurringTransaction(workspaceId, user.id, data.transaction_type, data);
       }
 
       // Handle simple transaction
-      return await this.createSimpleTransaction(workspaceId, user.id, transactionType, data);
+      return await this.createSimpleTransaction(workspaceId, user.id, data.transaction_type, data);
     } catch (error) {
       console.error('Error in createAdvancedTransaction:', error);
       throw error;
@@ -139,7 +139,9 @@ export const advancedTransactionService = {
         transaction_date: data.due_date,
         transaction_bank_id: data.account_id,
         transaction_card_id: data.credit_card_id || null,
-        recurrence_id: recurrenceRule.id,
+        payment_method: data.payment_method,
+        recurring: true,
+        recurrence_rule_id: recurrenceRule.id,
         transaction_status: 'pending',
       }])
       .select()

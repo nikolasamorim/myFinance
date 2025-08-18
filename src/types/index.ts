@@ -40,6 +40,7 @@ export interface Transaction {
 }
 
 export interface AdvancedTransactionData {
+  transaction_type: 'income' | 'expense' | 'debt' | 'investment';
   description: string;
   emission_date: string;
   due_date: string;
