@@ -289,7 +289,6 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
     } else if (parentCostCenterId) {
       setFormData({
         title: '',
-        type: parentCostCenterId ? 'expense' : 'expense',
         code: '',
         parent_id: parentCostCenterId,
         accounting_code: '',
@@ -299,7 +298,6 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
     } else {
       setFormData({
         title: '',
-        type: 'expense',
         code: '',
         parent_id: '',
         accounting_code: '',
@@ -379,6 +377,17 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
             onChange={(e) => handleInputChange('accounting_code', e.target.value)}
             placeholder="Ex: 1.1.001"
           />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo
+            </label>
+            <Dropdown
+              options={typeFormOptions}
+              value={formData.type}
+              onChange={(value) => handleInputChange('type', value)}
+            />
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
