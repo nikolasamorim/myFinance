@@ -173,7 +173,6 @@ export function Contas() {
                         <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Saldo Inicial</th>
                         <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Centro de Custo</th>
                         <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Data Abertura</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Cartões Vinculados</th>
                         <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
                       </tr>
                     </thead>
@@ -201,9 +200,6 @@ export function Contas() {
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                             {formatDate(account.opened_at)}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            {account.credit_cards?.length || 0} cartão(ões)
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4">
                             <div className="flex justify-center space-x-1 sm:space-x-2">

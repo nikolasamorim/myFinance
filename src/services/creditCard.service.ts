@@ -9,7 +9,6 @@ export interface CreditCardData {
   flag: string;
   limit: number;
   initial_balance: number;
-  account_id: string;
   due_day: number;
   closing_day: number;
   last_four_digits?: string;
@@ -119,7 +118,6 @@ export const creditCardService = {
       if (updates.title) dbUpdates.credit_card_name = updates.title;
       if (updates.limit !== undefined) dbUpdates.credit_card_limit = updates.limit;
       if (updates.initial_balance !== undefined) dbUpdates.initial_balance = updates.initial_balance;
-      if (updates.account_id !== undefined) dbUpdates.account_id = updates.account_id;
       if (updates.due_day !== undefined) dbUpdates.credit_card_due_day = updates.due_day;
       if (updates.closing_day !== undefined) dbUpdates.credit_card_closing_day = updates.closing_day;
       if (updates.color !== undefined) dbUpdates.color = updates.color;

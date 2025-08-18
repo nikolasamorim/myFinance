@@ -244,9 +244,6 @@ export function Cartoes() {
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                                 Dia {card.due_day}
                               </td>
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                                {card.linked_account_name || 'Não vinculada'}
-                              </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div className="flex justify-center space-x-1 sm:space-x-2">
                                   <button
@@ -338,7 +335,6 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
         flag: card.flag || 'visa',
         limit: Number(card.limit) || 0,
         initial_balance: Number(card.initial_balance) || 0,
-        account_id: card.account_id || '',
         due_day: card.due_day || 10,
         closing_day: card.closing_day || 5,
         last_four_digits: card.last_four_digits || '',
@@ -352,7 +348,6 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
         flag: 'visa',
         limit: 0,
         initial_balance: 0,
-        account_id: '',
         due_day: 10,
         closing_day: 5,
         last_four_digits: '',
@@ -373,7 +368,6 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
         flag: formData.flag,
         limit: formData.limit,
         initial_balance: formData.initial_balance,
-        account_id: formData.account_id,
         due_day: formData.due_day,
         closing_day: formData.closing_day,
         last_four_digits: formData.last_four_digits,
@@ -484,36 +478,6 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
             value={formData.icon}
             onChange={(value) => handleInputChange('icon', value)}
           />
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Conta associada *
-            </label>
-            <Dropdown
-              options={[
-                { value: '', label: 'Selecione uma conta' },
-                ...accounts.map(account => ({
-                  value: account.id,
-                  label: `${account.title} (${account.type === 'bank' ? 'Banco' : 'Dinheiro'})`
-                }))
-              ]}
-              value={formData.account_id}
-              onChange={(value) => handleInputChange('account_id', value)}
-            />
-            {!formData.account_id && (
-              <p className="text-xs text-red-600 mt-1">Selecione uma conta para associar ao cartão</p>
-            )}
-          </div>
-
-          <div className="md:col-span-2">
-            <Input
-              label="Conta vinculada (opcional)"
-              value={formData.account_id}
-              onChange={(e) => handleInputChange('account_id', e.target.value)}
-              placeholder="Selecione uma conta para débito automático"
-              style={{ display: 'none' }}
-            />
-          </div>
         </div>
 
         <div>
@@ -534,7 +498,6 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
             Cancelar
           </Button>
           <Button type="submit" loading={isLoading}>
-            disabled={!formData.account_id}
             {card ? 'Atualizar' : 'Criar'} Cartão
           </Button>
         </div>

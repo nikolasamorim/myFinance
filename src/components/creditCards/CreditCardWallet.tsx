@@ -10,8 +10,6 @@ interface CreditCardData {
   flag: string;
   limit: number;
   initial_balance: number;
-  account_id: string;
-  linked_account_name?: string;
   due_day: number;
   closing_day: number;
   color?: string;
@@ -156,22 +154,13 @@ export function CreditCardWallet({ cards, onEdit, onDelete }: CreditCardWalletPr
               <div className="space-y-2 pt-2 border-t border-white border-opacity-20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1">
-                    <Wallet className="w-3.5 h-3.5 opacity-60" />
-                    <span className="text-xs opacity-60">Conta</span>
+                    <Calendar className="w-3.5 h-3.5 opacity-60" />
+                    <span className="text-xs opacity-60">Vencimento</span>
                   </div>
-                  <span className="text-xs font-medium truncate max-w-24">
-                    {card.linked_account_name || 'Não vinculada'}
+                  <span className="text-xs font-medium">
+                    Dia {card.due_day}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1">
-                  <Calendar className="w-3.5 h-3.5 opacity-60" />
-                  <span className="text-xs opacity-60">Vencimento</span>
-                </div>
-              </div>
-                <span className="text-xs font-medium">
-                  Dia {card.due_day}
-                </span>
               </div>
             </div>
           </div>
