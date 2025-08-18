@@ -102,17 +102,6 @@ export function Navbar() {
 
           {/* Right side - Notifications and User Menu */}
           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-            {/* Quick Transaction Button - Desktop only */}
-            <div className="hidden md:block">
-              <TransactionTypeSelector
-                onSelect={(type) => {
-                  // Navigate to dashboard and trigger transaction creation
-                  navigate('/dashboard');
-                  // This would need to be handled by the Dashboard component
-                  // For now, we'll just navigate to dashboard
-                }}
-              />
-            </div>
 
             {/* Notifications */}
             <div className="relative">
