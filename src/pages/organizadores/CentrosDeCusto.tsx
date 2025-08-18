@@ -9,6 +9,8 @@ import { TabSelector } from '../../components/ui/TabSelector';
 import { KanbanBoard } from '../../components/kanban/KanbanBoard';
 import { useCostCenters } from '../../hooks/useCostCenters';
 import { cn } from '../../lib/utils';
+import { ColorPicker } from '../../components/ui/ColorPicker';
+import { IconPicker } from '../../components/ui/IconPicker';
 import type { CostCenterData } from '../../services/costCenter.service';
 
 interface CostCenterFilters {
