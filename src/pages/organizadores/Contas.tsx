@@ -170,9 +170,10 @@ export function Contas() {
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Título</th>
                         <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Tipo</th>
-                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Saldo Atual</th>
+                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Saldo Inicial</th>
                         <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Centro de Custo</th>
                         <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Data Abertura</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Cartões Vinculados</th>
                         <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
                       </tr>
                     </thead>
@@ -193,13 +194,16 @@ export function Contas() {
                             </span>
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
-                            {formatCurrency(Number(account.current_balance || account.initial_balance))}
+                            {formatCurrency(Number(account.initial_balance))}
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                             {account.cost_center_name || '-'}
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                             {formatDate(account.opened_at)}
+                          </td>
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                            {account.credit_cards?.length || 0} cartão(ões)
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4">
                             <div className="flex justify-center space-x-1 sm:space-x-2">

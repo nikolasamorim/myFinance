@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, Edit, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { CreditCard, Edit, Trash2, Calendar, DollarSign, Wallet } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
 import { cn } from '../../lib/utils';
@@ -9,7 +9,9 @@ interface CreditCardData {
   title: string;
   flag: string;
   limit: number;
-  current_balance: number;
+  initial_balance: number;
+  account_id: string;
+  linked_account_name?: string;
   due_day: number;
   closing_day: number;
   color?: string;
@@ -63,7 +65,7 @@ export function CreditCardWallet({ cards, onEdit, onDelete }: CreditCardWalletPr
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {cards.map((card) => {
-        const utilizationPercentage = getUtilizationPercentage(card.current_balance, card.limit);
+        const utilizationPercentage = getUtilizationPercentage(card.initial_balance, card.limit);
         const utilizationColor = getUtilizationColor(utilizationPercentage);
         
         return (
@@ -123,9 +125,9 @@ export function CreditCardWallet({ cards, onEdit, onDelete }: CreditCardWalletPr
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-xs opacity-60">Saldo atual</p>
+                  <p className="text-xs opacity-60">Saldo inicial</p>
                   <p className="font-semibold">
-                    {formatCurrency(card.current_balance)}
+                    {formatCurrency(card.initial_balance)}
                   </p>
                 </div>
                 <div className="text-right">
@@ -151,11 +153,22 @@ export function CreditCardWallet({ cards, onEdit, onDelete }: CreditCardWalletPr
               </div>
 
               {/* Due Date */}
-              <div className="flex items-center justify-between pt-2 border-t border-white border-opacity-20">
+              <div className="space-y-2 pt-2 border-t border-white border-opacity-20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-1">
+                    <Wallet className="w-3.5 h-3.5 opacity-60" />
+                    <span className="text-xs opacity-60">Conta</span>
+                  </div>
+                  <span className="text-xs font-medium truncate max-w-24">
+                    {card.linked_account_name || 'Não vinculada'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1">
                   <Calendar className="w-3.5 h-3.5 opacity-60" />
                   <span className="text-xs opacity-60">Vencimento</span>
                 </div>
+              </div>
                 <span className="text-xs font-medium">
                   Dia {card.due_day}
                 </span>

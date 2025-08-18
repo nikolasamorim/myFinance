@@ -11,6 +11,7 @@ import { ColorPicker } from '../../components/ui/ColorPicker';
 import { IconPicker } from '../../components/ui/IconPicker';
 import { CreditCardWallet } from '../../components/creditCards/CreditCardWallet';
 import { useCreditCards } from '../../hooks/useCreditCards';
+import { useAccounts } from '../../hooks/useAccounts';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { cn } from '../../lib/utils';
 import type { CreditCardData } from '../../services/creditCard.service';
@@ -23,8 +24,8 @@ interface CreditCardFormData {
   title: string;
   flag: string;
   limit: number;
-  current_balance: number;
-  linked_account_id: string;
+  initial_balance: number;
+  account_id: string;
   due_day: number;
   closing_day: number;
   last_four_digits: string;
@@ -197,10 +198,10 @@ export function Cartoes() {
                             <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Nome</th>
                             <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Bandeira</th>
                             <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Limite</th>
-                            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Saldo Atual</th>
+                            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Saldo Inicial</th>
                             <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Fechamento</th>
                             <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Vencimento</th>
-                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Conta Vinculada</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Conta Associada</th>
                             <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
                           </tr>
                         </thead>
@@ -235,7 +236,7 @@ export function Cartoes() {
                                 {formatCurrency(Number(card.limit))}
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
-                                {formatCurrency(Number(card.current_balance || 0))}
+                                {formatCurrency(Number(card.initial_balance || 0))}
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                                 Dia {card.closing_day}
@@ -244,7 +245,7 @@ export function Cartoes() {
                                 Dia {card.due_day}
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                                {card.linked_account_name || '-'}
+                                {card.linked_account_name || 'Não vinculada'}
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div className="flex justify-center space-x-1 sm:space-x-2">
@@ -312,12 +313,14 @@ interface CreditCardModalProps {
 }
 
 function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps) {
+  const { data: accounts = [] } = useAccounts({ type: 'all', search: '' });
+  
   const [formData, setFormData] = useState<CreditCardFormData>({
     title: '',
     flag: 'visa',
     limit: 0,
-    current_balance: 0,
-    linked_account_id: '',
+    initial_balance: 0,
+    account_id: '',
     due_day: 10,
     closing_day: 5,
     last_four_digits: '',
@@ -334,8 +337,8 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
         title: card.title || '',
         flag: card.flag || 'visa',
         limit: Number(card.limit) || 0,
-        current_balance: Number(card.current_balance) || 0,
-        linked_account_id: card.linked_account_id || '',
+        initial_balance: Number(card.initial_balance) || 0,
+        account_id: card.account_id || '',
         due_day: card.due_day || 10,
         closing_day: card.closing_day || 5,
         last_four_digits: card.last_four_digits || '',
@@ -348,8 +351,8 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
         title: '',
         flag: 'visa',
         limit: 0,
-        current_balance: 0,
-        linked_account_id: '',
+        initial_balance: 0,
+        account_id: '',
         due_day: 10,
         closing_day: 5,
         last_four_digits: '',
@@ -369,8 +372,8 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
         title: formData.title,
         flag: formData.flag,
         limit: formData.limit,
-        current_balance: formData.current_balance,
-        linked_account_id: formData.linked_account_id || null,
+        initial_balance: formData.initial_balance,
+        account_id: formData.account_id,
         due_day: formData.due_day,
         closing_day: formData.closing_day,
         last_four_digits: formData.last_four_digits,
@@ -443,11 +446,11 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
           />
 
           <Input
-            label="Saldo atual"
+            label="Saldo inicial"
             type="number"
             step="0.01"
-            value={formData.current_balance}
-            onChange={(e) => handleInputChange('current_balance', Number(e.target.value))}
+            value={formData.initial_balance}
+            onChange={(e) => handleInputChange('initial_balance', Number(e.target.value))}
           />
 
           <Input
@@ -483,11 +486,32 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
           />
 
           <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Conta associada *
+            </label>
+            <Dropdown
+              options={[
+                { value: '', label: 'Selecione uma conta' },
+                ...accounts.map(account => ({
+                  value: account.id,
+                  label: `${account.title} (${account.type === 'bank' ? 'Banco' : 'Dinheiro'})`
+                }))
+              ]}
+              value={formData.account_id}
+              onChange={(value) => handleInputChange('account_id', value)}
+            />
+            {!formData.account_id && (
+              <p className="text-xs text-red-600 mt-1">Selecione uma conta para associar ao cartão</p>
+            )}
+          </div>
+
+          <div className="md:col-span-2">
             <Input
               label="Conta vinculada (opcional)"
-              value={formData.linked_account_id}
-              onChange={(e) => handleInputChange('linked_account_id', e.target.value)}
+              value={formData.account_id}
+              onChange={(e) => handleInputChange('account_id', e.target.value)}
               placeholder="Selecione uma conta para débito automático"
+              style={{ display: 'none' }}
             />
           </div>
         </div>
@@ -510,6 +534,7 @@ function CreditCardModal({ isOpen, onClose, card, onSave }: CreditCardModalProps
             Cancelar
           </Button>
           <Button type="submit" loading={isLoading}>
+            disabled={!formData.account_id}
             {card ? 'Atualizar' : 'Criar'} Cartão
           </Button>
         </div>

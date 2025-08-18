@@ -40,7 +40,8 @@ export const accountService = {
           icon,
           description,
           created_at,
-          updated_at
+          updated_at,
+          credit_cards!credit_cards_account_id_fkey(credit_card_id, credit_card_name)
         `)
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false });
@@ -116,6 +117,19 @@ export const accountService = {
 
   async deleteAccount(id: string) {
     try {
+      // Check for dependent credit cards
+      const { data: dependentCards, error: checkError } = await supabase
+        .from('credit_cards')
+        .select('credit_card_id, credit_card_name')
+        .eq('account_id', id);
+
+      if (checkError) throw new Error('Failed to check dependent credit cards: ' + checkError.message);
+      
+      if (dependentCards && dependentCards.length > 0) {
+        const cardNames = dependentCards.map(card => card.credit_card_name).join(', ');
+        throw new Error(`Cannot delete account. The following credit cards are linked to this account: ${cardNames}. Please unlink or delete these cards first.`);
+      }
+
       const { error } = await supabase
         .from('accounts')
         .delete()
