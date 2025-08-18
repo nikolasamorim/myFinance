@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Filter, Calendar, DollarSign, TrendingUp, TrendingDown, CreditCard, LayoutDashboard } from 'lucide-react';
+import { Filter, Calendar, DollarSign, TrendingUp, TrendingDown, CreditCard, LayoutDashboard } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Dropdown } from '../components/ui/Dropdown';
+import { TransactionTypeSelector } from '../components/ui/TransactionTypeSelector';
 import { TransactionModal } from '../components/transactions/TransactionModal';
 import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
 import { MonthlyChart } from '../components/dashboard/MonthlyChart';
@@ -167,9 +168,9 @@ export function Dashboard() {
     setFilters(prev => ({ ...prev, [key]: value as any }));
   };
 
-  const handleCreateTransaction = () => {
+  const handleCreateTransaction = (type: 'income' | 'expense' | 'debt' | 'investment') => {
     setEditingTransaction(undefined);
-    setSelectedTransactionType('expense');
+    setSelectedTransactionType(type);
     setIsAdvancedModalOpen(true);
   };
 
@@ -274,10 +275,10 @@ export function Dashboard() {
               <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Filtros
             </Button>
-            <Button onClick={handleCreateTransaction} size="sm">
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Nova Transação
-            </Button>
+            <TransactionTypeSelector
+              onSelect={handleCreateTransaction}
+              className="h-7 px-2.5 text-xs"
+            />
           </div>
         </div>
 

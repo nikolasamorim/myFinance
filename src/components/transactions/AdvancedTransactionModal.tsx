@@ -314,11 +314,28 @@ export function AdvancedTransactionModal({
     }
   };
 
+  const getTransactionTypeColor = () => {
+    switch (transactionType) {
+      case 'income': return 'text-green-600';
+      case 'expense': return 'text-red-600';
+      case 'debt': return 'text-orange-600';
+      case 'investment': return 'text-blue-600';
+      default: return 'text-gray-600';
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={`Nova ${getTransactionTypeLabel()}`}
+      title={
+        <div className="flex items-center space-x-2">
+          <span>Nova {getTransactionTypeLabel()}</span>
+          <span className={`text-sm font-normal ${getTransactionTypeColor()}`}>
+            ({transactionType})
+          </span>
+        </div>
+      }
       size="xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

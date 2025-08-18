@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Bell, User, LogOut, Settings, Building, Users, X, LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, CreditCard, Wallet, Tag, Target, History } from 'lucide-react';
+import { Bell, User, LogOut, Settings, Building, Users, X, LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, CreditCard, Wallet, Tag, Target, History, Plus } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Dropdown } from '../ui/Dropdown';
+import { TransactionTypeSelector } from '../ui/TransactionTypeSelector';
 import { SidebarToggleButton } from '../ui/SidebarToggleButton';
 import { Sidebar } from './Sidebar';
 
@@ -101,6 +102,24 @@ export function Navbar() {
 
           {/* Right side - Notifications and User Menu */}
           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+            {/* Quick Transaction Button - Desktop only */}
+            <div className="hidden md:block">
+              <TransactionTypeSelector
+                onSelect={(type) => {
+                  // Navigate to dashboard and trigger transaction creation
+                  navigate('/dashboard');
+                  // This would need to be handled by the Dashboard component
+                  // For now, we'll just navigate to dashboard
+                }}
+                trigger={
+                  <button className="flex items-center space-x-1 px-2 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden lg:inline">Nova</span>
+                  </button>
+                }
+              />
+            </div>
+
             {/* Notifications */}
             <div className="relative">
               <button 
