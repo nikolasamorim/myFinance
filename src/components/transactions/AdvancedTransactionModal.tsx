@@ -131,6 +131,18 @@ export function AdvancedTransactionModal({
     recurrence_type: 'monthly',
     due_adjustment: 'none',
   });
+  const [formData, setFormData] = useState<AdvancedTransactionData>({
+    transaction_type: transactionType as 'income' | 'expense' | 'debt' | 'investment',
+    description: '',
+    emission_date: new Date().toISOString().split('T')[0],
+    due_date: new Date().toISOString().split('T')[0],
+    competence_date: new Date().toISOString().slice(0, 7),
+    amount: 0,
+    account_id: '',
+    payment_method: 'pix',
+    is_installment: false,
+    is_recurring: false,
+  });
 
   // Data hooks
   const { data: accounts = [] } = useAccounts({ type: 'all', search: '' });
