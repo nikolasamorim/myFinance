@@ -289,6 +289,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
     } else if (parentCostCenterId) {
       setFormData({
         title: '',
+        type: parentCostCenterId ? 'expense' : 'expense',
         code: '',
         parent_id: parentCostCenterId,
         accounting_code: '',
@@ -298,6 +299,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
     } else {
       setFormData({
         title: '',
+        type: 'expense',
         code: '',
         parent_id: '',
         accounting_code: '',
