@@ -7,6 +7,8 @@ import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
 import { TabSelector } from '../../components/ui/TabSelector';
 import { KanbanBoard } from '../../components/kanban/KanbanBoard';
+import { ColorPicker } from '../../components/ui/ColorPicker';
+import { IconPicker } from '../../components/ui/IconPicker';
 import { useCategories } from '../../hooks/useCategories';
 import { cn } from '../../lib/utils';
 import type { CategoryData } from '../../services/category.service';
