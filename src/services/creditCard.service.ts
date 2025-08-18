@@ -27,23 +27,20 @@ export const creditCardService = {
       let query = supabase
         .from('credit_cards')
         .select(`
-          id,
-          workspace_id,
-          title,
-          flag,
-          limit,
-          linked_account_id,
-          due_day,
-          closing_day,
-          description,
-          created_at,
-          updated_at
+          credit_card_id,
+          credit_card_workspace_id,
+          credit_card_name,
+          credit_card_limit,
+          credit_card_closing_day,
+          credit_card_due_day,
+          credit_card_created_at,
+          credit_card_updated_at
         `)
-        .eq('workspace_id', workspaceId)
-        .order('created_at', { ascending: false });
+        .eq('credit_card_workspace_id', workspaceId)
+        .order('credit_card_created_at', { ascending: false });
 
       if (filters.search) {
-        query = query.ilike('title', `%${filters.search}%`);
+        query = query.ilike('credit_card_name', `%${filters.search}%`);
       }
 
       const { data, error } = await query;
@@ -53,7 +50,20 @@ export const creditCardService = {
         throw new Error('Failed to fetch credit cards: ' + error.message);
       }
       
-      return data || [];
+      // Map database column names to frontend expected format
+      return (data || []).map(card => ({
+        id: card.credit_card_id,
+        workspace_id: card.credit_card_workspace_id,
+        title: card.credit_card_name,
+        flag: 'Visa', // Default since flag column doesn't exist in schema
+        limit: card.credit_card_limit,
+        linked_account_id: null, // Not in current schema
+        due_day: card.credit_card_due_day,
+        closing_day: card.credit_card_closing_day,
+        description: null, // Not in current schema
+        created_at: card.credit_card_created_at,
+        updated_at: card.credit_card_updated_at,
+      }));
     } catch (error) {
       console.error('Error in getCreditCards:', error);
       throw error;
@@ -69,14 +79,11 @@ export const creditCardService = {
       const { data, error } = await supabase
         .from('credit_cards')
         .insert([{
-          workspace_id: workspaceId,
-          title: cardData.title,
-          flag: cardData.flag,
-          limit: cardData.limit,
-          linked_account_id: cardData.linked_account_id,
-          due_day: cardData.due_day,
-          closing_day: cardData.closing_day,
-          description: cardData.description,
+          credit_card_workspace_id: workspaceId,
+          credit_card_name: cardData.title,
+          credit_card_limit: cardData.limit,
+          credit_card_due_day: cardData.due_day,
+          credit_card_closing_day: cardData.closing_day,
         }])
         .select()
         .single();
@@ -91,10 +98,17 @@ export const creditCardService = {
 
   async updateCreditCard(id: string, updates: Partial<CreditCardData>) {
     try {
+      // Map frontend field names to database column names
+      const dbUpdates: any = {};
+      if (updates.title) dbUpdates.credit_card_name = updates.title;
+      if (updates.limit !== undefined) dbUpdates.credit_card_limit = updates.limit;
+      if (updates.due_day !== undefined) dbUpdates.credit_card_due_day = updates.due_day;
+      if (updates.closing_day !== undefined) dbUpdates.credit_card_closing_day = updates.closing_day;
+
       const { data, error } = await supabase
         .from('credit_cards')
-        .update(updates)
-        .eq('id', id)
+        .update(dbUpdates)
+        .eq('credit_card_id', id)
         .select()
         .single();
 
@@ -111,7 +125,7 @@ export const creditCardService = {
       const { error } = await supabase
         .from('credit_cards')
         .delete()
-        .eq('id', id);
+        .eq('credit_card_id', id);
 
       if (error) throw new Error('Failed to delete credit card: ' + error.message);
     } catch (error) {
