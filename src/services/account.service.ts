@@ -40,8 +40,7 @@ export const accountService = {
           icon,
           description,
           created_at,
-          updated_at,
-          credit_cards(credit_card_id, credit_card_name)
+          updated_at
         `)
         .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false });
