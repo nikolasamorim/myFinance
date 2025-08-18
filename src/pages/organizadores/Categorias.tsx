@@ -267,7 +267,7 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
     } else if (parentCategoryId) {
       setFormData({
         title: '',
-        type: 'expense',
+        type: (typeof parentCategoryId === 'string' && (parentCategoryId === 'expense' || parentCategoryId === 'income') ? parentCategoryId : 'expense') as 'income' | 'expense',
         parent_id: parentCategoryId,
         description: '',
       });
