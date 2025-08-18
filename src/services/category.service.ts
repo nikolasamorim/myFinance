@@ -8,7 +8,6 @@ interface CategoryFilters {
 export interface CategoryData {
   title: string;
   type: 'income' | 'expense';
-  parent_id?: string | null;
   description?: string;
 }
 
@@ -29,7 +28,6 @@ export const categoryService = {
           category_workspace_id,
           category_name,
           category_type,
-          parent_id,
           description,
           category_created_at,
           category_updated_at
@@ -71,7 +69,6 @@ export const categoryService = {
           category_workspace_id: workspaceId,
           category_name: categoryData.title,
           category_type: categoryData.type,
-          parent_id: categoryData.parent_id,
           description: categoryData.description,
         }])
         .select()
@@ -92,7 +89,6 @@ export const categoryService = {
         .update({
           category_name: updates.title,
           category_type: updates.type,
-          parent_id: updates.parent_id,
           description: updates.description,
         })
         .eq('category_id', id)
