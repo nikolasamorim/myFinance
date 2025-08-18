@@ -149,16 +149,6 @@ export function Navbar() {
                   
                   <button 
                     onClick={() => {
-                      navigate('/history');
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <History className="w-4 h-4 mr-3" />
-                    Histórico
-                  </button>
-                  <button 
-                    onClick={() => {
                       navigate('/settings');
                       setShowUserMenu(false);
                     }}
@@ -166,6 +156,16 @@ export function Navbar() {
                   >
                     <Settings className="w-4 h-4 mr-3" />
                     Configurações
+                  </button>
+                  <button 
+                    onClick={() => {
+                      navigate('/history');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <History className="w-4 h-4 mr-3" />
+                    Histórico
                   </button>
                   <button
                     onClick={() => {
