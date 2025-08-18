@@ -6,7 +6,6 @@ import { Input } from '../../components/ui/Input';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
 import { TabSelector } from '../../components/ui/TabSelector';
-import { HierarchyView } from '../../components/hierarchy/HierarchyView';
 import { KanbanBoard } from '../../components/kanban/KanbanBoard';
 import { useCategories } from '../../hooks/useCategories';
 import { cn } from '../../lib/utils';
@@ -31,7 +30,7 @@ const typeOptions = [
 ];
 
 export function Categorias() {
-  const [activeTab, setActiveTab] = useState('table');
+  const [activeTab, setActiveTab] = useState('hierarchy');
   const [filters, setFilters] = useState<CategoryFilters>({
     type: 'all',
     search: '',
@@ -100,8 +99,8 @@ export function Categorias() {
   };
 
   const tabs = [
-    { id: 'table', label: 'Tabela', icon: <Table className="w-4 h-4" /> },
     { id: 'hierarchy', label: 'Hierarquia', icon: <TreePine className="w-4 h-4" /> },
+    { id: 'table', label: 'Tabela', icon: <Table className="w-4 h-4" /> },
   ];
 
   const renderCategoryContent = (category: any) => {
@@ -185,33 +184,107 @@ export function Categorias() {
         )}
 
         {/* Content based on active tab */}
-        {/* Kanban Board */}
         <div className="px-1 sm:px-0">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600" />
             </div>
           ) : (
-            <KanbanBoard
-              items={categories.map(cat => ({
-                id: cat.category_id,
-                title: cat.category_name,
-                type: cat.category_type,
-                parent_id: cat.parent_id,
-                sort_order: cat.sort_order,
-                description: cat.description,
-                ...cat,
-              }))}
-              columns={[
-                { id: 'expense', title: 'Categorias de Despesa', type: 'expense' },
-                { id: 'income', title: 'Categorias de Receita', type: 'income' },
-              ]}
-              onEdit={handleEditCategory}
-              onDelete={(id) => handleDeleteCategory(id)}
-              onCreate={handleCreateCategory}
-              onReorder={handleReorderCategories}
-              renderItemContent={renderCategoryContent}
-            />
+            <>
+              {activeTab === 'hierarchy' && (
+                <KanbanBoard
+                  items={categories.map(cat => ({
+                    id: cat.category_id,
+                    title: cat.category_name,
+                    type: cat.category_type,
+                    parent_id: cat.parent_id,
+                    sort_order: cat.sort_order,
+                    description: cat.description,
+                    ...cat,
+                  }))}
+                  columns={[
+                    { id: 'expense', title: 'Categorias de Despesa', type: 'expense' },
+                    { id: 'income', title: 'Categorias de Receita', type: 'income' },
+                  ]}
+                  onEdit={handleEditCategory}
+                  onDelete={(id) => handleDeleteCategory(id)}
+                  onCreate={handleCreateCategory}
+                  onReorder={handleReorderCategories}
+                  renderItemContent={renderCategoryContent}
+                />
+              )}
+
+              {activeTab === 'table' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg sm:text-xl">Categorias Cadastradas</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0 sm:p-6">
+                    <div className="w-full overflow-x-auto">
+                      <table className="w-full min-w-[700px]">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Nome</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Tipo</th>
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Categoria Pai</th>
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[150px]">Descrição</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categories.map((category) => (
+                            <tr key={category.category_id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{category.category_name}</p>
+                                </div>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getTypeColor(category.category_type)}`}>
+                                  {getTypeLabel(category.category_type)}
+                                </span>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600">
+                                {category.parent_name || '-'}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600">
+                                {category.description || '-'}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex justify-center space-x-1 sm:space-x-2">
+                                  <button
+                                    onClick={() => handleEditCategory(category)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCategory(category.category_id)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      
+                      {categories.length === 0 && (
+                        <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
+                          <Tag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                          <p className="text-base sm:text-lg font-medium">Nenhuma categoria encontrada</p>
+                          <p className="text-xs sm:text-sm">Comece criando sua primeira categoria</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </div>
       </div>

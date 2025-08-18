@@ -27,11 +27,15 @@ export const categoryService = {
           category_workspace_id,
           category_name,
           category_type,
+          parent_id,
+          sort_order,
+          description,
           category_created_at,
-          category_updated_at
+          category_updated_at,
+          parent:categories!parent_id(category_name)
         `)
         .eq('category_workspace_id', workspaceId)
-        .order('category_name', { ascending: true });
+        .order('sort_order', { ascending: true });
 
       if (filters.search) {
         query = query.ilike('category_name', `%${filters.search}%`);
@@ -48,7 +52,19 @@ export const categoryService = {
         throw new Error('Failed to fetch categories: ' + error.message);
       }
       
-      return data || [];
+      // Map database columns to frontend interface
+      return (data || []).map(item => ({
+        category_id: item.category_id,
+        category_workspace_id: item.category_workspace_id,
+        category_name: item.category_name,
+        category_type: item.category_type,
+        parent_id: item.parent_id,
+        sort_order: item.sort_order,
+        description: item.description,
+        parent_name: item.parent?.category_name || null,
+        category_created_at: item.category_created_at,
+        category_updated_at: item.category_updated_at,
+      }));
     } catch (error) {
       console.error('Error in getCategories:', error);
       throw error;
@@ -67,6 +83,9 @@ export const categoryService = {
           category_workspace_id: workspaceId,
           category_name: categoryData.title,
           category_type: categoryData.type,
+          parent_id: categoryData.parent_id,
+          description: categoryData.description,
+          sort_order: categoryData.sort_order || 0,
         }])
         .select()
         .single();
@@ -86,6 +105,9 @@ export const categoryService = {
         .update({
           category_name: updates.title,
           category_type: updates.type,
+          parent_id: updates.parent_id,
+          description: updates.description,
+          sort_order: updates.sort_order,
         })
         .eq('category_id', id)
         .select()

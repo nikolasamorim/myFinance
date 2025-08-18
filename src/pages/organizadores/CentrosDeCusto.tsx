@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
+import { TabSelector } from '../../components/ui/TabSelector';
 import { KanbanBoard } from '../../components/kanban/KanbanBoard';
 import { useCostCenters } from '../../hooks/useCostCenters';
 import { cn } from '../../lib/utils';
@@ -32,6 +33,7 @@ const statusOptions = [
 ];
 
 export function CentrosDeCusto() {
+  const [activeTab, setActiveTab] = useState('hierarchy');
   const [filters, setFilters] = useState<CostCenterFilters>({
     status: 'all',
     search: '',
@@ -103,6 +105,11 @@ export function CentrosDeCusto() {
     }
   };
 
+  const tabs = [
+    { id: 'hierarchy', label: 'Hierarquia', icon: <TreePine className="w-4 h-4" /> },
+    { id: 'table', label: 'Tabela', icon: <Table className="w-4 h-4" /> },
+  ];
+
   const renderCostCenterContent = (costCenter: any) => {
     return (
       <div className="flex items-center justify-between w-full">
@@ -155,6 +162,11 @@ export function CentrosDeCusto() {
             </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
+            <TabSelector
+              tabs={tabs}
+              activeTab={activeTab}
+              onChange={setActiveTab}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -199,35 +211,125 @@ export function CentrosDeCusto() {
         )}
 
         {/* Content based on active tab */}
-        {/* Kanban Board */}
         <div className="px-1 sm:px-0">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
             </div>
           ) : (
-            <KanbanBoard
-              items={costCenters.map(cc => ({
-                id: cc.id,
-                title: cc.title,
-                type: cc.type || 'expense',
-                parent_id: cc.parent_id,
-                sort_order: cc.sort_order,
-                code: cc.code,
-                accounting_code: cc.accounting_code,
-                status: cc.status,
-                description: cc.description,
-                ...cc,
-              }))}
-              columns={[
-                { id: 'cost-centers', title: 'Centros de Custo', type: undefined },
-              ]}
-              onEdit={handleEditCostCenter}
-              onDelete={handleDeleteCostCenter}
-              onCreate={handleCreateCostCenter}
-              onReorder={handleReorderCostCenters}
-              renderItemContent={renderCostCenterContent}
-            />
+            <>
+              {activeTab === 'hierarchy' && (
+                <KanbanBoard
+                  items={costCenters.map(cc => ({
+                    id: cc.id,
+                    title: cc.title,
+                    type: cc.type || 'expense',
+                    parent_id: cc.parent_id,
+                    sort_order: cc.sort_order,
+                    code: cc.code,
+                    accounting_code: cc.accounting_code,
+                    status: cc.status,
+                    description: cc.description,
+                    ...cc,
+                  }))}
+                  columns={[
+                    { id: 'cost-centers', title: 'Centros de Custo', type: undefined },
+                  ]}
+                  onEdit={handleEditCostCenter}
+                  onDelete={handleDeleteCostCenter}
+                  onCreate={handleCreateCostCenter}
+                  onReorder={handleReorderCostCenters}
+                  renderItemContent={renderCostCenterContent}
+                />
+              )}
+
+              {activeTab === 'table' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg sm:text-xl">Centros de Custo Cadastrados</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0 sm:p-6">
+                    <div className="w-full overflow-x-auto">
+                      <table className="w-full min-w-[800px]">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Nome</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Tipo</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Código</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Código Contábil</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Status</th>
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Centro Pai</th>
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[150px]">Descrição</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {costCenters.map((costCenter) => (
+                            <tr key={costCenter.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{costCenter.title}</p>
+                                </div>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${
+                                  costCenter.type === 'revenue' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                                }`}>
+                                  {costCenter.type === 'revenue' ? 'Receita' : 'Despesa'}
+                                </span>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                                {costCenter.code || '-'}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                                {costCenter.accounting_code || '-'}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getStatusColor(costCenter.status)}`}>
+                                  {getStatusLabel(costCenter.status)}
+                                </span>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600">
+                                {costCenter.parent_name || '-'}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600">
+                                {costCenter.description || '-'}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex justify-center space-x-1 sm:space-x-2">
+                                  <button
+                                    onClick={() => handleEditCostCenter(costCenter)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCostCenter(costCenter.id)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      
+                      {costCenters.length === 0 && (
+                        <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
+                          <Target className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                          <p className="text-base sm:text-lg font-medium">Nenhum centro de custo encontrado</p>
+                          <p className="text-xs sm:text-sm">Comece criando seu primeiro centro de custo</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </div>
       </div>

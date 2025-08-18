@@ -32,6 +32,7 @@ export const costCenterService = {
           cost_center_id,
           cost_center_workspace_id,
           cost_center_name,
+          type,
           parent_id,
           sort_order,
           status,
@@ -39,7 +40,8 @@ export const costCenterService = {
           accounting_code,
           description,
           cost_center_created_at,
-          cost_center_updated_at
+          cost_center_updated_at,
+          parent:cost_centers!parent_id(cost_center_name)
         `)
         .eq('cost_center_workspace_id', workspaceId)
         .order('sort_order', { ascending: true });
@@ -60,8 +62,10 @@ export const costCenterService = {
         id: item.cost_center_id,
         workspace_id: item.cost_center_workspace_id,
         title: item.cost_center_name,
+        type: item.type,
         code: item.code,
         parent_id: item.parent_id,
+        parent_name: item.parent?.cost_center_name || null,
         accounting_code: item.accounting_code,
         status: item.status || 'active',
         description: item.description,
@@ -85,6 +89,7 @@ export const costCenterService = {
         .insert([{
           cost_center_workspace_id: workspaceId,
           cost_center_name: costCenterData.title,
+          type: costCenterData.type,
           code: costCenterData.code,
           parent_id: costCenterData.parent_id,
           accounting_code: costCenterData.accounting_code,
@@ -107,6 +112,7 @@ export const costCenterService = {
     try {
       const updateData: any = {};
       if (updates.title !== undefined) updateData.cost_center_name = updates.title;
+      if (updates.type !== undefined) updateData.type = updates.type;
       if (updates.code !== undefined) updateData.code = updates.code;
       if (updates.parent_id !== undefined) updateData.parent_id = updates.parent_id;
       if (updates.accounting_code !== undefined) updateData.accounting_code = updates.accounting_code;
