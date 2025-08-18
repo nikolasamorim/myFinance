@@ -7,6 +7,7 @@ interface CostCenterFilters {
 
 export interface CostCenterData {
   title: string;
+  type: 'revenue' | 'expense';
   code?: string | null;
   parent_id?: string | null;
   accounting_code?: string | null;
@@ -155,6 +156,7 @@ export const costCenterService = {
           .update({
             parent_id: update.parent_id,
             sort_order: update.sort_order,
+            ...(update.type && { type: update.type }),
           })
           .eq('cost_center_id', update.id)
           .eq('cost_center_workspace_id', workspaceId)

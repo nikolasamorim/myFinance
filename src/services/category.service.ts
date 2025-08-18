@@ -126,6 +126,7 @@ export const categoryService = {
           .update({
             parent_id: update.parent_id,
             sort_order: update.sort_order,
+            ...(update.type && { category_type: update.type }),
           })
           .eq('category_id', update.id)
           .eq('category_workspace_id', workspaceId)
