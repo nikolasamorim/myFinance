@@ -25,6 +25,43 @@ export interface Transaction {
   transaction_date: string;
   transaction_created_at: string;
   transaction_updated_at?: string;
+  recurrence_id?: string;
+  installment_group_id?: string;
+  installment_number?: number;
+  installment_total?: number;
+  transaction_status?: 'pending' | 'paid' | 'received';
+}
+
+export interface RecurrenceRule {
+  id: string;
+  workspace_id: string;
+  user_id: string;
+  transaction_type: 'income' | 'expense' | 'debt' | 'investment';
+  description: string;
+  start_date: string;
+  recurrence_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  repeat_count?: number;
+  end_date?: string;
+  due_adjustment: 'none' | 'previous_business_day' | 'next_business_day';
+  recurrence_day?: string;
+  status: 'active' | 'paused' | 'canceled';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InstallmentGroup {
+  id: string;
+  workspace_id: string;
+  user_id: string;
+  total_value: number;
+  installment_count: number;
+  initial_due_date: string;
+  description: string;
+  payment_method_id?: string;
+  account_id?: string;
+  card_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Category {

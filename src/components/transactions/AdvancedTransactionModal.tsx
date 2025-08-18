@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, Edit, Trash2, Plus, AlertCircle } from 'lucide-react';
+import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, Edit, Trash2, Plus, AlertCircle, Repeat, Clock } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -42,6 +42,16 @@ interface Installment {
   amount: number;
 }
 
+interface RecurrenceData {
+  enabled: boolean;
+  start_date: string;
+  end_date?: string;
+  recurrence_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  repeat_count?: number;
+  due_adjustment: 'none' | 'previous_business_day' | 'next_business_day';
+  recurrence_day?: string;
+}
+
 interface AdvancedTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -64,14 +74,23 @@ const paymentMethodOptions = [
   { value: 'auto_debit', label: 'Débito Automático' },
 ];
 
+const recurrenceTypeOptions = [
+  { value: 'daily', label: 'Diário' },
+  { value: 'weekly', label: 'Semanal' },
+  { value: 'monthly', label: 'Mensal' },
+  { value: 'yearly', label: 'Anual' },
+];
+
+const dueAdjustmentOptions = [
+  { value: 'none', label: 'Nenhum ajuste' },
+  { value: 'previous_business_day', label: 'Dia útil anterior' },
+  { value: 'next_business_day', label: 'Próximo dia útil' },
+];
+
 // Smart currency formatter
 const formatCurrencyInput = (value: string): string => {
-  // Remove all non-numeric characters
   const numericValue = value.replace(/\D/g, '');
-  
   if (!numericValue) return '';
-  
-  // Convert to number and format
   const number = parseInt(numericValue) / 100;
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -82,12 +101,9 @@ const formatCurrencyInput = (value: string): string => {
 
 // Smart installment formatter
 const formatInstallmentInput = (value: string): string => {
-  // Remove all non-numeric characters
   const numericValue = value.replace(/\D/g, '');
-  
   if (!numericValue) return '';
   
-  // Format as NN/NN
   if (numericValue.length <= 2) {
     return numericValue;
   } else if (numericValue.length <= 4) {
@@ -106,6 +122,12 @@ const validateInstallmentFormat = (value: string): boolean => {
   return current >= 1 && current <= total && total >= 1 && total <= 99;
 };
 
+// Parse currency input to number
+const parseCurrencyInput = (value: string): number => {
+  const numericValue = value.replace(/\D/g, '');
+  return numericValue ? parseInt(numericValue) / 100 : 0;
+};
+
 export function AdvancedTransactionModal({ 
   isOpen, 
   onClose, 
@@ -120,6 +142,12 @@ export function AdvancedTransactionModal({
   const [validationError, setValidationError] = useState('');
   const [currencyDisplayValue, setCurrencyDisplayValue] = useState('');
   const [tabValidationErrors, setTabValidationErrors] = useState<string[]>([]);
+  const [recurrenceData, setRecurrenceData] = useState<RecurrenceData>({
+    enabled: false,
+    start_date: new Date().toISOString().split('T')[0],
+    recurrence_type: 'monthly',
+    due_adjustment: 'none',
+  });
 
   // Data hooks
   const { data: accounts = [] } = useAccounts({ type: 'all', search: '' });
@@ -144,7 +172,7 @@ export function AdvancedTransactionModal({
     defaultValues: {
       emission_date: new Date().toISOString().split('T')[0],
       due_date: new Date().toISOString().split('T')[0],
-      competence_date: new Date().toISOString().slice(0, 7), // YYYY-MM format
+      competence_date: new Date().toISOString().slice(0, 7),
       is_installment: false,
       is_recurring: false,
       payment_method: 'pix',
@@ -154,6 +182,7 @@ export function AdvancedTransactionModal({
 
   const watchedValues = watch();
   const isInstallment = watch('is_installment');
+  const isRecurring = watch('is_recurring');
   const emissionDate = watch('emission_date');
   const mainAmount = watch('amount');
 
@@ -161,7 +190,8 @@ export function AdvancedTransactionModal({
   useEffect(() => {
     if (emissionDate) {
       setValue('due_date', emissionDate);
-      setValue('competence_date', emissionDate.slice(0, 7)); // YYYY-MM
+      setValue('competence_date', emissionDate.slice(0, 7));
+      setRecurrenceData(prev => ({ ...prev, start_date: emissionDate }));
     }
   }, [emissionDate, setValue]);
 
@@ -171,9 +201,23 @@ export function AdvancedTransactionModal({
       setInstallments([]);
       setInstallmentsGenerated(false);
       setInstallmentInput('');
-      setActiveTab('data');
+      if (activeTab === 'installments') {
+        setActiveTab('data');
+      }
     }
-  }, [isInstallment]);
+  }, [isInstallment, activeTab]);
+
+  // Reset recurrence when recurring toggle is turned off
+  useEffect(() => {
+    if (!isRecurring) {
+      setRecurrenceData(prev => ({ ...prev, enabled: false }));
+      if (activeTab === 'recurrence') {
+        setActiveTab('data');
+      }
+    } else {
+      setRecurrenceData(prev => ({ ...prev, enabled: true }));
+    }
+  }, [isRecurring, activeTab]);
 
   // Initialize currency display value
   useEffect(() => {
@@ -213,10 +257,17 @@ export function AdvancedTransactionModal({
 
   // Handle tab change with validation
   const handleTabChange = async (newTab: string) => {
+    // Prevent access to installments tab if not enabled
     if (newTab === 'installments' && !isInstallment) {
-      return; // Prevent access if installment is not enabled
+      return;
     }
 
+    // Prevent access to recurrence tab if not enabled
+    if (newTab === 'recurrence' && !isRecurring) {
+      return;
+    }
+
+    // Validate data tab before switching
     if (activeTab === 'data' && newTab !== 'data') {
       const isDataValid = await validateDataTab();
       if (!isDataValid) {
@@ -235,8 +286,7 @@ export function AdvancedTransactionModal({
     const formatted = formatCurrencyInput(inputValue);
     setCurrencyDisplayValue(formatted);
     
-    // Extract numeric value and set in form
-    const numericValue = parseFloat(inputValue.replace(/\D/g, '')) / 100;
+    const numericValue = parseCurrencyInput(inputValue);
     setValue('amount', numericValue || 0);
   };
 
@@ -329,9 +379,45 @@ export function AdvancedTransactionModal({
     if (!installmentsGenerated) return false;
     if (installments.length === 0) return false;
     
-    const tolerance = 0.01; // Allow 1 cent difference due to rounding
+    const tolerance = 0.01;
     return Math.abs(installmentsTotal - mainAmount) < tolerance;
   }, [isInstallment, installmentsGenerated, installments.length, installmentsTotal, mainAmount]);
+
+  // Generate recurrence preview
+  const generateRecurrencePreview = (): string[] => {
+    if (!recurrenceData.enabled) return [];
+    
+    const preview: string[] = [];
+    const startDate = new Date(recurrenceData.start_date);
+    const endDate = recurrenceData.end_date ? new Date(recurrenceData.end_date) : null;
+    const maxPreview = 5;
+    
+    for (let i = 0; i < (recurrenceData.repeat_count || maxPreview); i++) {
+      const date = new Date(startDate);
+      
+      switch (recurrenceData.recurrence_type) {
+        case 'daily':
+          date.setDate(date.getDate() + i);
+          break;
+        case 'weekly':
+          date.setDate(date.getDate() + (i * 7));
+          break;
+        case 'monthly':
+          date.setMonth(date.getMonth() + i);
+          break;
+        case 'yearly':
+          date.setFullYear(date.getFullYear() + i);
+          break;
+      }
+      
+      if (endDate && date > endDate) break;
+      if (preview.length >= maxPreview) break;
+      
+      preview.push(date.toLocaleDateString('pt-BR'));
+    }
+    
+    return preview;
+  };
 
   const onSubmit = async (data: TransactionFormData) => {
     setValidationError('');
@@ -359,12 +445,20 @@ export function AdvancedTransactionModal({
       }
     }
 
+    // Validate recurrence if needed
+    if (data.is_recurring && !recurrenceData.enabled) {
+      setValidationError('Configure a recorrência antes de salvar');
+      setActiveTab('recurrence');
+      return;
+    }
+
     try {
       const transactionData = {
         ...data,
         transaction_type: transactionType,
         transaction_workspace_id: currentWorkspace?.workspace_id,
         installments: data.is_installment ? installments : undefined,
+        recurrence: data.is_recurring ? recurrenceData : undefined,
       };
 
       await onSave(transactionData);
@@ -384,6 +478,12 @@ export function AdvancedTransactionModal({
     setValidationError('');
     setTabValidationErrors([]);
     setCurrencyDisplayValue('');
+    setRecurrenceData({
+      enabled: false,
+      start_date: new Date().toISOString().split('T')[0],
+      recurrence_type: 'monthly',
+      due_adjustment: 'none',
+    });
     onClose();
   };
 
@@ -425,6 +525,12 @@ export function AdvancedTransactionModal({
       label: 'Parcelas', 
       icon: <CreditCard className="w-4 h-4" />,
       disabled: !isInstallment 
+    },
+    { 
+      id: 'recurrence', 
+      label: 'Recorrência', 
+      icon: <Repeat className="w-4 h-4" />,
+      disabled: !isRecurring 
     },
   ];
 
@@ -899,17 +1005,147 @@ export function AdvancedTransactionModal({
               )}
             </div>
           )}
+
+          {activeTab === 'recurrence' && isRecurring && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Configuração de Recorrência
+                </h3>
+                <div className="text-sm text-gray-600">
+                  Valor por ocorrência: <span className="font-semibold">{formatCurrency(mainAmount || 0)}</span>
+                </div>
+              </div>
+
+              {/* Recurrence Configuration */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="Data de Início"
+                    type="date"
+                    value={recurrenceData.start_date}
+                    onChange={(e) => setRecurrenceData(prev => ({ ...prev, start_date: e.target.value }))}
+                    required
+                  />
+
+                  <Input
+                    label="Data de Fim (opcional)"
+                    type="date"
+                    value={recurrenceData.end_date || ''}
+                    onChange={(e) => setRecurrenceData(prev => ({ ...prev, end_date: e.target.value || undefined }))}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tipo de Recorrência
+                    </label>
+                    <Dropdown
+                      options={recurrenceTypeOptions}
+                      value={recurrenceData.recurrence_type}
+                      onChange={(value) => setRecurrenceData(prev => ({ ...prev, recurrence_type: value as any }))}
+                    />
+                  </div>
+
+                  <Input
+                    label="Número de Repetições (opcional)"
+                    type="number"
+                    min="1"
+                    value={recurrenceData.repeat_count || ''}
+                    onChange={(e) => setRecurrenceData(prev => ({ 
+                      ...prev, 
+                      repeat_count: e.target.value ? Number(e.target.value) : undefined 
+                    }))}
+                    placeholder="Ex: 12 para 12 meses"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ajuste de Vencimento
+                  </label>
+                  <Dropdown
+                    options={dueAdjustmentOptions}
+                    value={recurrenceData.due_adjustment}
+                    onChange={(value) => setRecurrenceData(prev => ({ ...prev, due_adjustment: value as any }))}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Como ajustar vencimentos que caem em fins de semana ou feriados
+                  </p>
+                </div>
+
+                {/* Recurrence Day for specific types */}
+                {(recurrenceData.recurrence_type === 'monthly' || recurrenceData.recurrence_type === 'yearly') && (
+                  <Input
+                    label={`Dia do ${recurrenceData.recurrence_type === 'monthly' ? 'Mês' : 'Ano'}`}
+                    type="number"
+                    min="1"
+                    max={recurrenceData.recurrence_type === 'monthly' ? "31" : "365"}
+                    value={recurrenceData.recurrence_day || ''}
+                    onChange={(e) => setRecurrenceData(prev => ({ ...prev, recurrence_day: e.target.value }))}
+                    placeholder={recurrenceData.recurrence_type === 'monthly' ? "Ex: 15 para dia 15" : "Ex: 90 para 90º dia do ano"}
+                  />
+                )}
+              </div>
+
+              {/* Recurrence Preview */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 mb-3 flex items-center">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Prévia da Recorrência
+                </h4>
+                
+                <div className="space-y-2">
+                  <p className="text-sm text-blue-800">
+                    <strong>Tipo:</strong> {recurrenceTypeOptions.find(t => t.value === recurrenceData.recurrence_type)?.label}
+                  </p>
+                  <p className="text-sm text-blue-800">
+                    <strong>Início:</strong> {new Date(recurrenceData.start_date).toLocaleDateString('pt-BR')}
+                  </p>
+                  {recurrenceData.end_date && (
+                    <p className="text-sm text-blue-800">
+                      <strong>Fim:</strong> {new Date(recurrenceData.end_date).toLocaleDateString('pt-BR')}
+                    </p>
+                  )}
+                  {recurrenceData.repeat_count && (
+                    <p className="text-sm text-blue-800">
+                      <strong>Repetições:</strong> {recurrenceData.repeat_count}x
+                    </p>
+                  )}
+                  
+                  <div className="mt-3">
+                    <p className="text-sm font-medium text-blue-900 mb-2">Próximas ocorrências:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {generateRecurrencePreview().map((date, index) => (
+                        <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                          {date}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Form Actions */}
         <div className="flex justify-between items-center pt-6 border-t border-gray-200">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 space-y-1">
             {isInstallment && (
-              <span className={cn(
+              <div className={cn(
                 installmentsGenerated ? 'text-green-600' : 'text-yellow-600'
               )}>
                 Parcelas: {installmentsGenerated ? `${installments.length} geradas` : 'Não geradas'}
-              </span>
+              </div>
+            )}
+            {isRecurring && (
+              <div className={cn(
+                recurrenceData.enabled ? 'text-green-600' : 'text-yellow-600'
+              )}>
+                Recorrência: {recurrenceData.enabled ? 'Configurada' : 'Não configurada'}
+              </div>
             )}
           </div>
           
@@ -920,7 +1156,10 @@ export function AdvancedTransactionModal({
             <Button 
               type="submit" 
               loading={isSubmitting}
-              disabled={isInstallment && (!installmentsGenerated || !installmentsValid)}
+              disabled={
+                (isInstallment && (!installmentsGenerated || !installmentsValid)) ||
+                (isRecurring && !recurrenceData.enabled)
+              }
             >
               Salvar {getTransactionTypeLabel()}
             </Button>
