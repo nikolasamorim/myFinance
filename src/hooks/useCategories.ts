@@ -57,5 +57,12 @@ export function useCategories(filters: CategoryFilters) {
     createCategory,
     updateCategory,
     deleteCategory,
+    updateCategoryOrder: useMutation({
+      mutationFn: (updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) =>
+        categoryService.updateCategoryOrder(currentWorkspace!.workspace_id, updates),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['categories', currentWorkspace?.workspace_id] });
+      },
+    }),
   };
 }

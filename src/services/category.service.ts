@@ -112,4 +112,37 @@ export const categoryService = {
       throw error;
     }
   },
+
+  async updateCategoryOrder(workspaceId: string, updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw new Error('Authentication failed: ' + userError.message);
+      if (!user) throw new Error('User not authenticated');
+
+      // Update multiple categories in a single transaction-like operation
+      const promises = updates.map(update => 
+        supabase
+          .from('categories')
+          .update({
+            parent_id: update.parent_id,
+            sort_order: update.sort_order,
+          })
+          .eq('category_id', update.id)
+          .eq('category_workspace_id', workspaceId)
+      );
+
+      const results = await Promise.all(promises);
+      
+      // Check for errors
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        throw new Error('Failed to update category order: ' + errors[0].error.message);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in updateCategoryOrder:', error);
+      throw error;
+    }
+  },
 };

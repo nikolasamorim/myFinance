@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Tag, Plus, Filter, Edit, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
+import { Tag, Plus, Filter, Edit, Trash2, Table, TreePine } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
+import { TabSelector } from '../../components/ui/TabSelector';
+import { HierarchyView } from '../../components/hierarchy/HierarchyView';
 import { useCategories } from '../../hooks/useCategories';
 import { cn } from '../../lib/utils';
 import type { CategoryData } from '../../services/category.service';
@@ -17,6 +19,8 @@ interface CategoryFilters {
 interface CategoryFormData {
   title: string;
   type: 'income' | 'expense';
+  parent_id: string;
+  description: string;
 }
 
 const typeOptions = [
@@ -26,6 +30,7 @@ const typeOptions = [
 ];
 
 export function Categorias() {
+  const [activeTab, setActiveTab] = useState('table');
   const [filters, setFilters] = useState<CategoryFilters>({
     type: 'all',
     search: '',
@@ -33,33 +38,31 @@ export function Categorias() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [parentCategoryId, setParentCategoryId] = useState<string | undefined>();
   const [showFilters, setShowFilters] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const { 
     data: categories = [], 
     isLoading, 
     createCategory, 
     updateCategory, 
-    deleteCategory 
+    deleteCategory,
+    updateCategoryOrder,
   } = useCategories(filters);
-
-  // Organize categories hierarchically
-  const hierarchicalCategories = useMemo(() => {
-    return categories;
-  }, [categories]);
 
   const handleFilterChange = (key: keyof CategoryFilters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleCreateCategory = () => {
+  const handleCreateCategory = (parentId?: string) => {
     setEditingCategory(null);
+    setParentCategoryId(parentId);
     setShowModal(true);
   };
 
   const handleEditCategory = (category: any) => {
     setEditingCategory(category);
+    setParentCategoryId(undefined);
     setShowModal(true);
   };
 
@@ -69,14 +72,8 @@ export function Categorias() {
     }
   };
 
-  const toggleExpanded = (categoryId: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
-    setExpandedCategories(newExpanded);
+  const handleReorderCategories = async (updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) => {
+    await updateCategoryOrder.mutateAsync(updates);
   };
 
   const getTypeLabel = (type: string) => {
@@ -101,43 +98,26 @@ export function Categorias() {
     }
   };
 
-  const renderCategory = (category: any, level: number = 0) => {
+  const tabs = [
+    { id: 'table', label: 'Tabela', icon: <Table className="w-4 h-4" /> },
+    { id: 'hierarchy', label: 'Hierarquia', icon: <TreePine className="w-4 h-4" /> },
+  ];
+
+  const renderCategoryContent = (category: any) => {
     return (
-      <tr key={category.category_id} className="border-b border-gray-100 hover:bg-gray-50">
-          <td className="py-2 sm:py-3 px-2 sm:px-4">
-            <div className="flex items-center">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{category.category_name}</p>
-                {category.description && (
-                  <p className="text-xs text-gray-500 truncate">{category.description}</p>
-                )}
-              </div>
-            </div>
-          </td>
-          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
-            <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getTypeColor(category.category_type)}`}>
-              {getTypeLabel(category.category_type)}
-            </span>
-          </td>
-          <td className="py-2 sm:py-3 px-2 sm:px-4">
-            <div className="flex justify-center space-x-1 sm:space-x-2">
-              <button
-                onClick={() => handleEditCategory(category)}
-                className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                title="Editar"
-              >
-                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-              </button>
-              <button
-                onClick={() => handleDeleteCategory(category.category_id)}
-                className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
-                title="Excluir"
-              >
-                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-              </button>
-            </div>
-          </td>
-        </tr>
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center space-x-3">
+          <div>
+            <p className="font-medium text-gray-900">{category.category_name}</p>
+            {category.description && (
+              <p className="text-sm text-gray-500">{category.description}</p>
+            )}
+          </div>
+          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(category.category_type)}`}>
+            {getTypeLabel(category.category_type)}
+          </span>
+        </div>
+      </div>
     );
   };
 
@@ -152,7 +132,14 @@ export function Categorias() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Categorias</h1>
+            </div>
+          </div>
           <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
+            <TabSelector
+              tabs={tabs}
+              activeTab={activeTab}
+              onChange={setActiveTab}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -161,7 +148,7 @@ export function Categorias() {
               <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Filtros
             </Button>
-            <Button onClick={handleCreateCategory} size="sm">
+            <Button onClick={() => handleCreateCategory()} size="sm">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Nova Categoria
             </Button>
@@ -196,7 +183,7 @@ export function Categorias() {
           </div>
         )}
 
-        {/* Categories Table */}
+        {/* Content based on active tab */}
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
@@ -208,28 +195,83 @@ export function Categorias() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600" />
                 </div>
               ) : (
-                <div className="w-full overflow-x-auto">
-                  <table className="w-full min-w-[600px]">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[200px]">Nome</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Tipo</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categories.map((category) => renderCategory(category))}
-                    </tbody>
-                  </table>
-                  
-                  {categories.length === 0 && (
-                    <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                      <Tag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
-                      <p className="text-base sm:text-lg font-medium">Nenhuma categoria encontrada</p>
-                      <p className="text-xs sm:text-sm">Comece criando sua primeira categoria</p>
+                <>
+                  {activeTab === 'table' ? (
+                    <div className="w-full overflow-x-auto">
+                      <table className="w-full min-w-[600px]">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[200px]">Nome</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Tipo</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categories.map((category) => (
+                            <tr key={category.category_id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex items-center">
+                                  <div>
+                                    <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{category.category_name}</p>
+                                    {category.description && (
+                                      <p className="text-xs text-gray-500 truncate">{category.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getTypeColor(category.category_type)}`}>
+                                  {getTypeLabel(category.category_type)}
+                                </span>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex justify-center space-x-1 sm:space-x-2">
+                                  <button
+                                    onClick={() => handleEditCategory(category)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCategory(category.category_id)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      
+                      {categories.length === 0 && (
+                        <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
+                          <Tag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                          <p className="text-base sm:text-lg font-medium">Nenhuma categoria encontrada</p>
+                          <p className="text-xs sm:text-sm">Comece criando sua primeira categoria</p>
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    <HierarchyView
+                      items={categories.map(cat => ({
+                        id: cat.category_id,
+                        title: cat.category_name,
+                        parent_id: cat.parent_id,
+                        sort_order: cat.sort_order,
+                        ...cat,
+                      }))}
+                      onEdit={handleEditCategory}
+                      onDelete={(id) => handleDeleteCategory(id)}
+                      onCreate={handleCreateCategory}
+                      onReorder={handleReorderCategories}
+                      renderItemContent={renderCategoryContent}
+                    />
                   )}
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -241,10 +283,11 @@ export function Categorias() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         category={editingCategory}
+        parentCategoryId={parentCategoryId}
         categories={categories}
         onSave={async (data) => {
           if (editingCategory) {
-            await updateCategory.mutateAsync({ id: editingCategory.id, updates: data });
+            await updateCategory.mutateAsync({ id: editingCategory.category_id, updates: data });
           } else {
             await createCategory.mutateAsync(data);
           }
@@ -260,14 +303,17 @@ interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   category?: any;
+  parentCategoryId?: string;
   categories: any[];
   onSave: (data: any) => Promise<void>;
 }
 
-function CategoryModal({ isOpen, onClose, category, categories, onSave }: CategoryModalProps) {
+function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories, onSave }: CategoryModalProps) {
   const [formData, setFormData] = useState<CategoryFormData>({
     title: '',
     type: 'expense',
+    parent_id: '',
+    description: '',
     parent_id: '',
     description: '',
   });
@@ -282,6 +328,13 @@ function CategoryModal({ isOpen, onClose, category, categories, onSave }: Catego
         parent_id: category.parent_id || '',
         description: category.description || '',
       });
+    } else if (parentCategoryId) {
+      setFormData({
+        title: '',
+        type: 'expense',
+        parent_id: parentCategoryId,
+        description: '',
+      });
     } else {
       setFormData({
         title: '',
@@ -290,7 +343,7 @@ function CategoryModal({ isOpen, onClose, category, categories, onSave }: Catego
         description: '',
       });
     }
-  }, [category]);
+  }, [category, parentCategoryId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -320,6 +373,14 @@ function CategoryModal({ isOpen, onClose, category, categories, onSave }: Catego
     { value: 'expense', label: 'Despesa' },
   ];
 
+  // Filter parent categories and exclude current category
+  const parentOptions = [
+    { value: '', label: 'Nenhuma (categoria raiz)' },
+    ...categories
+      .filter(cat => cat.category_id !== category?.category_id)
+      .map(cat => ({ value: cat.category_id, label: cat.category_name }))
+  ];
+
   return (
     <Modal
       isOpen={isOpen}
@@ -339,7 +400,7 @@ function CategoryModal({ isOpen, onClose, category, categories, onSave }: Catego
             />
           </div>
 
-          <div className="md:col-span-2">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tipo
             </label>
@@ -347,6 +408,18 @@ function CategoryModal({ isOpen, onClose, category, categories, onSave }: Catego
               options={typeFormOptions}
               value={formData.type}
               onChange={(value) => handleInputChange('type', value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Categoria pai
+            </label>
+            <Dropdown
+              options={parentOptions}
+              value={formData.parent_id}
+              onChange={(value) => handleInputChange('parent_id', value)}
+              placeholder="Selecione uma categoria pai"
             />
           </div>
         </div>

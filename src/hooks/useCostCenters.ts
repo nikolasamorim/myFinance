@@ -57,5 +57,12 @@ export function useCostCenters(filters: CostCenterFilters) {
     createCostCenter,
     updateCostCenter,
     deleteCostCenter,
+    updateCostCenterOrder: useMutation({
+      mutationFn: (updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) =>
+        costCenterService.updateCostCenterOrder(currentWorkspace!.workspace_id, updates),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['cost-centers', currentWorkspace?.workspace_id] });
+      },
+    }),
   };
 }

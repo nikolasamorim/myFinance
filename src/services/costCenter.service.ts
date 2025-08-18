@@ -7,11 +7,12 @@ interface CostCenterFilters {
 
 export interface CostCenterData {
   title: string;
-  code?: string;
+  code?: string | null;
   parent_id?: string | null;
-  accounting_code?: string;
+  accounting_code?: string | null;
+  sort_order?: number;
   status: 'active' | 'inactive';
-  description?: string;
+  description?: string | null;
 }
 
 export const costCenterService = {
@@ -30,11 +31,17 @@ export const costCenterService = {
           cost_center_id,
           cost_center_workspace_id,
           cost_center_name,
+          parent_id,
+          sort_order,
+          status,
+          code,
+          accounting_code,
+          description,
           cost_center_created_at,
           cost_center_updated_at
         `)
         .eq('cost_center_workspace_id', workspaceId)
-        .order('cost_center_name', { ascending: true });
+        .order('sort_order', { ascending: true });
 
       if (filters.search) {
         query = query.ilike('cost_center_name', `%${filters.search}%`);
@@ -52,11 +59,11 @@ export const costCenterService = {
         id: item.cost_center_id,
         workspace_id: item.cost_center_workspace_id,
         title: item.cost_center_name,
-        code: null, // Not in current schema
-        parent_id: null, // Not in current schema
-        accounting_code: null, // Not in current schema
-        status: 'active', // Default since not in current schema
-        description: null, // Not in current schema
+        code: item.code,
+        parent_id: item.parent_id,
+        accounting_code: item.accounting_code,
+        status: item.status || 'active',
+        description: item.description,
         created_at: item.cost_center_created_at,
         updated_at: item.cost_center_updated_at,
       }));
@@ -77,6 +84,12 @@ export const costCenterService = {
         .insert([{
           cost_center_workspace_id: workspaceId,
           cost_center_name: costCenterData.title,
+          code: costCenterData.code,
+          parent_id: costCenterData.parent_id,
+          accounting_code: costCenterData.accounting_code,
+          status: costCenterData.status,
+          description: costCenterData.description,
+          sort_order: costCenterData.sort_order || 0,
         }])
         .select()
         .single();
@@ -91,11 +104,18 @@ export const costCenterService = {
 
   async updateCostCenter(id: string, updates: Partial<CostCenterData>) {
     try {
+      const updateData: any = {};
+      if (updates.title !== undefined) updateData.cost_center_name = updates.title;
+      if (updates.code !== undefined) updateData.code = updates.code;
+      if (updates.parent_id !== undefined) updateData.parent_id = updates.parent_id;
+      if (updates.accounting_code !== undefined) updateData.accounting_code = updates.accounting_code;
+      if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.sort_order !== undefined) updateData.sort_order = updates.sort_order;
+
       const { data, error } = await supabase
         .from('cost_centers')
-        .update({
-          cost_center_name: updates.title,
-        })
+        .update(updateData)
         .eq('cost_center_id', id)
         .select()
         .single();
@@ -118,6 +138,39 @@ export const costCenterService = {
       if (error) throw new Error('Failed to delete cost center: ' + error.message);
     } catch (error) {
       console.error('Error in deleteCostCenter:', error);
+      throw error;
+    }
+  },
+
+  async updateCostCenterOrder(workspaceId: string, updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw new Error('Authentication failed: ' + userError.message);
+      if (!user) throw new Error('User not authenticated');
+
+      // Update multiple cost centers in a single transaction-like operation
+      const promises = updates.map(update => 
+        supabase
+          .from('cost_centers')
+          .update({
+            parent_id: update.parent_id,
+            sort_order: update.sort_order,
+          })
+          .eq('cost_center_id', update.id)
+          .eq('cost_center_workspace_id', workspaceId)
+      );
+
+      const results = await Promise.all(promises);
+      
+      // Check for errors
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        throw new Error('Failed to update cost center order: ' + errors[0].error.message);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in updateCostCenterOrder:', error);
       throw error;
     }
   },

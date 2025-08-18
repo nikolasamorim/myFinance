@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Target, Plus, Filter, Edit, Trash2, ChevronRight, ChevronDown, Building } from 'lucide-react';
+import { Target, Plus, Filter, Edit, Trash2, Table, TreePine } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
+import { TabSelector } from '../../components/ui/TabSelector';
+import { HierarchyView } from '../../components/hierarchy/HierarchyView';
 import { useCostCenters } from '../../hooks/useCostCenters';
 import { cn } from '../../lib/utils';
 import type { CostCenterData } from '../../services/costCenter.service';
@@ -30,6 +32,7 @@ const statusOptions = [
 ];
 
 export function CentrosDeCusto() {
+  const [activeTab, setActiveTab] = useState('table');
   const [filters, setFilters] = useState<CostCenterFilters>({
     status: 'all',
     search: '',
@@ -37,51 +40,31 @@ export function CentrosDeCusto() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingCostCenter, setEditingCostCenter] = useState<any>(null);
+  const [parentCostCenterId, setParentCostCenterId] = useState<string | undefined>();
   const [showFilters, setShowFilters] = useState(false);
-  const [expandedCostCenters, setExpandedCostCenters] = useState<Set<string>>(new Set());
 
   const { 
     data: costCenters = [], 
     isLoading, 
     createCostCenter, 
     updateCostCenter, 
-    deleteCostCenter 
+    deleteCostCenter,
+    updateCostCenterOrder,
   } = useCostCenters(filters);
-
-  // Organize cost centers hierarchically
-  const hierarchicalCostCenters = useMemo(() => {
-    const costCenterMap = new Map();
-    const rootCostCenters: any[] = [];
-
-    // First pass: create map of all cost centers
-    costCenters.forEach(costCenter => {
-      costCenterMap.set(costCenter.id, { ...costCenter, children: [] });
-    });
-
-    // Second pass: organize hierarchy
-    costCenters.forEach(costCenter => {
-      const costCenterWithChildren = costCenterMap.get(costCenter.id);
-      if (costCenter.parent_id && costCenterMap.has(costCenter.parent_id)) {
-        costCenterMap.get(costCenter.parent_id).children.push(costCenterWithChildren);
-      } else {
-        rootCostCenters.push(costCenterWithChildren);
-      }
-    });
-
-    return rootCostCenters;
-  }, [costCenters]);
 
   const handleFilterChange = (key: keyof CostCenterFilters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleCreateCostCenter = () => {
+  const handleCreateCostCenter = (parentId?: string) => {
     setEditingCostCenter(null);
+    setParentCostCenterId(parentId);
     setShowModal(true);
   };
 
   const handleEditCostCenter = (costCenter: any) => {
     setEditingCostCenter(costCenter);
+    setParentCostCenterId(undefined);
     setShowModal(true);
   };
 
@@ -91,14 +74,8 @@ export function CentrosDeCusto() {
     }
   };
 
-  const toggleExpanded = (costCenterId: string) => {
-    const newExpanded = new Set(expandedCostCenters);
-    if (newExpanded.has(costCenterId)) {
-      newExpanded.delete(costCenterId);
-    } else {
-      newExpanded.add(costCenterId);
-    }
-    setExpandedCostCenters(newExpanded);
+  const handleReorderCostCenters = async (updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) => {
+    await updateCostCenterOrder.mutateAsync(updates);
   };
 
   const getStatusLabel = (status: string) => {
@@ -123,68 +100,38 @@ export function CentrosDeCusto() {
     }
   };
 
-  const renderCostCenter = (costCenter: any, level: number = 0) => {
-    const hasChildren = costCenter.children && costCenter.children.length > 0;
-    const isExpanded = expandedCostCenters.has(costCenter.id);
+  const tabs = [
+    { id: 'table', label: 'Tabela', icon: <Table className="w-4 h-4" /> },
+    { id: 'hierarchy', label: 'Hierarquia', icon: <TreePine className="w-4 h-4" /> },
+  ];
 
+  const renderCostCenterContent = (costCenter: any) => {
     return (
-      <React.Fragment key={costCenter.id}>
-        <tr className="border-b border-gray-100 hover:bg-gray-50">
-          <td className="py-2 sm:py-3 px-2 sm:px-4">
-            <div className="flex items-center" style={{ paddingLeft: `${level * 20}px` }}>
-              {hasChildren && (
-                <button
-                  onClick={() => toggleExpanded(costCenter.id)}
-                  className="mr-2 p-1 hover:bg-gray-200 rounded"
-                >
-                  {isExpanded ? (
-                    <ChevronDown className="w-3 h-3" />
-                  ) : (
-                    <ChevronRight className="w-3 h-3" />
-                  )}
-                </button>
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center space-x-3">
+          <div>
+            <p className="font-medium text-gray-900">{costCenter.title}</p>
+            {costCenter.description && (
+              <p className="text-sm text-gray-500">{costCenter.description}</p>
+            )}
+            <div className="flex items-center space-x-2 mt-1">
+              {costCenter.code && (
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                  {costCenter.code}
+                </span>
               )}
-              {!hasChildren && <div className="w-6 mr-2" />}
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{costCenter.title}</p>
-                {costCenter.description && (
-                  <p className="text-xs text-gray-500 truncate">{costCenter.description}</p>
-                )}
-              </div>
+              {costCenter.accounting_code && (
+                <span className="text-xs text-gray-500 bg-blue-100 px-2 py-0.5 rounded">
+                  {costCenter.accounting_code}
+                </span>
+              )}
             </div>
-          </td>
-          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-            {costCenter.code || '-'}
-          </td>
-          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-            {costCenter.accounting_code || '-'}
-          </td>
-          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
-            <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getStatusColor(costCenter.status)}`}>
-              {getStatusLabel(costCenter.status)}
-            </span>
-          </td>
-          <td className="py-2 sm:py-3 px-2 sm:px-4">
-            <div className="flex justify-center space-x-1 sm:space-x-2">
-              <button
-                onClick={() => handleEditCostCenter(costCenter)}
-                className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                title="Editar"
-              >
-                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-              </button>
-              <button
-                onClick={() => handleDeleteCostCenter(costCenter.id)}
-                className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
-                title="Excluir"
-              >
-                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-              </button>
-            </div>
-          </td>
-        </tr>
-        {hasChildren && isExpanded && costCenter.children.map((child: any) => renderCostCenter(child, level + 1))}
-      </React.Fragment>
+          </div>
+        </div>
+        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(costCenter.status)}`}>
+          {getStatusLabel(costCenter.status)}
+        </span>
+      </div>
     );
   };
 
@@ -203,6 +150,11 @@ export function CentrosDeCusto() {
             </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
+            <TabSelector
+              tabs={tabs}
+              activeTab={activeTab}
+              onChange={setActiveTab}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -211,7 +163,7 @@ export function CentrosDeCusto() {
               <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Filtros
             </Button>
-            <Button onClick={handleCreateCostCenter} size="sm">
+            <Button onClick={() => handleCreateCostCenter()} size="sm">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Novo Centro de Custo
             </Button>
@@ -246,7 +198,7 @@ export function CentrosDeCusto() {
           </div>
         )}
 
-        {/* Cost Centers Table */}
+        {/* Content based on active tab */}
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
@@ -258,30 +210,85 @@ export function CentrosDeCusto() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
                 </div>
               ) : (
-                <div className="w-full overflow-x-auto">
-                  <table className="w-full min-w-[700px]">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[200px]">Nome</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Código</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Código Contábil</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Status</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {hierarchicalCostCenters.map((costCenter) => renderCostCenter(costCenter))}
-                    </tbody>
-                  </table>
-                  
-                  {costCenters.length === 0 && (
-                    <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                      <Target className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
-                      <p className="text-base sm:text-lg font-medium">Nenhum centro de custo encontrado</p>
-                      <p className="text-xs sm:text-sm">Comece criando seu primeiro centro de custo</p>
+                <>
+                  {activeTab === 'table' ? (
+                    <div className="w-full overflow-x-auto">
+                      <table className="w-full min-w-[700px]">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[200px]">Nome</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Código</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Código Contábil</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Status</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {costCenters.map((costCenter) => (
+                            <tr key={costCenter.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex items-center">
+                                  <div>
+                                    <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{costCenter.title}</p>
+                                    {costCenter.description && (
+                                      <p className="text-xs text-gray-500 truncate">{costCenter.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                                {costCenter.code || '-'}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                                {costCenter.accounting_code || '-'}
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getStatusColor(costCenter.status)}`}>
+                                  {getStatusLabel(costCenter.status)}
+                                </span>
+                              </td>
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex justify-center space-x-1 sm:space-x-2">
+                                  <button
+                                    onClick={() => handleEditCostCenter(costCenter)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCostCenter(costCenter.id)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      
+                      {costCenters.length === 0 && (
+                        <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
+                          <Target className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                          <p className="text-base sm:text-lg font-medium">Nenhum centro de custo encontrado</p>
+                          <p className="text-xs sm:text-sm">Comece criando seu primeiro centro de custo</p>
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    <HierarchyView
+                      items={costCenters}
+                      onEdit={handleEditCostCenter}
+                      onDelete={handleDeleteCostCenter}
+                      onCreate={handleCreateCostCenter}
+                      onReorder={handleReorderCostCenters}
+                      renderItemContent={renderCostCenterContent}
+                    />
                   )}
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -293,6 +300,7 @@ export function CentrosDeCusto() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         costCenter={editingCostCenter}
+        parentCostCenterId={parentCostCenterId}
         costCenters={costCenters}
         onSave={async (data) => {
           if (editingCostCenter) {
@@ -312,11 +320,12 @@ interface CostCenterModalProps {
   isOpen: boolean;
   onClose: () => void;
   costCenter?: any;
+  parentCostCenterId?: string;
   costCenters: any[];
   onSave: (data: any) => Promise<void>;
 }
 
-function CostCenterModal({ isOpen, onClose, costCenter, costCenters, onSave }: CostCenterModalProps) {
+function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, costCenters, onSave }: CostCenterModalProps) {
   const [formData, setFormData] = useState<CostCenterFormData>({
     title: '',
     code: '',
@@ -338,6 +347,15 @@ function CostCenterModal({ isOpen, onClose, costCenter, costCenters, onSave }: C
         status: costCenter.status || 'active',
         description: costCenter.description || '',
       });
+    } else if (parentCostCenterId) {
+      setFormData({
+        title: '',
+        code: '',
+        parent_id: parentCostCenterId,
+        accounting_code: '',
+        status: 'active',
+        description: '',
+      });
     } else {
       setFormData({
         title: '',
@@ -348,7 +366,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, costCenters, onSave }: C
         description: '',
       });
     }
-  }, [costCenter]);
+  }, [costCenter, parentCostCenterId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
