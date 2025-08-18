@@ -120,7 +120,7 @@ export const advancedTransactionService = {
       .insert([{
         workspace_id: workspaceId,
         user_id: userId,
-        transaction_type: data.transaction_type,
+        transaction_type: transactionType,
         description: data.description,
         start_date: data.recurrence.start_date,
         recurrence_type: data.recurrence.recurrence_type,
@@ -141,7 +141,7 @@ export const advancedTransactionService = {
       .insert([{
         transaction_workspace_id: workspaceId,
         transaction_created_by_user_id: userId,
-        transaction_type: data.transaction_type,
+        transaction_type: transactionType,
         transaction_description: data.description,
         transaction_amount: data.amount,
         transaction_issue_date: data.emission_date,
