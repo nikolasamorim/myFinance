@@ -17,7 +17,6 @@ interface CategoryFilters {
 interface CategoryFormData {
   title: string;
   type: 'income' | 'expense';
-  description: string;
 }
 
 const typeOptions = [
@@ -153,9 +152,6 @@ export function Categorias() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Categorias</h1>
-              <p className="text-sm sm:text-base text-gray-600">Organize transações por categorias</p>
-            </div>
-          </div>
           <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
             <Button
               variant="outline"
