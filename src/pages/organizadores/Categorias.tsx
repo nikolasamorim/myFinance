@@ -20,6 +20,8 @@ interface CategoryFormData {
   title: string;
   type: 'income' | 'expense';
   parent_id: string;
+  color: string;
+  icon: string;
   description: string;
 }
 

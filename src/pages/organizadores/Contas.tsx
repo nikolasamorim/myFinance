@@ -381,6 +381,18 @@ function AccountModal({ isOpen, onClose, account, onSave }: AccountModalProps) {
             onChange={(e) => handleInputChange('cost_center_id', e.target.value)}
             placeholder="Selecione um centro de custo"
           />
+
+          <ColorPicker
+            label="Cor da conta"
+            value={formData.color}
+            onChange={(value) => handleInputChange('color', value)}
+          />
+
+          <IconPicker
+            label="Ícone da conta"
+            value={formData.icon}
+            onChange={(value) => handleInputChange('icon', value)}
+          />
         </div>
 
         <div>
