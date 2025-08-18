@@ -24,8 +24,6 @@ interface CostCenterFormData {
   parent_id: string;
   accounting_code: string;
   status: 'active' | 'inactive';
-  color: string;
-  icon: string;
   description: string;
 }
 
@@ -555,6 +553,18 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
               placeholder="Selecione um centro pai"
             />
           </div>
+
+          <ColorPicker
+            label="Cor do centro de custo"
+            value={formData.color}
+            onChange={(value) => handleInputChange('color', value)}
+          />
+
+          <IconPicker
+            label="Ícone do centro de custo"
+            value={formData.icon}
+            onChange={(value) => handleInputChange('icon', value)}
+          />
         </div>
 
         <div>
