@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Dropdown } from '../components/ui/Dropdown';
 import { TransactionModal } from '../components/transactions/TransactionModal';
+import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
 import { MonthlyChart } from '../components/dashboard/MonthlyChart';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useWorkspace } from '../context/WorkspaceContext';
@@ -36,6 +37,8 @@ interface MonthlyData {
 export function Dashboard() {
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
+  const [selectedTransactionType, setSelectedTransactionType] = useState<'income' | 'expense' | 'debt' | 'investment'>('expense');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<DashboardFilters>({
@@ -166,7 +169,8 @@ export function Dashboard() {
 
   const handleCreateTransaction = () => {
     setEditingTransaction(undefined);
-    setIsTransactionModalOpen(true);
+    setSelectedTransactionType('expense');
+    setIsAdvancedModalOpen(true);
   };
 
   const handleEditTransaction = (transaction: Transaction) => {
@@ -176,6 +180,7 @@ export function Dashboard() {
 
   const handleCloseModal = () => {
     setIsTransactionModalOpen(false);
+    setIsAdvancedModalOpen(false);
     setEditingTransaction(undefined);
   };
 
@@ -573,6 +578,18 @@ export function Dashboard() {
         isOpen={isTransactionModalOpen}
         onClose={handleCloseModal}
         transaction={editingTransaction}
+      />
+
+      {/* Advanced Transaction Modal */}
+      <AdvancedTransactionModal
+        isOpen={isAdvancedModalOpen}
+        onClose={handleCloseModal}
+        transactionType={selectedTransactionType}
+        onSave={async (data) => {
+          console.log('Saving advanced transaction:', data);
+          // TODO: Implement advanced transaction saving logic
+          handleCloseModal();
+        }}
       />
     </>
   );

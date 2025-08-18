@@ -5,6 +5,7 @@ interface Tab {
   id: string;
   label: string;
   icon?: React.ReactNode;
+  disabled?: boolean;
 }
 
 interface TabSelectorProps {
@@ -21,11 +22,13 @@ export function TabSelector({ tabs, activeTab, onChange, className }: TabSelecto
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
+          disabled={tab.disabled}
           className={cn(
             'flex items-center space-x-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all',
             activeTab === tab.id
               ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+            tab.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-600'
           )}
         >
           {tab.icon && <span className="w-4 h-4">{tab.icon}</span>}
