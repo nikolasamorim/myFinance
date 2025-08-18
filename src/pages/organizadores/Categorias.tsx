@@ -7,6 +7,7 @@ import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
 import { TabSelector } from '../../components/ui/TabSelector';
 import { HierarchyView } from '../../components/hierarchy/HierarchyView';
+import { KanbanBoard } from '../../components/ui/KanbanBoard';
 import { useCategories } from '../../hooks/useCategories';
 import { cn } from '../../lib/utils';
 import type { CategoryData } from '../../services/category.service';
@@ -57,12 +58,12 @@ export function Categorias() {
   const handleCreateCategory = (parentId?: string) => {
     setEditingCategory(null);
     setParentCategoryId(parentId);
-      (typeof parentId === 'string' && (parentId === 'expense' || parentId === 'income') ? parentId : 'expense');
+    setShowModal(true);
   };
 
   const handleEditCategory = (category: any) => {
     setEditingCategory(category);
-    setParentCategoryId(parentId && parentId !== 'expense' && parentId !== 'income' ? parentId : undefined);
+    setParentCategoryId(category.parent_id && category.parent_id !== 'expense' && category.parent_id !== 'income' ? category.parent_id : undefined);
     setShowModal(true);
   };
 
@@ -74,6 +75,10 @@ export function Categorias() {
 
   const handleReorderCategories = async (updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) => {
     await updateCategoryOrder.mutateAsync(updates);
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
       case 'income':
         return 'Receita';
       case 'expense':
@@ -247,8 +252,6 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
     type: 'expense',
     parent_id: '',
     description: '',
-    parent_id: '',
-    description: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -264,7 +267,7 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
     } else if (parentCategoryId) {
       setFormData({
         title: '',
-        type: (typeof parentCategoryId === 'string' && (parentCategoryId === 'expense' || parentCategoryId === 'income') ? parentCategoryId : 'expense') as 'income' | 'expense',
+        type: 'expense',
         parent_id: parentCategoryId,
         description: '',
       });
