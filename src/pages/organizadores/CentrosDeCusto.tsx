@@ -337,6 +337,11 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
     { value: 'inactive', label: 'Inativo' },
   ];
 
+  const typeFormOptions = [
+    { value: 'revenue', label: 'Receita' },
+    { value: 'expense', label: 'Despesa' },
+  ];
+
   // Filter parent cost centers and exclude current cost center
   const parentOptions = [
     { value: '', label: 'Nenhum (centro raiz)' },
