@@ -38,7 +38,6 @@ export const creditCardService = {
           current_balance,
           credit_card_closing_day,
           credit_card_due_day,
-          last_four_digits,
           color,
           icon,
           credit_card_created_at,
@@ -69,7 +68,6 @@ export const creditCardService = {
         linked_account_id: null, // Not in current schema
         due_day: card.credit_card_due_day,
         closing_day: card.credit_card_closing_day,
-        last_four_digits: card.last_four_digits,
         color: card.color,
         icon: card.icon,
         description: null, // Not in current schema
@@ -97,7 +95,6 @@ export const creditCardService = {
           current_balance: cardData.current_balance,
           credit_card_due_day: cardData.due_day,
           credit_card_closing_day: cardData.closing_day,
-          last_four_digits: cardData.last_four_digits,
           color: cardData.color,
           icon: cardData.icon,
         }])
@@ -121,7 +118,6 @@ export const creditCardService = {
       if (updates.current_balance !== undefined) dbUpdates.current_balance = updates.current_balance;
       if (updates.due_day !== undefined) dbUpdates.credit_card_due_day = updates.due_day;
       if (updates.closing_day !== undefined) dbUpdates.credit_card_closing_day = updates.closing_day;
-      if (updates.last_four_digits !== undefined) dbUpdates.last_four_digits = updates.last_four_digits;
       if (updates.color !== undefined) dbUpdates.color = updates.color;
       if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
 
