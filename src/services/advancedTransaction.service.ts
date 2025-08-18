@@ -40,9 +40,9 @@ export const advancedTransactionService = {
         transaction_card_id: data.credit_card_id || null,
         transaction_cost_center_id: data.cost_center_id || null,
         transaction_category_id: data.category_id || null,
-        transaction_payment_method: data.payment_method,
-        transaction_is_paid: false,
+        payment_method: data.payment_method,
         transaction_status: 'pending',
+        recurring: false,
       }])
       .select()
       .single();
@@ -91,6 +91,9 @@ export const advancedTransactionService = {
       installment_group_id: installmentGroup.id,
       installment_number: installment.number,
       installment_total: data.installments!.length,
+      installments_count: data.installments!.length,
+      payment_method: data.payment_method,
+      recurring: false,
     }));
 
     const { data: transactions, error: transactionsError } = await supabase
@@ -141,8 +144,10 @@ export const advancedTransactionService = {
         transaction_date: data.due_date,
         transaction_bank_id: data.account_id,
         transaction_card_id: data.credit_card_id || null,
-        transaction_payment_method: data.payment_method,
-        recurrence_id: recurrenceRule.id,
+        payment_method: data.payment_method,
+        recurrence_rule_id: recurrenceRule.id,
+        recurring: true,
+        transaction_status: 'pending',
       }])
       .select()
       .single();

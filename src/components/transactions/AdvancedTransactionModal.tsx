@@ -36,18 +36,18 @@ const transactionSchema = z.object({
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
 const paymentMethodOptions = [
-  { value: 'cash', label: 'Dinheiro' },
+  { value: 'dinheiro', label: 'Dinheiro' },
   { value: 'boleto', label: 'Boleto' },
-  { value: 'credit_to_account', label: 'Crédito em Conta' },
-  { value: 'debit_to_account', label: 'Débito em Conta' },
-  { value: 'check_cash', label: 'Cheque (à vista)' },
-  { value: 'check_term', label: 'Cheque (a prazo)' },
-  { value: 'credit_card', label: 'Cartão de Crédito' },
-  { value: 'debit_card', label: 'Cartão de Débito' },
-  { value: 'bank_slip', label: 'Boleto Bancário' },
-  { value: 'barter', label: 'Permuta' },
+  { value: 'credito_em_conta', label: 'Crédito em Conta' },
+  { value: 'debito_em_conta', label: 'Débito em Conta' },
+  { value: 'cheque_a_vista', label: 'Cheque à Vista' },
+  { value: 'cheque_a_prazo', label: 'Cheque a Prazo' },
+  { value: 'cartao_de_credito', label: 'Cartão de Crédito' },
+  { value: 'cartao_de_debito', label: 'Cartão de Débito' },
+  { value: 'guia', label: 'Guia' },
+  { value: 'permuta', label: 'Permuta' },
   { value: 'pix', label: 'PIX' },
-  { value: 'auto_debit', label: 'Débito Automático' },
+  { value: 'debito_automatico', label: 'Débito Automático' },
 ];
 
 const recurrenceTypeOptions = [
