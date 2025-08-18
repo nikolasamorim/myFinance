@@ -8,6 +8,9 @@ interface CategoryFilters {
 export interface CategoryData {
   title: string;
   type: 'income' | 'expense';
+  parent_id?: string | null;
+  description?: string;
+  sort_order?: number;
 }
 
 export const categoryService = {

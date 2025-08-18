@@ -13,6 +13,7 @@ import type { CostCenterData } from '../../services/costCenter.service';
 
 interface CostCenterFilters {
   status: string;
+  type: string;
   search: string;
 }
 
@@ -32,10 +33,17 @@ const statusOptions = [
   { value: 'inactive', label: 'Inativo' },
 ];
 
+const typeOptions = [
+  { value: 'all', label: 'Todos' },
+  { value: 'revenue', label: 'Receita' },
+  { value: 'expense', label: 'Despesa' },
+];
+
 export function CentrosDeCusto() {
   const [activeTab, setActiveTab] = useState('hierarchy');
   const [filters, setFilters] = useState<CostCenterFilters>({
     status: 'all',
+    type: 'all',
     search: '',
   });
 
@@ -57,7 +65,7 @@ export function CentrosDeCusto() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleCreateCostCenter = (parentId?: string) => {
+  const handleCreateCostCenter = (parentId?: string, type?: string) => {
     setEditingCostCenter(null);
     setParentCostCenterId(parentId);
     setShowModal(true);
@@ -75,12 +83,8 @@ export function CentrosDeCusto() {
     }
   };
 
-  const handleReorderCostCenters = async (updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) => {
-    const updatesWithType = updates.map(update => ({
-      ...update,
-      type: costCenters.find(cc => cc.id === update.id)?.type,
-    }));
-    await updateCostCenterOrder.mutateAsync(updatesWithType);
+  const handleReorderCostCenters = async (updates: Array<{ id: string; parent_id: string | null; sort_order: number; type?: string }>) => {
+    await updateCostCenterOrder.mutateAsync(updates);
   };
 
   const getStatusLabel = (status: string) => {
@@ -105,6 +109,28 @@ export function CentrosDeCusto() {
     }
   };
 
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'revenue':
+        return 'Receita';
+      case 'expense':
+        return 'Despesa';
+      default:
+        return type;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'revenue':
+        return 'text-green-600 bg-green-50';
+      case 'expense':
+        return 'text-red-600 bg-red-50';
+      default:
+        return 'text-gray-600 bg-gray-50';
+    }
+  };
+
   const tabs = [
     { id: 'hierarchy', label: 'Hierarquia', icon: <TreePine className="w-4 h-4" /> },
     { id: 'table', label: 'Tabela', icon: <Table className="w-4 h-4" /> },
@@ -113,36 +139,36 @@ export function CentrosDeCusto() {
   const renderCostCenterContent = (costCenter: any) => {
     return (
       <div className="flex items-center justify-between w-full">
-        <div className="flex items-center space-x-3">
-          <div>
-            <p className="font-medium text-gray-900">{costCenter.title}</p>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
-                costCenter.type === 'revenue' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
-              }`}>
-                {costCenter.type === 'revenue' ? 'Receita' : 'Despesa'}
-              </span>
-            </div>
-            {costCenter.description && (
-              <p className="text-sm text-gray-500">{costCenter.description}</p>
-            )}
-            <div className="flex items-center space-x-2 mt-1">
-              {costCenter.code && (
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                  {costCenter.code}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-3">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-gray-900 truncate">{costCenter.title}</p>
+              <div className="flex items-center space-x-2 mt-1">
+                <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getTypeColor(costCenter.type)}`}>
+                  {getTypeLabel(costCenter.type)}
                 </span>
-              )}
-              {costCenter.accounting_code && (
-                <span className="text-xs text-gray-500 bg-blue-100 px-2 py-0.5 rounded">
-                  {costCenter.accounting_code}
+                <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(costCenter.status)}`}>
+                  {getStatusLabel(costCenter.status)}
                 </span>
+              </div>
+              {costCenter.description && (
+                <p className="text-sm text-gray-500 mt-1 truncate">{costCenter.description}</p>
               )}
+              <div className="flex items-center space-x-2 mt-1">
+                {costCenter.code && (
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                    Código: {costCenter.code}
+                  </span>
+                )}
+                {costCenter.accounting_code && (
+                  <span className="text-xs text-gray-500 bg-blue-100 px-2 py-0.5 rounded">
+                    Contábil: {costCenter.accounting_code}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
-        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(costCenter.status)}`}>
-          {getStatusLabel(costCenter.status)}
-        </span>
       </div>
     );
   };
@@ -187,7 +213,7 @@ export function CentrosDeCusto() {
           <div className="px-1 sm:px-0">
             <Card>
               <CardContent className="p-3 sm:p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Status</label>
                     <Dropdown
@@ -196,7 +222,15 @@ export function CentrosDeCusto() {
                       onChange={(value) => handleFilterChange('status', value)}
                     />
                   </div>
-                  <div className="sm:col-span-2 lg:col-span-1">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                    <Dropdown
+                      options={typeOptions}
+                      value={filters.type}
+                      onChange={(value) => handleFilterChange('type', value)}
+                    />
+                  </div>
+                  <div className="sm:col-span-2 lg:col-span-2">
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
                     <Input
                       placeholder="Buscar centros de custo..."
@@ -250,7 +284,7 @@ export function CentrosDeCusto() {
                   </CardHeader>
                   <CardContent className="p-0 sm:p-6">
                     <div className="w-full overflow-x-auto">
-                      <table className="w-full min-w-[800px]">
+                      <table className="w-full min-w-[900px]">
                         <thead>
                           <tr className="border-b border-gray-200">
                             <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Nome</th>
@@ -272,10 +306,8 @@ export function CentrosDeCusto() {
                                 </div>
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
-                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${
-                                  costCenter.type === 'revenue' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
-                                }`}>
-                                  {costCenter.type === 'revenue' ? 'Receita' : 'Despesa'}
+                                <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getTypeColor(costCenter.type)}`}>
+                                  {getTypeLabel(costCenter.type)}
                                 </span>
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
@@ -391,6 +423,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
     } else if (parentCostCenterId) {
       setFormData({
         title: '',
+        type: 'expense',
         code: '',
         parent_id: parentCostCenterId,
         accounting_code: '',
@@ -400,6 +433,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
     } else {
       setFormData({
         title: '',
+        type: 'expense',
         code: '',
         parent_id: '',
         accounting_code: '',
@@ -416,6 +450,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
     try {
       const costCenterData: CostCenterData = {
         title: formData.title,
+        type: formData.type,
         code: formData.code,
         parent_id: formData.parent_id || null,
         accounting_code: formData.accounting_code,
@@ -471,6 +506,28 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo
+            </label>
+            <Dropdown
+              options={typeFormOptions}
+              value={formData.type}
+              onChange={(value) => handleInputChange('type', value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <Dropdown
+              options={statusFormOptions}
+              value={formData.status}
+              onChange={(value) => handleInputChange('status', value)}
+            />
+          </div>
+
           <Input
             label="Código"
             value={formData.code}
@@ -485,18 +542,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
             placeholder="Ex: 1.1.001"
           />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo
-            </label>
-            <Dropdown
-              options={typeFormOptions}
-              value={formData.type}
-              onChange={(value) => handleInputChange('type', value)}
-            />
-          </div>
-
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Centro de custo pai
             </label>
@@ -505,17 +551,6 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
               value={formData.parent_id}
               onChange={(value) => handleInputChange('parent_id', value)}
               placeholder="Selecione um centro pai"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <Dropdown
-              options={statusFormOptions}
-              value={formData.status}
-              onChange={(value) => handleInputChange('status', value)}
             />
           </div>
         </div>

@@ -54,7 +54,7 @@ export function Categorias() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleCreateCategory = (parentId?: string) => {
+  const handleCreateCategory = (parentId?: string, type?: string) => {
     setEditingCategory(null);
     setParentCategoryId(parentId);
     setShowModal(true);
@@ -72,7 +72,7 @@ export function Categorias() {
     }
   };
 
-  const handleReorderCategories = async (updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) => {
+  const handleReorderCategories = async (updates: Array<{ id: string; parent_id: string | null; sort_order: number; type?: string }>) => {
     await updateCategoryOrder.mutateAsync(updates);
   };
 
@@ -106,16 +106,18 @@ export function Categorias() {
   const renderCategoryContent = (category: any) => {
     return (
       <div className="flex items-center justify-between w-full">
-        <div className="flex items-center space-x-3">
-          <div>
-            <p className="font-medium text-gray-900">{category.category_name}</p>
-            {category.description && (
-              <p className="text-sm text-gray-500">{category.description}</p>
-            )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-3">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-gray-900 truncate">{category.category_name}</p>
+              {category.description && (
+                <p className="text-sm text-gray-500 mt-1 truncate">{category.description}</p>
+              )}
+            </div>
+            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(category.category_type)}`}>
+              {getTypeLabel(category.category_type)}
+            </span>
           </div>
-          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(category.category_type)}`}>
-            {getTypeLabel(category.category_type)}
-          </span>
         </div>
       </div>
     );
@@ -132,6 +134,7 @@ export function Categorias() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Categorias</h1>
+              <p className="text-sm sm:text-base text-gray-600">Organize suas transações por categorias</p>
             </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
@@ -338,9 +341,13 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
         description: category.description || '',
       });
     } else if (parentCategoryId) {
+      // Determine type from parent or use default
+      const parentCategory = categories.find(c => c.category_id === parentCategoryId);
+      const inferredType = parentCategory?.category_type || 'expense';
+      
       setFormData({
         title: '',
-        type: (typeof parentCategoryId === 'string' && (parentCategoryId === 'expense' || parentCategoryId === 'income') ? parentCategoryId : 'expense') as 'income' | 'expense',
+        type: inferredType as 'income' | 'expense',
         parent_id: parentCategoryId,
         description: '',
       });
@@ -352,7 +359,7 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
         description: '',
       });
     }
-  }, [category, parentCategoryId]);
+  }, [category, parentCategoryId, categories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -387,6 +394,7 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
     { value: '', label: 'Nenhuma (categoria raiz)' },
     ...categories
       .filter(cat => cat.category_id !== category?.category_id)
+      .filter(cat => cat.category_type === formData.type) // Only show same type as parent options
       .map(cat => ({ value: cat.category_id, label: cat.category_name }))
   ];
 
