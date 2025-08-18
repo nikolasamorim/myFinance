@@ -27,26 +27,17 @@ export const costCenterService = {
       let query = supabase
         .from('cost_centers')
         .select(`
-          id,
-          workspace_id,
-          title,
-          code,
-          parent_id,
-          accounting_code,
-          status,
-          description,
-          created_at,
-          updated_at
+          cost_center_id,
+          cost_center_workspace_id,
+          cost_center_name,
+          cost_center_created_at,
+          cost_center_updated_at
         `)
-        .eq('workspace_id', workspaceId)
-        .order('title', { ascending: true });
+        .eq('cost_center_workspace_id', workspaceId)
+        .order('cost_center_name', { ascending: true });
 
       if (filters.search) {
-        query = query.ilike('title', `%${filters.search}%`);
-      }
-
-      if (filters.status !== 'all') {
-        query = query.eq('status', filters.status);
+        query = query.ilike('cost_center_name', `%${filters.search}%`);
       }
 
       const { data, error } = await query;
@@ -56,7 +47,19 @@ export const costCenterService = {
         throw new Error('Failed to fetch cost centers: ' + error.message);
       }
       
-      return data || [];
+      // Map database columns to frontend interface
+      return (data || []).map(item => ({
+        id: item.cost_center_id,
+        workspace_id: item.cost_center_workspace_id,
+        title: item.cost_center_name,
+        code: null, // Not in current schema
+        parent_id: null, // Not in current schema
+        accounting_code: null, // Not in current schema
+        status: 'active', // Default since not in current schema
+        description: null, // Not in current schema
+        created_at: item.cost_center_created_at,
+        updated_at: item.cost_center_updated_at,
+      }));
     } catch (error) {
       console.error('Error in getCostCenters:', error);
       throw error;
@@ -72,13 +75,8 @@ export const costCenterService = {
       const { data, error } = await supabase
         .from('cost_centers')
         .insert([{
-          workspace_id: workspaceId,
-          title: costCenterData.title,
-          code: costCenterData.code,
-          parent_id: costCenterData.parent_id,
-          accounting_code: costCenterData.accounting_code,
-          status: costCenterData.status,
-          description: costCenterData.description,
+          cost_center_workspace_id: workspaceId,
+          cost_center_name: costCenterData.title,
         }])
         .select()
         .single();
@@ -95,8 +93,10 @@ export const costCenterService = {
     try {
       const { data, error } = await supabase
         .from('cost_centers')
-        .update(updates)
-        .eq('id', id)
+        .update({
+          cost_center_name: updates.title,
+        })
+        .eq('cost_center_id', id)
         .select()
         .single();
 
@@ -113,7 +113,7 @@ export const costCenterService = {
       const { error } = await supabase
         .from('cost_centers')
         .delete()
-        .eq('id', id);
+        .eq('cost_center_id', id);
 
       if (error) throw new Error('Failed to delete cost center: ' + error.message);
     } catch (error) {
