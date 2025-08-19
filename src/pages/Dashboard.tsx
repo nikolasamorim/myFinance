@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Filter, Calendar, DollarSign, TrendingUp, TrendingDown, CreditCard, LayoutDashboard } from 'lucide-react';
+import { Filter, Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle, Landmark, CreditCard, LayoutDashboard } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -8,7 +8,7 @@ import { TransactionTypeSelector } from '../components/ui/TransactionTypeSelecto
 import { TransactionModal } from '../components/transactions/TransactionModal';
 import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
 import { useAdvancedTransactions } from '../hooks/useAdvancedTransactions';
-import { MonthlyChart } from '../components/dashboard/MonthlyChart';
+// import { MonthlyChart } from '../components/dashboard/MonthlyChart';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { formatCurrency, formatDate } from '../lib/utils';
@@ -252,6 +252,21 @@ export function Dashboard() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
+  }
+
+  function getTypeIcon(type: string) {
+    switch (type) {
+      case "income":
+        return <TrendingUp className="p-1.5 rounded-lg bg-green-100 text-green-600" />;
+      case "expense":
+        return <TrendingDown className="p-1.5 rounded-lg bg-red-100 text-red-600" />;
+      case "debt":
+        return <AlertTriangle className="p-1.5 rounded-lg bg-orange-100 text-orange-600" />;
+      case "investment":
+        return <Landmark className="p-1.5 rounded-lg bg-blue-100 text-blue-600" />;
+      default:
+        return null;
+    }
   }
 
   return (
@@ -518,18 +533,18 @@ export function Dashboard() {
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
-              <CardTitle>Últimos Lançamentos</CardTitle>
+              <CardTitle>Lançamentos</CardTitle>
             </CardHeader>
             <CardContent className="p-0 sm:p-6">
               <div className="w-full overflow-x-auto">
                 <table className="w-full min-w-[600px]">
                   <thead>
                     <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[50px]">Tipo</th>
                       <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[125px] sm:w-[150px]">Status</th>
                       <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[120px]">Título</th>
                       <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[100px]">Data</th>
-                      <th className="text-right py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[80px]">Valor</th>
-                      <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[70px]">Tipo</th>
+                      <th className="text-right py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[100px]">Valor</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -539,6 +554,13 @@ export function Dashboard() {
                         className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                         onClick={() => handleEditTransaction(transaction)}
                       >
+                        <td className="py-2 px-2 sm:px-3 text-left">
+                          <span
+                            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
+                            title={getTypeLabel(transaction.transaction_type)} // Tooltip nativo
+  >                            {getTypeIcon(transaction.transaction_type)}
+                          </span>
+                        </td>
                         <td className="py-2 px-2 sm:px-3 text-left">
                           <span className={`inline-flex px-1 sm:px-1.5 py-0.5 text-xs font-medium rounded-full ${getStatusColor(transaction.transaction_status || 'pending')}`}>
                             {getStatusLabel(transaction.transaction_status || 'pending')}
@@ -554,11 +576,6 @@ export function Dashboard() {
                         </td>
                         <td className="py-2 px-2 sm:px-3 text-xs text-right font-medium">
                           {formatCurrency(Number(transaction.transaction_amount))}
-                        </td>
-                        <td className="py-2 px-2 sm:px-3 text-center">
-                          <span className={`inline-flex px-1 sm:px-1.5 py-0.5 text-xs font-medium rounded-full ${getTypeColor(transaction.transaction_type)}`}>
-                            {getTypeLabel(transaction.transaction_type)}
-                          </span>
                         </td>
                       </tr>
                     ))}
