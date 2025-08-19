@@ -97,9 +97,10 @@ export function AdvancedTransactionModal({
   const [activeTab, setActiveTab] = useState('data');
   const [installments, setInstallments] = useState<InstallmentData[]>([]);
   const [installmentsGenerated, setInstallmentsGenerated] = useState(false);
-  const [validationError, setValidationError] = useState('');
   const [currencyDisplayValue, setCurrencyDisplayValue] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [currentInstallmentNumber, setCurrentInstallmentNumber] = useState(1);
+  const [totalInstallments, setTotalInstallments] = useState(12);
   
   const [recurrenceData, setRecurrenceData] = useState<RecurrenceData>({
     enabled: false,
@@ -160,23 +161,19 @@ export function AdvancedTransactionModal({
     if (!isInstallment) {
       setInstallments([]);
       setInstallmentsGenerated(false);
-      if (activeTab === 'installments') {
-        setActiveTab('data');
-      }
+      setCurrentInstallmentNumber(1);
+      setTotalInstallments(12);
     }
-  }, [isInstallment, activeTab]);
+  }, [isInstallment]);
 
   // Reset recurrence when recurring toggle is turned off
   useEffect(() => {
     if (!isRecurring) {
       setRecurrenceData(prev => ({ ...prev, enabled: false }));
-      if (activeTab === 'recurrence') {
-        setActiveTab('data');
-      }
     } else {
       setRecurrenceData(prev => ({ ...prev, enabled: true }));
     }
-  }, [isRecurring, activeTab]);
+  }, [isRecurring]);
 
   // Initialize currency display value
   useEffect(() => {
@@ -185,47 +182,8 @@ export function AdvancedTransactionModal({
     }
   }, [mainAmount]);
 
-  // Validate required fields for Data tab
-  const validateDataTab = async (): Promise<boolean> => {
-    const requiredFields = [
-      'description',
-      'emission_date', 
-      'due_date',
-      'competence_date',
-      'amount',
-      'account_id',
-      'payment_method'
-    ] as const;
-
-    const isValid = await trigger(requiredFields);
-    return isValid && mainAmount > 0;
-  };
-
-  // Handle tab change with validation - NO API CALLS
-  const handleTabChange = async (newTab: string) => {
-    // Clear any previous validation errors
-    setValidationError('');
-
-    // Prevent access to installments tab if not enabled
-    if (newTab === 'installments' && !isInstallment) {
-      return;
-    }
-
-    // Prevent access to recurrence tab if not enabled
-    if (newTab === 'recurrence' && !isRecurring) {
-      return;
-    }
-
-    // Validate data tab before switching - NO API CALLS, JUST VALIDATION
-    if (activeTab === 'data' && newTab !== 'data') {
-      const isDataValid = await validateDataTab();
-      if (!isDataValid) {
-        setValidationError('Preencha todos os campos obrigatórios antes de continuar');
-        return;
-      }
-    }
-
-    // Only change tab, no API calls
+  // Handle tab change - NO VALIDATION, NO API CALLS
+  const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
   };
 
@@ -242,11 +200,10 @@ export function AdvancedTransactionModal({
   // Generate installments - NO API CALLS
   const generateInstallments = () => {
     if (!mainAmount || mainAmount <= 0) {
-      setValidationError('Defina o valor principal antes de gerar parcelas');
       return;
     }
 
-    const installmentCount = Math.max(2, Math.floor(mainAmount / 100)); // Default to reasonable number
+    const installmentCount = totalInstallments;
     const installmentAmount = mainAmount / installmentCount;
     const newInstallments: InstallmentData[] = [];
 
@@ -266,7 +223,6 @@ export function AdvancedTransactionModal({
 
     setInstallments(newInstallments);
     setInstallmentsGenerated(true);
-    setValidationError('');
   };
 
   const updateInstallment = (id: string, field: keyof InstallmentData, value: any) => {
@@ -352,33 +308,35 @@ export function AdvancedTransactionModal({
 
   // Final validation before save
   const validateBeforeSave = async (): Promise<boolean> => {
-    // Validate data tab
-    const isDataValid = await validateDataTab();
+    // Validate required fields
+    const requiredFields = [
+      'description',
+      'emission_date', 
+      'due_date',
+      'competence_date',
+      'amount',
+      'account_id',
+      'payment_method'
+    ] as const;
+
+    const isDataValid = await trigger(requiredFields);
     if (!isDataValid) {
-      setValidationError('Preencha todos os campos obrigatórios na aba "Dados"');
-      setActiveTab('data');
       return false;
     }
 
     // Validate installments if enabled
     if (isInstallment) {
       if (!installmentsGenerated) {
-        setValidationError('Clique em "Visualizar Parcelas" para gerar as parcelas antes de salvar');
-        setActiveTab('installments');
         return false;
       }
 
       if (!installmentsValid) {
-        setValidationError('A soma das parcelas deve ser igual ao valor principal');
-        setActiveTab('installments');
         return false;
       }
     }
 
     // Validate recurrence if enabled
     if (isRecurring && !recurrenceData.enabled) {
-      setValidationError('Configure a recorrência antes de salvar');
-      setActiveTab('recurrence');
       return false;
     }
 
@@ -387,7 +345,6 @@ export function AdvancedTransactionModal({
 
   // ONLY submit function that makes API calls
   const onSubmit = async (data: TransactionFormData) => {
-    setValidationError('');
     setIsSaving(true);
 
     try {
@@ -395,6 +352,7 @@ export function AdvancedTransactionModal({
       const isValid = await validateBeforeSave();
       if (!isValid) {
         setIsSaving(false);
+        alert('Por favor, preencha todos os campos obrigatórios e configure as opções selecionadas antes de salvar.');
         return;
       }
 
@@ -422,7 +380,7 @@ export function AdvancedTransactionModal({
       handleClose();
     } catch (error) {
       console.error('Error saving transaction:', error);
-      setValidationError('Erro ao salvar transação. Tente novamente.');
+      alert('Erro ao salvar transação. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
@@ -433,9 +391,10 @@ export function AdvancedTransactionModal({
     setInstallments([]);
     setInstallmentsGenerated(false);
     setActiveTab('data');
-    setValidationError('');
     setCurrencyDisplayValue('');
     setIsSaving(false);
+    setCurrentInstallmentNumber(1);
+    setTotalInstallments(12);
     setRecurrenceData({
       enabled: false,
       start_date: new Date().toISOString().split('T')[0],
@@ -527,16 +486,6 @@ export function AdvancedTransactionModal({
       size="xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Error Display */}
-        {validationError && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-            <div className="flex items-start space-x-2">
-              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <p className="text-sm font-medium">{validationError}</p>
-            </div>
-          </div>
-        )}
-
         {/* Tab Navigation */}
         <TabSelector
           tabs={tabs}
@@ -746,6 +695,32 @@ export function AdvancedTransactionModal({
                     />
                     <span className="text-sm font-medium text-gray-700">É parcelado?</span>
                   </label>
+
+                  {/* Installment Field - Only show when installment is enabled */}
+                  {isInstallment && (
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm font-medium text-gray-700">Parcela:</label>
+                      <div className="flex items-center space-x-1">
+                        <input
+                          type="number"
+                          min="1"
+                          max={totalInstallments}
+                          value={currentInstallmentNumber}
+                          onChange={(e) => setCurrentInstallmentNumber(Number(e.target.value))}
+                          className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-600">/</span>
+                        <input
+                          type="number"
+                          min="2"
+                          max="99"
+                          value={totalInstallments}
+                          onChange={(e) => setTotalInstallments(Number(e.target.value))}
+                          className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <label className="flex items-center">
                     <input
@@ -1077,11 +1052,6 @@ export function AdvancedTransactionModal({
             <Button 
               type="submit" 
               loading={isSaving}
-              disabled={
-                isSaving ||
-                (isInstallment && (!installmentsGenerated || !installmentsValid)) ||
-                (isRecurring && !recurrenceData.enabled)
-              }
             >
               Salvar {getTransactionTypeLabel()}
             </Button>

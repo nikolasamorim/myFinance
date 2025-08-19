@@ -39,7 +39,7 @@ export const dashboardService = {
     console.log('Fetching dashboard data for workspace:', workspaceId);
 
     try {
-      // Get all transactions for the workspace ordered by transaction_date DESC
+      // Get all transactions including recurring expansions
       let query = supabase
         .from('transactions')
         .select('*')
@@ -91,8 +91,11 @@ export const dashboardService = {
 
       const allTransactions = transactions || [];
 
+      // Expand recurring transactions for monthly view
+      const expandedTransactions = await this.expandRecurringTransactions(allTransactions);
+
       // Calculate paid summary (only paid/received transactions)
-      const paidTransactions = allTransactions.filter(t => 
+      const paidTransactions = expandedTransactions.filter(t => 
         t.transaction_status === 'paid' || t.transaction_status === 'received'
       );
 
@@ -118,7 +121,7 @@ export const dashboardService = {
       // Calculate monthly breakdown (all transactions, regardless of status, grouped by transaction_date)
       const monthlyBreakdown: MonthlyBreakdown = {};
       
-      allTransactions.forEach(transaction => {
+      expandedTransactions.forEach(transaction => {
         const date = new Date(transaction.transaction_date);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         
@@ -174,7 +177,7 @@ export const dashboardService = {
       }
 
       // Get recent transactions (last 10)
-      const recentTransactions = allTransactions.slice(0, 10);
+      const recentTransactions = expandedTransactions.slice(0, 10);
 
       return {
         paidSummary,
@@ -187,5 +190,72 @@ export const dashboardService = {
       console.error('Error in getDashboardData:', error);
       throw error;
     }
+  },
+
+  async expandRecurringTransactions(transactions: any[]): Promise<any[]> {
+    const expanded = [...transactions];
+    const currentDate = new Date();
+    const futureLimit = new Date();
+    futureLimit.setFullYear(currentDate.getFullYear() + 2); // Expand 2 years into future
+
+    // Find recurring transactions
+    const recurringTransactions = transactions.filter(t => t.recurrence_rule_id);
+
+    for (const transaction of recurringTransactions) {
+      try {
+        // Get recurrence rule
+        const { data: rule, error } = await supabase
+          .from('recurrence_rules')
+          .select('*')
+          .eq('id', transaction.recurrence_rule_id)
+          .single();
+
+        if (error || !rule || rule.status !== 'active') continue;
+
+        // Generate future instances
+        const startDate = new Date(rule.start_date);
+        const endDate = rule.end_date ? new Date(rule.end_date) : futureLimit;
+        let currentInstanceDate = new Date(startDate);
+        let instanceCount = 0;
+        const maxInstances = rule.repeat_count || 100; // Reasonable limit
+
+        while (currentInstanceDate <= endDate && instanceCount < maxInstances) {
+          // Skip the original transaction date to avoid duplicates
+          if (currentInstanceDate.toISOString().split('T')[0] !== transaction.transaction_date) {
+            const futureInstance = {
+              ...transaction,
+              transaction_id: `${transaction.transaction_id}-future-${instanceCount}`,
+              transaction_date: currentInstanceDate.toISOString().split('T')[0],
+              transaction_status: 'pending', // Future instances are always pending
+              is_future_instance: true, // Mark as future instance
+            };
+            expanded.push(futureInstance);
+          }
+
+          // Calculate next occurrence
+          switch (rule.recurrence_type) {
+            case 'daily':
+              currentInstanceDate.setDate(currentInstanceDate.getDate() + 1);
+              break;
+            case 'weekly':
+              currentInstanceDate.setDate(currentInstanceDate.getDate() + 7);
+              break;
+            case 'monthly':
+              currentInstanceDate.setMonth(currentInstanceDate.getMonth() + 1);
+              break;
+            case 'yearly':
+              currentInstanceDate.setFullYear(currentInstanceDate.getFullYear() + 1);
+              break;
+          }
+
+          instanceCount++;
+        }
+      } catch (error) {
+        console.error('Error expanding recurring transaction:', transaction.transaction_id, error);
+        // Continue with other transactions if one fails
+      }
+    }
+
+    return expanded;
   },
 };
