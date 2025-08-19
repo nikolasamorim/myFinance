@@ -13,7 +13,6 @@ import { useAccounts } from '../../hooks/useAccounts';
 import { useCreditCards } from '../../hooks/useCreditCards';
 import { useCategories } from '../../hooks/useCategories';
 import { useCostCenters } from '../../hooks/useCostCenters';
-import { useAdvancedTransactions } from '../../hooks/useAdvancedTransactions';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { cn } from '../../lib/utils';
 import type { AdvancedTransactionData, InstallmentData, RecurrenceData } from '../../types';
@@ -75,29 +74,6 @@ const formatCurrencyInput = (value: string): string => {
   }).format(number);
 };
 
-// Smart installment formatter
-const formatInstallmentInput = (value: string): string => {
-  const numericValue = value.replace(/\D/g, '');
-  if (!numericValue) return '';
-  
-  if (numericValue.length <= 2) {
-    return numericValue;
-  } else if (numericValue.length <= 4) {
-    return `${numericValue.slice(0, 2)}/${numericValue.slice(2)}`;
-  } else {
-    return `${numericValue.slice(0, 2)}/${numericValue.slice(2, 4)}`;
-  }
-};
-
-// Validate installment format
-const validateInstallmentFormat = (value: string): boolean => {
-  const regex = /^\d{1,2}\/\d{1,2}$/;
-  if (!regex.test(value)) return false;
-  
-  const [current, total] = value.split('/').map(Number);
-  return current >= 1 && current <= total && total >= 1 && total <= 99;
-};
-
 // Parse currency input to number
 const parseCurrencyInput = (value: string): number => {
   const numericValue = value.replace(/\D/g, '');
@@ -120,28 +96,16 @@ export function AdvancedTransactionModal({
   const { currentWorkspace } = useWorkspace();
   const [activeTab, setActiveTab] = useState('data');
   const [installments, setInstallments] = useState<InstallmentData[]>([]);
-  const [installmentInput, setInstallmentInput] = useState('');
   const [installmentsGenerated, setInstallmentsGenerated] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [currencyDisplayValue, setCurrencyDisplayValue] = useState('');
-  const [tabValidationErrors, setTabValidationErrors] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  
   const [recurrenceData, setRecurrenceData] = useState<RecurrenceData>({
     enabled: false,
     start_date: new Date().toISOString().split('T')[0],
     recurrence_type: 'monthly',
     due_adjustment: 'none',
-  });
-  const [formData, setFormData] = useState<AdvancedTransactionData>({
-    transaction_type: transactionType as 'income' | 'expense' | 'debt' | 'investment',
-    description: '',
-    emission_date: new Date().toISOString().split('T')[0],
-    due_date: new Date().toISOString().split('T')[0],
-    competence_date: new Date().toISOString().slice(0, 7),
-    amount: 0,
-    account_id: '',
-    payment_method: 'pix',
-    is_installment: false,
-    is_recurring: false,
   });
 
   // Data hooks
@@ -152,7 +116,6 @@ export function AdvancedTransactionModal({
     search: '' 
   });
   const { data: costCenters = [] } = useCostCenters({ status: 'active', search: '' });
-  const { createAdvancedTransaction } = useAdvancedTransactions();
 
   const {
     control,
@@ -162,7 +125,8 @@ export function AdvancedTransactionModal({
     watch,
     reset,
     trigger,
-    formState: { errors, isSubmitting },
+    getValues,
+    formState: { errors },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -196,7 +160,6 @@ export function AdvancedTransactionModal({
     if (!isInstallment) {
       setInstallments([]);
       setInstallmentsGenerated(false);
-      setInstallmentInput('');
       if (activeTab === 'installments') {
         setActiveTab('data');
       }
@@ -232,27 +195,17 @@ export function AdvancedTransactionModal({
       'amount',
       'account_id',
       'payment_method'
-    ];
+    ] as const;
 
     const isValid = await trigger(requiredFields);
-    
-    if (!isValid) {
-      const errorMessages: string[] = [];
-      requiredFields.forEach(field => {
-        if (errors[field as keyof typeof errors]) {
-          errorMessages.push(errors[field as keyof typeof errors]?.message || `${field} é obrigatório`);
-        }
-      });
-      setTabValidationErrors(errorMessages);
-      return false;
-    }
-
-    setTabValidationErrors([]);
-    return true;
+    return isValid && mainAmount > 0;
   };
 
-  // Handle tab change with validation
+  // Handle tab change with validation - NO API CALLS
   const handleTabChange = async (newTab: string) => {
+    // Clear any previous validation errors
+    setValidationError('');
+
     // Prevent access to installments tab if not enabled
     if (newTab === 'installments' && !isInstallment) {
       return;
@@ -263,7 +216,7 @@ export function AdvancedTransactionModal({
       return;
     }
 
-    // Validate data tab before switching
+    // Validate data tab before switching - NO API CALLS, JUST VALIDATION
     if (activeTab === 'data' && newTab !== 'data') {
       const isDataValid = await validateDataTab();
       if (!isDataValid) {
@@ -272,51 +225,32 @@ export function AdvancedTransactionModal({
       }
     }
 
-    setValidationError('');
+    // Only change tab, no API calls
     setActiveTab(newTab);
   };
 
-  // Handle currency input
+  // Handle currency input with real-time formatting
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const formatted = formatCurrencyInput(inputValue);
     setCurrencyDisplayValue(formatted);
     
     const numericValue = parseCurrencyInput(inputValue);
-    setValue('amount', numericValue || 0);
+    setValue('amount', numericValue || 0, { shouldValidate: true });
   };
 
-  // Handle installment input
-  const handleInstallmentInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    const formatted = formatInstallmentInput(inputValue);
-    setInstallmentInput(formatted);
-  };
-
+  // Generate installments - NO API CALLS
   const generateInstallments = () => {
-    if (!validateInstallmentFormat(installmentInput)) {
-      setValidationError('Formato inválido. Use o formato 00/00 (ex: 01/12)');
-      return;
-    }
-
-    const [current, total] = installmentInput.split('/').map(Number);
-    
-    if (current < 1 || current > total || total < 1) {
-      setValidationError('Valores inválidos para parcelas');
-      return;
-    }
-
     if (!mainAmount || mainAmount <= 0) {
       setValidationError('Defina o valor principal antes de gerar parcelas');
       return;
     }
 
-    setValidationError('');
-
-    const installmentAmount = mainAmount / total;
+    const installmentCount = Math.max(2, Math.floor(mainAmount / 100)); // Default to reasonable number
+    const installmentAmount = mainAmount / installmentCount;
     const newInstallments: InstallmentData[] = [];
 
-    for (let i = 1; i <= total; i++) {
+    for (let i = 1; i <= installmentCount; i++) {
       const installmentDate = new Date(watchedValues.due_date);
       installmentDate.setMonth(installmentDate.getMonth() + (i - 1));
 
@@ -332,6 +266,7 @@ export function AdvancedTransactionModal({
 
     setInstallments(newInstallments);
     setInstallmentsGenerated(true);
+    setValidationError('');
   };
 
   const updateInstallment = (id: string, field: keyof InstallmentData, value: any) => {
@@ -415,54 +350,81 @@ export function AdvancedTransactionModal({
     return preview;
   };
 
-  const onSubmit = async (data: TransactionFormData) => {
-    setValidationError('');
-
-    // Validate data tab first
+  // Final validation before save
+  const validateBeforeSave = async (): Promise<boolean> => {
+    // Validate data tab
     const isDataValid = await validateDataTab();
     if (!isDataValid) {
-      setValidationError('Preencha todos os campos obrigatórios');
+      setValidationError('Preencha todos os campos obrigatórios na aba "Dados"');
       setActiveTab('data');
-      return;
+      return false;
     }
 
-    // Validate installments if needed
-    if (data.is_installment) {
+    // Validate installments if enabled
+    if (isInstallment) {
       if (!installmentsGenerated) {
-        setValidationError('Gere as parcelas antes de salvar');
+        setValidationError('Clique em "Visualizar Parcelas" para gerar as parcelas antes de salvar');
         setActiveTab('installments');
-        return;
+        return false;
       }
 
       if (!installmentsValid) {
         setValidationError('A soma das parcelas deve ser igual ao valor principal');
         setActiveTab('installments');
-        return;
+        return false;
       }
     }
 
-    // Validate recurrence if needed
-    if (data.is_recurring && !recurrenceData.enabled) {
+    // Validate recurrence if enabled
+    if (isRecurring && !recurrenceData.enabled) {
       setValidationError('Configure a recorrência antes de salvar');
       setActiveTab('recurrence');
-      return;
+      return false;
     }
 
+    return true;
+  };
+
+  // ONLY submit function that makes API calls
+  const onSubmit = async (data: TransactionFormData) => {
+    setValidationError('');
+    setIsSaving(true);
+
     try {
+      // Final validation
+      const isValid = await validateBeforeSave();
+      if (!isValid) {
+        setIsSaving(false);
+        return;
+      }
+
+      // Prepare transaction data
       const transactionData: AdvancedTransactionData = {
-        ...data,
+        transaction_type: transactionType,
+        description: data.description,
+        emission_date: data.emission_date,
+        due_date: data.due_date,
+        competence_date: data.competence_date,
+        amount: data.amount,
+        account_id: data.account_id,
+        credit_card_id: data.credit_card_id,
+        cost_center_id: data.cost_center_id,
+        category_id: data.category_id,
+        payment_method: data.payment_method,
+        is_installment: data.is_installment,
+        is_recurring: data.is_recurring,
         installments: data.is_installment ? installments : undefined,
         recurrence: data.is_recurring ? recurrenceData : undefined,
       };
 
-      await createAdvancedTransaction.mutateAsync({ 
-        transactionType, 
-        data: transactionData 
-      });
+      // Make API call
+      await onSave(transactionData);
       handleClose();
     } catch (error) {
       console.error('Error saving transaction:', error);
       setValidationError('Erro ao salvar transação. Tente novamente.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -470,11 +432,10 @@ export function AdvancedTransactionModal({
     reset();
     setInstallments([]);
     setInstallmentsGenerated(false);
-    setInstallmentInput('');
     setActiveTab('data');
     setValidationError('');
-    setTabValidationErrors([]);
     setCurrencyDisplayValue('');
+    setIsSaving(false);
     setRecurrenceData({
       enabled: false,
       start_date: new Date().toISOString().split('T')[0],
@@ -567,18 +528,11 @@ export function AdvancedTransactionModal({
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Error Display */}
-        {(validationError || tabValidationErrors.length > 0) && (
+        {validationError && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
             <div className="flex items-start space-x-2">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <div className="space-y-1">
-                {validationError && (
-                  <p className="text-sm font-medium">{validationError}</p>
-                )}
-                {tabValidationErrors.map((error, index) => (
-                  <p key={index} className="text-xs">{error}</p>
-                ))}
-              </div>
+              <p className="text-sm font-medium">{validationError}</p>
             </div>
           </div>
         )}
@@ -706,11 +660,11 @@ export function AdvancedTransactionModal({
                     )}
                   </div>
 
-                  {/* Credit Card - Only for expenses and not installments */}
-                  {transactionType === 'expense' && !isInstallment && (
+                  {/* Credit Card - Only for expenses */}
+                  {transactionType === 'expense' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Cartão de Crédito
+                        Cartão de Crédito (opcional)
                       </label>
                       <Controller
                         name="credit_card_id"
@@ -741,7 +695,7 @@ export function AdvancedTransactionModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Centro de Custo
+                      Centro de Custo (opcional)
                     </label>
                     <Controller
                       name="cost_center_id"
@@ -759,7 +713,7 @@ export function AdvancedTransactionModal({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Categoria
+                      Categoria (opcional)
                     </label>
                     <Controller
                       name="category_id"
@@ -780,7 +734,7 @@ export function AdvancedTransactionModal({
               {/* Options */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                  Opções
+                  Opções Avançadas
                 </h3>
 
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
@@ -817,27 +771,14 @@ export function AdvancedTransactionModal({
                 </div>
               </div>
 
-              {/* Installment Input */}
-              <div className="flex items-end space-x-3">
-                <div className="flex-1 max-w-xs">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Parcelas
-                  </label>
-                  <input
-                    type="text"
-                    value={installmentInput}
-                    onChange={handleInstallmentInputChange}
-                    placeholder="01/12"
-                    className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Formato: parcela atual/total (ex: 01/12)
-                  </p>
-                </div>
+              {/* Generate Installments Button */}
+              <div className="flex items-center justify-center">
                 <Button
                   type="button"
                   onClick={generateInstallments}
-                  disabled={!installmentInput || !mainAmount || !validateInstallmentFormat(installmentInput)}
+                  disabled={!mainAmount || mainAmount <= 0}
+                  variant="outline"
+                  size="lg"
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Visualizar Parcelas
@@ -977,7 +918,7 @@ export function AdvancedTransactionModal({
                 <div className="text-center py-8 text-gray-500">
                   <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-sm font-medium">Nenhuma parcela gerada</p>
-                  <p className="text-xs">Configure o número de parcelas e clique em "Visualizar Parcelas"</p>
+                  <p className="text-xs">Clique em "Visualizar Parcelas" para gerar as parcelas automaticamente</p>
                 </div>
               )}
             </div>
@@ -1112,9 +1053,12 @@ export function AdvancedTransactionModal({
           <div className="text-sm text-gray-600 space-y-1">
             {isInstallment && (
               <div className={cn(
-                installmentsGenerated ? 'text-green-600' : 'text-yellow-600'
+                installmentsGenerated && installmentsValid ? 'text-green-600' : 'text-yellow-600'
               )}>
-                Parcelas: {installmentsGenerated ? `${installments.length} geradas` : 'Não geradas'}
+                Parcelas: {installmentsGenerated ? 
+                  (installmentsValid ? `${installments.length} válidas` : `${installments.length} com erro`) : 
+                  'Não geradas'
+                }
               </div>
             )}
             {isRecurring && (
@@ -1127,13 +1071,14 @@ export function AdvancedTransactionModal({
           </div>
           
           <div className="flex space-x-3">
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSaving}>
               Cancelar
             </Button>
             <Button 
               type="submit" 
-              loading={isSubmitting || createAdvancedTransaction.isPending}
+              loading={isSaving}
               disabled={
+                isSaving ||
                 (isInstallment && (!installmentsGenerated || !installmentsValid)) ||
                 (isRecurring && !recurrenceData.enabled)
               }

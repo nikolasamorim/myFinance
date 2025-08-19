@@ -32,7 +32,7 @@ export const advancedTransactionService = {
       .insert([{
         transaction_workspace_id: workspaceId,
         transaction_created_by_user_id: userId,
-        transaction_type: data.transaction_type,
+        transaction_type: transactionType,
         transaction_description: data.description,
         transaction_amount: data.amount,
         transaction_date: data.due_date,
@@ -66,7 +66,6 @@ export const advancedTransactionService = {
         description: data.description,
         account_id: data.account_id,
         card_id: data.credit_card_id || null,
-        payment_method_id: data.payment_method,
       }])
       .select()
       .single();
@@ -77,7 +76,7 @@ export const advancedTransactionService = {
     const installmentTransactions = data.installments.map((installment, index) => ({
       transaction_workspace_id: workspaceId,
       transaction_created_by_user_id: userId,
-      transaction_type: data.transaction_type,
+      transaction_type: transactionType,
       transaction_description: `${data.description} - Parcela ${installment.number}/${data.installments!.length}`,
       transaction_amount: installment.amount,
       transaction_date: installment.date,
