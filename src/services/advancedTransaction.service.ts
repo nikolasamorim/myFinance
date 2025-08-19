@@ -138,9 +138,7 @@ export const advancedTransactionService = {
         transaction_date: data.due_date,
         transaction_bank_id: data.account_id,
         transaction_card_id: data.credit_card_id || null,
-        payment_method: data.payment_method,
-        recurring: true,
-        recurrence_rule_id: recurrenceRule.id,
+        recurrence_id: recurrenceRule.id,
         transaction_status: 'pending',
       }])
       .select()
