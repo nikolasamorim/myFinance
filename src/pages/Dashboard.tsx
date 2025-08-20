@@ -377,9 +377,15 @@ export function Dashboard() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Saldo Atual</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Saldo</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.currentBalance || 0)}
+                    {formatCurrency(dashboardData?.paidSummary?.currentBalance || 0) /* Total de lançamentos */} 
+                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-400 mt-1">
+                    {formatCurrency(dashboardData?.paidSummary?.currentBalance || 0) /* Lançamentos pagos */} (Pago)
+                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-400 mt-1">
+                    {formatCurrency(dashboardData?.paidSummary?.currentBalance || 0) /* Lançamentos não pagos */} (Não pago)
                   </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
@@ -393,9 +399,15 @@ export function Dashboard() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Receitas Pagas</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Receitas</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mt-1">
                     {formatCurrency(dashboardData?.paidSummary?.totalIncome || 0)}
+                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-green-400 mt-1">
+                    {formatCurrency(dashboardData?.paidSummary?.totalIncome || 0) /* Lançamentos pagos */} (Pago)
+                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-green-400 mt-1">
+                    {formatCurrency(dashboardData?.paidSummary?.totalIncome || 0) /* Lançamentos não pagos */} (Não pago)
                   </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-green-100 rounded-lg flex-shrink-0">
@@ -409,9 +421,15 @@ export function Dashboard() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Despesas Pagas</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Despesas</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mt-1">
                     {formatCurrency(dashboardData?.paidSummary?.totalExpenses || 0)}
+                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-red-400 mt-1">
+                    {formatCurrency(dashboardData?.paidSummary?.totalExpenses || 0) /* Lançamentos pagos */} (Pago)
+                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-red-400 mt-1">
+                    {formatCurrency(dashboardData?.paidSummary?.totalExpenses || 0) /* Lançamentos não pagos */} (Não pago)
                   </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-red-100 rounded-lg flex-shrink-0">
@@ -425,9 +443,15 @@ export function Dashboard() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Dívidas Pagas</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Dívidas</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-orange-600 mt-1">
                     {formatCurrency(dashboardData?.paidSummary?.totalDebts || 0)}
+                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-orange-400 mt-1">
+                    {formatCurrency(dashboardData?.paidSummary?.totalDebts || 0) /* Lançamentos pagos */} (Pago)
+                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-orange-400 mt-1">
+                    {formatCurrency(dashboardData?.paidSummary?.totalDebts || 0) /* Lançamentos não pagos */} (Não pago)
                   </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-orange-100 rounded-lg flex-shrink-0">
