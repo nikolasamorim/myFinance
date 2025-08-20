@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Filter, Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle, Landmark, CreditCard, LayoutDashboard } from 'lucide-react';
+import { Filter, Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle,
+   Landmark, CreditCard, LayoutDashboard, CheckCircle, Clock, Circle, AlertCircle,
+   XCircle
+} from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -264,6 +267,25 @@ export function Dashboard() {
         return <AlertTriangle className="p-1.5 rounded-lg bg-orange-100 text-orange-600" />;
       case "investment":
         return <Landmark className="p-1.5 rounded-lg bg-blue-100 text-blue-600" />;
+      default:
+        return null;
+    }
+  }
+
+  function getStatusIcon(status: string) {
+    switch (status) {
+      case "paid":
+        return <CheckCircle className="p-1.5 rounded-lg bg-green-600 text-green-50" />;
+      case "pending":
+        return <Clock className="p-1.5 rounded-lg bg-yellow-500 text-yellow-50" />;
+      case "open":
+        return <Circle className="p-1.5 rounded-lg bg-blue-500 text-blue-50" />;
+      case "overdue":
+        return <AlertCircle className="p-1.5 rounded-lg bg-red-600 text-red-50" />;
+      case "scheduled":
+        return <Calendar className="p-1.5 rounded-lg bg-indigo-500 text-indigo-50" />;
+      case "canceled":
+        return <XCircle className="p-1.5 rounded-lg bg-gray-500 text-gray-50" />;
       default:
         return null;
     }
@@ -540,8 +562,8 @@ export function Dashboard() {
                 <table className="w-full min-w-[600px]">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[50px]">Tipo</th>
-                      <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[125px] sm:w-[150px]">Status</th>
+                      <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[50px]">Tipo</th>
+                      <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[50px]">Status</th>
                       <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[120px]">Título</th>
                       <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[100px]">Data</th>
                       <th className="text-right py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[100px]">Valor</th>
@@ -554,16 +576,19 @@ export function Dashboard() {
                         className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                         onClick={() => handleEditTransaction(transaction)}
                       >
-                        <td className="py-2 px-2 sm:px-3 text-left">
+                        <td className="py-2 px-2 sm:px-3 text-center">
                           <span
                             className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
                             title={getTypeLabel(transaction.transaction_type)} // Tooltip nativo
   >                            {getTypeIcon(transaction.transaction_type)}
                           </span>
                         </td>
-                        <td className="py-2 px-2 sm:px-3 text-left">
-                          <span className={`inline-flex px-1 sm:px-1.5 py-0.5 text-xs font-medium rounded-full ${getStatusColor(transaction.transaction_status || 'pending')}`}>
-                            {getStatusLabel(transaction.transaction_status || 'pending')}
+                        <td className="py-2 px-2 sm:px-3 text-center">
+                          <span
+                            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
+                            title={getStatusLabel(transaction.transaction_status || "pending")} // tooltip nativo
+                          >
+                            {getStatusIcon(transaction.transaction_status || "pending")}
                           </span>
                         </td>
                         <td className="py-2 px-2 sm:px-3 text-xs text-gray-900">
