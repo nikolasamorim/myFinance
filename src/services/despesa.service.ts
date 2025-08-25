@@ -211,9 +211,10 @@ export const despesaService = {
         .select('*')
         .eq('transaction_workspace_id', workspaceId)
         .eq('transaction_type', 'expense')
-        .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
-        .lte('transaction_date', endOfMonth.toISOString().split('T')[0])
-        .ilike('transaction_description', '%fixa%'); // Only include expenses with "fixa" in description
+        .eq('recurring', true)
+        // Comentando o código abaixo para trazer as despesas fixas independente da data que foi criada
+        // .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
+        // .lte('transaction_date', endOfMonth.toISOString().split('T')[0])
 
       if (error) throw new Error('Failed to fetch fixed expenses: ' + error.message);
 
