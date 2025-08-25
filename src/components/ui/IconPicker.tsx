@@ -100,7 +100,7 @@ export function IconPicker({ value, onChange, label, className }: IconPickerProp
               </div>
             )}
             
-            <div className="grid grid-cols-8 gap-2">
+            <div className="grid grid-cols-6 gap-2">
               {filteredIcons.map((iconName) => {
                 const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons] as React.ComponentType<any>;
                 if (!IconComponent) return null;
@@ -110,7 +110,7 @@ export function IconPicker({ value, onChange, label, className }: IconPickerProp
                     key={iconName}
                     type="button"
                     className={cn(
-                      'p-2 rounded border-2 transition-all hover:bg-gray-50',
+                      'w-9 h-9 flex items-center justify-center rounded border-2 transition-all hover:bg-gray-50',
                       value === iconName ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                     )}
                     onClick={() => {
