@@ -37,7 +37,7 @@ interface DespesaFormData {
 
 const statusOptions = [
   { value: 'all', label: 'Todos' },
-  { value: 'pending', label: 'A pagar' },
+  { value: 'pending', label: 'Pendente' },
   { value: 'paid', label: 'Pagas' },
 ];
 
@@ -141,7 +141,7 @@ export function Despesas() {
       case 'paid':
         return 'Paga';
       case 'pending':
-        return 'A pagar';
+        return 'Pendente';
       default:
         return status;
     }
@@ -186,6 +186,25 @@ export function Despesas() {
       acc[s].total += v;
       return acc;
   }, {});
+
+  function getStatusIcon(status: string) {
+    switch (status) {
+      case "paid":
+        return <CheckCircle className="p-1.5 rounded-lg bg-green-600 text-green-50" />;
+      case "pending":
+        return <Clock className="p-1.5 rounded-lg bg-yellow-500 text-yellow-50" />;
+      case "open":
+        return <Circle className="p-1.5 rounded-lg bg-blue-500 text-blue-50" />;
+      case "overdue":
+        return <AlertCircle className="p-1.5 rounded-lg bg-red-600 text-red-50" />;
+      case "scheduled":
+        return <Calendar className="p-1.5 rounded-lg bg-indigo-500 text-indigo-50" />;
+      case "canceled":
+        return <XCircle className="p-1.5 rounded-lg bg-gray-500 text-gray-50" />;
+      default:
+        return null;
+    }
+  }
 
   return (
     <>
@@ -735,9 +754,9 @@ export function Despesas() {
                     <table className="w-full min-w-[800px]">
                       <thead>
                         <tr className="border-b border-gray-200">
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[50px]">Status</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Título</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Valor</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Status</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Vencimento</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Pagamento</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Tipo</th>
@@ -748,6 +767,14 @@ export function Despesas() {
                       <tbody>
                         {despesas.map((despesa) => (
                           <tr key={despesa.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                              <span
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
+                                title={getStatusLabel(despesa.status || "pending")} // tooltip nativo
+                              >
+                                {getStatusIcon(despesa.status || "pending")}
+                              </span>
+                            </td>
                             <td className="py-2 sm:py-3 px-2 sm:px-4">
                               <div>
                                 <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{despesa.title}</p>
@@ -758,11 +785,6 @@ export function Despesas() {
                             </td>
                             <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
                               {formatCurrency(Number(despesa.amount))}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
-                              <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getStatusColor(despesa.status)}`}>
-                                {getStatusLabel(despesa.status)}
-                              </span>
                             </td>
                             <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
                               {formatDate(despesa.transaction_date)}
