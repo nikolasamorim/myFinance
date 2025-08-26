@@ -1,187 +1,202 @@
-/* ===== Dark overrides (neutros) ===== */
+/* ===== Jira Dark Theme – Tailwind overrides ===== */
 @layer utilities {
-    /* -------- Superfícies -------- */
-    /* fundo global e containers comuns */
-    .dark .bg-white                { @apply bg-neutral-900; }
-    .dark .bg-gray-50              { @apply bg-neutral-900; }
-    .dark .bg-gray-100             { @apply bg-neutral-900; }
-    .dark .bg-gray-200             { @apply bg-neutral-800; }
-    .dark .bg-gray-300             { @apply bg-neutral-700; }
-    .dark .bg-slate-50             { @apply bg-neutral-900; }
-    .dark .bg-slate-100            { @apply bg-neutral-900; }
-  
-    /* cartões / painéis */
-    .dark .bg-slate-100\/50         { @apply bg-neutral-900/50; }
-    .dark .bg-slate-200\/60         { @apply bg-neutral-800/60; }
-  
-    /* dropdowns/menus/modais (muito usados como bg-white) */
-    .dark .shadow-lg               { @apply shadow-black/40; } /* sombra mais contida no dark */
-  
-    /* -------- Tipografia -------- */
-    .dark .text-black              { @apply text-neutral-100; }
-    .dark .text-gray-900           { @apply text-neutral-100; }
-    .dark .text-gray-800           { @apply text-neutral-100; }
-    .dark .text-gray-700           { @apply text-neutral-200; }
-    .dark .text-gray-600           { @apply text-neutral-300; }
-    .dark .text-gray-500           { @apply text-neutral-400; }
-    .dark .text-gray-400           { @apply text-neutral-400; }
-  
-    /* títulos “brand” que estavam esbranquiçados */
-    .dark .text-slate-900          { @apply text-neutral-100; }
-    .dark .text-slate-700          { @apply text-neutral-200; }
-  
-    /* -------- Bordas / divisórias -------- */
-    .dark .border-gray-100         { @apply border-neutral-800; }
-    .dark .border-gray-200         { @apply border-neutral-800; }
-    .dark .border-gray-300         { @apply border-neutral-700; }
-    .dark .divide-gray-200         { @apply divide-neutral-800; }
-    .dark .ring-gray-200           { @apply ring-neutral-800; }
-  
-    /* focus ring acessível */
-    .dark .focus\:ring-gray-200:focus { @apply ring-neutral-700; }
-    .dark .focus\:ring-gray-300:focus { @apply ring-neutral-600; }
-  
-    /* -------- Hovers / estados -------- */
-    .dark .hover\:bg-gray-50:hover   { @apply bg-neutral-800; }
-    .dark .hover\:bg-gray-100:hover  { @apply bg-neutral-800; }
-    .dark .hover\:bg-gray-200:hover  { @apply bg-neutral-700; }
-    .dark .hover\:text-gray-900:hover{ @apply text-neutral-100; }
-  
-    /* ------- Inputs / selects / textareas ------- */
-    /* inputs normalmente bg-white/border-gray-200/text-gray-900 */
-    .dark input:not([type="checkbox"]):not([type="radio"]),
-    .dark select,
-    .dark textarea {
-      @apply bg-neutral-900 text-neutral-100 placeholder-neutral-500 border border-neutral-800;
-    }
-    .dark input:focus,
-    .dark select:focus,
-    .dark textarea:focus {
-      @apply outline-none ring-2 ring-neutral-600 border-neutral-700;
-    }
-    .dark .disabled\:bg-gray-100:disabled { @apply bg-neutral-800; }
-  
-    /* ------- Botões neutros / ghost ------- */
-    .dark .bg-gray-100.text-gray-700,
-    .dark .text-gray-700.bg-transparent {
-      @apply text-neutral-200;
-    }
-    .dark .hover\:bg-gray-100:hover { @apply bg-neutral-800; }
-  
-    /* ------- Badges / chips suaves ------- */
-    .dark .bg-gray-100.text-gray-800 { @apply bg-neutral-800 text-neutral-200; }
-    .dark .bg-gray-200.text-gray-800 { @apply bg-neutral-700 text-neutral-100; }
-  
-    /* ------- Tabelas ------- */
-    .dark table { @apply text-neutral-200; }
-    .dark thead th { @apply bg-neutral-900 text-neutral-400 border-b border-neutral-800; }
-    .dark tbody tr { @apply border-b border-neutral-800; }
-    .dark tbody tr:hover { @apply bg-neutral-800/60; }
-    .dark td { @apply text-neutral-200; }
-  
-    /* ------- Sidebar / Nav ------- */
-    /* superfícies */
-    .dark .sidebar,
-    .dark nav,
-    .dark .menu-surface {
-      @apply bg-neutral-950 border-neutral-900;
-    }
-    /* itens */
-    .dark .nav-item,
-    .dark .menu-item {
-      @apply text-neutral-300;
-    }
-    .dark .nav-item:hover,
-    .dark .menu-item:hover {
-      @apply bg-neutral-900 text-neutral-100;
-    }
-    .dark .nav-item-active,
-    .dark .menu-item-active {
-      @apply bg-neutral-900 text-neutral-100 border border-neutral-800;
-    }
-  
-    /* ------- Cards / sections ------- */
-    .dark .card {
-      @apply bg-neutral-900 border border-neutral-800 text-neutral-200;
-    }
-  
-    /* ------- Tooltip / badge de notificação ------- */
-    .dark .tooltip { @apply bg-neutral-800 text-neutral-100 border border-neutral-700; }
-    .dark .badge-dot { @apply ring-2 ring-neutral-900; } /* se usa dot com ring */
-  
-    /* ------- Scrollbars (opcional) ------- */
-    .dark *::-webkit-scrollbar        { width: 10px; height: 10px; }
-    .dark *::-webkit-scrollbar-track  { @apply bg-neutral-950; }
-    .dark *::-webkit-scrollbar-thumb  { @apply bg-neutral-800 rounded-md; }
-    .dark *::-webkit-scrollbar-thumb:hover { @apply bg-neutral-700; }
-  
-    /* ------- Ícones comuns (cinza médio no dark) ------- */
-    .dark .text-gray-600 svg,
-    .dark svg.text-gray-600 { @apply text-neutral-300; }
-    .dark .text-gray-400 svg,
-    .dark svg.text-gray-400 { @apply text-neutral-400; }
-  
-    /* ------- Skeletons / pulse ------- */
-    .dark .animate-pulse { --tw-gradient-from: transparent; } /* evita brilho azulado */
-    .dark .skeleton      { @apply bg-neutral-800; }
+  /* ========= Design tokens (CSS vars) ========= */
+  .dark {
+    --ds-surface: #1D2125;            /* fundo base */
+    --ds-surface-raised: #22272B;     /* cartões/painéis */
+    --ds-surface-sunken: #161A1D;     /* áreas “afundadas”, sidebar */
+    --ds-border: #2C333A;             /* bordas/divisórias */
+    --ds-hover: #2C333A;              /* hover de superfície */
+    --ds-overlay: rgba(9, 30, 66, .31); /* sombras/overlays Atlassian */
 
-    /* ===== Card do mês vigente ===== */
-    .dark #selected-month-card {
-        @apply bg-neutral-900 ring-2 ring-neutral-500;
-    }
+    --ds-text: #DEE4EA;               /* texto alto contraste */
+    --ds-text-secondary: #B6C2CF;     /* texto médio */
+    --ds-text-subtle: #9FADBC;        /* texto sutil */
+    --ds-icon: #9FADBC;               /* ícones padrão */
 
-    .dark #selected-month-card:hover {
-        @apply bg-neutral-800;
-    }
+    --ds-link: #579DFF;               /* links */
+    --ds-focus: #1D7AFC;              /* foco e “selected” */
+    --ds-selected: #1D7AFC;           /* selecionado */
 
-    /* neutralizar utilitárias azuis herdadas no dark */
-    .dark #selected-month-card.bg-blue-50        { @apply bg-neutral-900; }
-    .dark #selected-month-card.hover\:bg-blue-50:hover { @apply bg-neutral-800; }
-    .dark #selected-month-card.border-blue-200   { @apply border-neutral-700; }
-    .dark #selected-month-card.ring-blue-500     { @apply ring-neutral-500; }
-
-    /* textos dentro do card, se houver azul */
-    .dark #selected-month-card .text-blue-600 { @apply text-neutral-100; }
-    .dark #selected-month-card .text-blue-500 { @apply text-neutral-200; }
-
-  
-  /* ===== Opções de marca (não mexe nas suas cores de status) =====
-     Mantemos os acentos (verde = success, vermelho = danger, laranja = warning)
-     para leitura rápida. Se quiser “desaturar” no dark, ative os blocos abaixo.
-  */
-
-  /* Alterando cores dos sumário dos containers */
-    .dark .bg-green-50 .text-gray-900 {@apply text-emerald-600}
-    .dark .bg-green-50 .text-green-700 {@apply text-emerald-600}
-    .dark .bg-green-50 .text-gray-500 {@apply text-emerald-600}
-    .dark .bg-green-50 .text-gray-600 {@apply text-emerald-600}
-
-    .dark .bg-yellow-50 .text-gray-900 {@apply text-amber-600}
-    .dark .bg-yellow-50 .text-yellow-700 {@apply text-amber-600}
-    .dark .bg-yellow-50 .text-gray-500 {@apply text-amber-600}
-    .dark .bg-yellow-50 .text-gray-600 {@apply text-amber-600}
-
-    .dark .bg-blue-50 .text-gray-900 {@apply text-sky-600}
-    .dark .bg-blue-50 .text-blue-700 {@apply text-sky-600}
-    .dark .bg-blue-50 .text-gray-500 {@apply text-sky-600}
-    .dark .bg-blue-50 .text-gray-600 {@apply text-sky-600}
-
-    .dark .bg-red-50 .text-gray-900 {@apply text-rose-600}
-    .dark .bg-red-50 .text-red-700 {@apply text-rose-600}
-    .dark .bg-red-50 .text-gray-500 {@apply text-rose-600}
-    .dark .bg-red-50 .text-gray-600 {@apply text-rose-600}
-
-    .dark .bg-indigo-50 .text-gray-900 {@apply text-sky-700}
-    .dark .bg-indigo-50 .text-indigo-700 {@apply text-sky-700}
-    .dark .bg-indigo-50 .text-gray-500 {@apply text-sky-700}
-    .dark .bg-indigo-50 .text-gray-600 {@apply text-sky-700}
-  
-  /* desaturar leve (opcional) */
-    .dark .text-green-600 { @apply text-emerald-400; }
-    .dark .text-red-600   { @apply text-rose-400; }
-    .dark .text-orange-600{ @apply text-orange-400; }
-    .dark .text-blue-600  { @apply text-sky-400; }
-    .dark .text-purple-600{ @apply text-violet-400; }
-    .dark .text-yellow-600{ @apply text-amber-400; }
+    --ds-accent-blue: #579DFF;
+    --ds-accent-green: #4BCE97;
+    --ds-accent-yellow: #F5CD47;
+    --ds-accent-red: #F87168;
+    --ds-accent-purple: #9F8FEF;
   }
-  
+
+  /* -------- Superfícies -------- */
+  .dark .bg-white,
+  .dark .bg-gray-50,
+  .dark .bg-gray-100,
+  .dark .bg-slate-50,
+  .dark .bg-slate-100 { @apply bg-[var(--ds-surface)]; }
+
+  .dark .bg-gray-200,
+  .dark .bg-gray-300,
+  .dark .bg-slate-200\/60,
+  .dark .bg-slate-100\/50 { @apply bg-[var(--ds-surface-raised)]; }
+
+  /* sombras/overlays contidas no dark */
+  .dark .shadow-lg { @apply shadow-[0_12px_32px_var(--ds-overlay)]; }
+
+  /* -------- Tipografia -------- */
+  .dark .text-black,
+  .dark .text-gray-900,
+  .dark .text-slate-900 { @apply text-[var(--ds-text)]; }
+
+  .dark .text-gray-800,
+  .dark .text-gray-700,
+  .dark .text-slate-700 { @apply text-[var(--ds-text-secondary)]; }
+
+  .dark .text-gray-600,
+  .dark .text-gray-500,
+  .dark .text-gray-400 { @apply text-[var(--ds-text-subtle)]; }
+
+  /* -------- Bordas / divisórias / rings -------- */
+  .dark .border-gray-100,
+  .dark .border-gray-200,
+  .dark .border-gray-300 { @apply border-[var(--ds-border)]; }
+
+  .dark .divide-gray-200 { @apply divide-[var(--ds-border)]; }
+  .dark .ring-gray-200 { @apply ring-[var(--ds-border)]; }
+
+  /* focus ring consistente (A11y) */
+  .dark .focus\:ring-gray-200:focus,
+  .dark .focus\:ring-gray-300:focus { @apply ring-[var(--ds-focus)]; }
+
+  /* -------- Hovers / estados de superfície -------- */
+  .dark .hover\:bg-gray-50:hover,
+  .dark .hover\:bg-gray-100:hover,
+  .dark .hover\:bg-gray-200:hover { @apply bg-[var(--ds-hover)]; }
+
+  .dark .hover\:text-gray-900:hover { @apply text-[var(--ds-text)]; }
+
+  /* ------- Inputs / selects / textareas ------- */
+  .dark input:not([type="checkbox"]):not([type="radio"]),
+  .dark select,
+  .dark textarea {
+    @apply bg-[var(--ds-surface)] text-[var(--ds-text)] placeholder-[var(--ds-text-subtle)] border border-[var(--ds-border)];
+  }
+  .dark input:focus,
+  .dark select:focus,
+  .dark textarea:focus {
+    @apply outline-none ring-2 ring-[var(--ds-focus)] border-[var(--ds-border)];
+  }
+  .dark .disabled\:bg-gray-100:disabled { @apply bg-[var(--ds-surface-raised)]; }
+
+  /* ------- Botões neutros / ghost ------- */
+  .dark .bg-gray-100.text-gray-700,
+  .dark .text-gray-700.bg-transparent { @apply text-[var(--ds-text-secondary)]; }
+  .dark .hover\:bg-gray-100:hover { @apply bg-[var(--ds-hover)]; }
+
+  /* ------- Badges / chips suaves ------- */
+  .dark .bg-gray-100.text-gray-800 { @apply bg-[var(--ds-surface-raised)] text-[var(--ds-text-secondary)]; }
+  .dark .bg-gray-200.text-gray-800 { @apply bg-[var(--ds-hover)] text-[var(--ds-text)]; }
+
+  /* ------- Tabelas ------- */
+  .dark table { @apply text-[var(--ds-text-secondary)]; }
+  .dark thead th { @apply bg-[var(--ds-surface)] text-[color:var(--ds-text-subtle)] border-b border-[var(--ds-border)]; }
+  .dark tbody tr { @apply border-b border-[var(--ds-border)]; }
+  .dark tbody tr:hover { @apply bg-[#2C333A]/60; }
+  .dark td { @apply text-[var(--ds-text-secondary)]; }
+
+  /* ------- Sidebar / Nav ------- */
+  .dark .sidebar,
+  .dark nav,
+  .dark .menu-surface { @apply bg-[var(--ds-surface-sunken)] border-[var(--ds-border)]; }
+
+  .dark .nav-item,
+  .dark .menu-item { @apply text-[var(--ds-text-secondary)]; }
+
+  .dark .nav-item:hover,
+  .dark .menu-item:hover { @apply bg-[var(--ds-hover)] text-[var(--ds-text)]; }
+
+  .dark .nav-item-active,
+  .dark .menu-item-active {
+    @apply bg-[var(--ds-surface-raised)] text-[var(--ds-text)] border border-[var(--ds-border)];
+  }
+
+  /* ------- Cards / sections ------- */
+  .dark .card {
+    @apply bg-[var(--ds-surface-raised)] border border-[var(--ds-border)] text-[var(--ds-text-secondary)];
+  }
+
+  /* ------- Tooltip / badge de notificação ------- */
+  .dark .tooltip { @apply bg-[var(--ds-surface-raised)] text-[var(--ds-text)] border border-[var(--ds-border)]; }
+  .dark .badge-dot { @apply ring-2 ring-[var(--ds-surface)]; }
+
+  /* ------- Ícones ------- */
+  .dark .text-gray-600 svg,
+  .dark svg.text-gray-600 { @apply text-[var(--ds-icon)]; }
+  .dark .text-gray-400 svg,
+  .dark svg.text-gray-400 { @apply text-[var(--ds-text-subtle)]; }
+
+  /* ------- Skeletons / pulse ------- */
+  .dark .animate-pulse { --tw-gradient-from: transparent; } /* evita brilho azulado */
+  .dark .skeleton { @apply bg-[var(--ds-hover)]; }
+
+  /* ===== Card do mês vigente ===== */
+  .dark #selected-month-card { @apply bg-[var(--ds-surface-raised)] ring-2 ring-[var(--ds-focus)]; }
+  .dark #selected-month-card:hover { @apply bg-[var(--ds-hover)]; }
+
+  /* neutralizar utilitárias azuis herdadas no dark (para o card) */
+  .dark #selected-month-card.bg-blue-50        { @apply bg-[var(--ds-surface-raised)]; }
+  .dark #selected-month-card.hover\:bg-blue-50:hover { @apply bg-[var(--ds-hover)]; }
+  .dark #selected-month-card.border-blue-200   { @apply border-[var(--ds-border)]; }
+  .dark #selected-month-card.ring-blue-500     { @apply ring-[var(--ds-focus)]; }
+
+  /* textos internos do card em caso de azuis herdados */
+  .dark #selected-month-card .text-blue-600 { @apply text-[var(--ds-text)]; }
+  .dark #selected-month-card .text-blue-500 { @apply text-[var(--ds-text-secondary)]; }
+
+  /* ===== Cores “de marca” nos sumários (aprox. Atlassian) ===== */
+  /* VERDE */
+  .dark .bg-green-50 .text-gray-900,
+  .dark .bg-green-50 .text-green-700,
+  .dark .bg-green-50 .text-gray-500,
+  .dark .bg-green-50 .text-gray-600 { @apply text-[#4BCE97]; }
+
+  /* AMARELO */
+  .dark .bg-yellow-50 .text-gray-900,
+  .dark .bg-yellow-50 .text-yellow-700,
+  .dark .bg-yellow-50 .text-gray-500,
+  .dark .bg-yellow-50 .text-gray-600 { @apply text-[#F5CD47]; }
+
+  /* AZUL */
+  .dark .bg-blue-50 .text-gray-900,
+  .dark .bg-blue-50 .text-blue-700,
+  .dark .bg-blue-50 .text-gray-500,
+  .dark .bg-blue-50 .text-gray-600 { @apply text-[#579DFF]; }
+
+  /* VERMELHO */
+  .dark .bg-red-50 .text-gray-900,
+  .dark .bg-red-50 .text-red-700,
+  .dark .bg-red-50 .text-gray-500,
+  .dark .bg-red-50 .text-gray-600 { @apply text-[#F87168]; }
+
+  /* ÍNDIGO → roxo Atlassian */
+  .dark .bg-indigo-50 .text-gray-900,
+  .dark .bg-indigo-50 .text-indigo-700,
+  .dark .bg-indigo-50 .text-gray-500,
+  .dark .bg-indigo-50 .text-gray-600 { @apply text-[#9F8FEF]; }
+
+  /* desaturação leve (genérica) para utilitárias */
+  .dark .text-green-600  { @apply text-[#4BCE97]; }
+  .dark .text-red-600    { @apply text-[#F87168]; }
+  .dark .text-orange-600 { @apply text-[#F5CD47]; } /* aprox. para warnings */
+  .dark .text-blue-600   { @apply text-[#579DFF]; }
+  .dark .text-purple-600 { @apply text-[#9F8FEF]; }
+  .dark .text-yellow-600 { @apply text-[#F5CD47]; }
+
+  /* ===== Links / estados focados ===== */
+  .dark a { @apply text-[var(--ds-link)]; }
+  .dark a:hover { @apply underline; }
+  .dark .ring-blue-500 { @apply ring-[var(--ds-focus)]; }
+}
+
+/* ===== Scrollbars (fora do @apply por compatibilidade) ===== */
+.dark *::-webkit-scrollbar        { width: 10px; height: 10px; }
+.dark *::-webkit-scrollbar-track  { background-color: var(--ds-surface-sunken); }
+.dark *::-webkit-scrollbar-thumb  { background-color: var(--ds-border); border-radius: .375rem; }
+.dark *::-webkit-scrollbar-thumb:hover { background-color: #3A444D; }
