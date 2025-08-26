@@ -4,7 +4,7 @@
   .dark {
     --ds-surface: #1D2125;            /* fundo base */
     --ds-surface-raised: #22272B;     /* cartões/painéis */
-    --ds-surface-sunken: #161A1D;     /* áreas “afundadas”, sidebar */
+    --ds-surface-sunken: #1D2125;     /* áreas “afundadas”, sidebar */
     --ds-border: #2C333A;             /* bordas/divisórias */
     --ds-hover: #2C333A;              /* hover de superfície */
     --ds-overlay: rgba(9, 30, 66, .31); /* sombras/overlays Atlassian */
