@@ -471,7 +471,7 @@ export function Dashboard() {
                 Visão Mensal
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0 sm:p-6">
+            <CardContent className="py-0 px-1 sm:px-6">
               <div 
                 className="overflow-x-auto scrollbar-hide" 
                 id="monthly-scroll"
@@ -581,7 +581,7 @@ export function Dashboard() {
             <CardHeader>
               <CardTitle>Lançamentos</CardTitle>
             </CardHeader>
-            <CardContent className="p-0 sm:p-6">
+            <CardContent className="py-0 px-1 sm:px-6">
               <div className="w-full overflow-x-auto">
                 <table className="w-full min-w-[600px]">
                   <thead>

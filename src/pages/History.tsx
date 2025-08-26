@@ -189,7 +189,7 @@ export function History() {
           <CardHeader>
             <CardTitle className="text-lg sm:text-xl">Registro de Atividades</CardTitle>
           </CardHeader>
-          <CardContent className="p-0 sm:p-6">
+          <CardContent className="py-0 px-1 sm:px-6">
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600" />

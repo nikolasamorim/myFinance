@@ -190,7 +190,7 @@ export function Cartoes() {
                   <CardHeader>
                     <CardTitle className="text-lg sm:text-xl">Cartões Cadastrados</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-0 sm:p-6">
+                  <CardContent className="py-0 px-1 sm:px-6">
                     <div className="w-full overflow-x-auto">
                       <table className="w-full min-w-[900px]">
                         <thead>
