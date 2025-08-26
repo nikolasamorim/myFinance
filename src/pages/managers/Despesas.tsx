@@ -436,11 +436,113 @@ export function Despesas() {
                   {(!installmentsThisMonth || installmentsThisMonth.length === 0) && (
                     <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
                       <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm">Nenhuma parcela este mês</p>
+                      <p className="text-sm">Nenhuma parcela neste período</p>
                     </div>
                   )}
                 </div>
               </div>
+            </CardContent>
+            <CardContent className="p-4 pt-0 sm:px-6 sm:pt-0">
+              {(() => {
+                // ---- Aggregates ----
+                const totalCount =
+                  installmentsThisMonth?.length || 0;
+
+                const totalValue =
+                  installmentsThisMonth?.reduce((acc, i) => acc + Number(i.amount || 0), 0) || 0;
+
+                const byStatus: Record<string, { count: number; total: number }> =
+                  (installmentsThisMonth ?? []).reduce((acc, i: any) => {
+                    const s = i.status ?? "pending";
+                    const v = Number(i.amount) || 0;
+                    if (!acc[s]) acc[s] = { count: 0, total: 0 };
+                    acc[s].count += 1;
+                    acc[s].total += v;
+                    return acc;
+                  }, {} as Record<string, { count: number; total: number }>);
+
+                // ---- Visual config (independente do outro sumário) ----
+                const statusConfig: Record<
+                  string,
+                  {
+                    label: string;
+                    cardBg: string;
+                    titleColor: string;
+                    valueColor: string;
+                    border: string;
+                    Icon: React.ComponentType<any>;
+                  }
+                > = {
+                  paid:      { label: "Pagas",     cardBg: "bg-green-50",  titleColor: "text-gray-500", valueColor: "text-green-700",  border: "border-green-200",  Icon: CheckCircle },
+                  pending:   { label: "Pendentes", cardBg: "bg-yellow-50", titleColor: "text-gray-500", valueColor: "text-yellow-700", border: "border-yellow-200", Icon: Clock },
+                  open:      { label: "Abertas",   cardBg: "bg-blue-50",   titleColor: "text-gray-500", valueColor: "text-blue-700",   border: "border-blue-200",   Icon: Circle },
+                  overdue:   { label: "Vencidas",  cardBg: "bg-red-50",    titleColor: "text-gray-500", valueColor: "text-red-700",    border: "border-red-200",    Icon: AlertCircle },
+                  scheduled: { label: "Agendadas", cardBg: "bg-indigo-50", titleColor: "text-gray-500", valueColor: "text-indigo-700", border: "border-indigo-200", Icon: Calendar },
+                  canceled:  { label: "Canceladas",cardBg: "bg-gray-50",   titleColor: "text-gray-500", valueColor: "text-gray-700",   border: "border-gray-200",   Icon: XCircle },
+                };
+
+                return (
+                  <div
+                    className="
+                      overflow-x-auto -mx-4 px-4
+                      sm:overflow-visible sm:mx-0 sm:px-0
+                      scrollbar-hide
+                    "
+                    style={{ scrollBehavior: "smooth" }}
+                  >
+                    <div
+                      className="
+                        flex gap-3 w-max snap-x snap-mandatory
+                        sm:grid sm:w-auto sm:snap-none sm:gap-4
+                        sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7
+                      "
+                    >
+                      {/* TOTAL */}
+                      <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="p-1.5 rounded-lg bg-gray-700 text-white">
+                            <CreditCard className="w-3 h-3" />
+                          </span>
+                          <p className="text-xs text-gray-500">Total</p>
+                        </div>
+                        <p className="text-sm font-medium text-gray-600">
+                          {totalCount} {totalCount === 1 ? "despesa" : "despesas"}
+                        </p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {formatCurrency(totalValue)}
+                        </p>
+                      </div>
+
+                      {/* POR STATUS */}
+                      {Object.entries(statusConfig).map(([key, cfg]) => {
+                        const stats = byStatus[key] ?? { count: 0, total: 0 };
+                        const Icon = cfg.Icon;
+                        return (
+                          <div
+                            key={key}
+                            className={`min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border ${cfg.border} ${cfg.cardBg} text-left`}
+                          >
+                            <div className="flex items-center gap-2 mb-2">
+                              <Icon className="w-3 h-3" />
+                              <p className={`text-xs ${cfg.titleColor}`}>{cfg.label}</p>
+                            </div>
+
+                            {/* Valor das parcelas desse status no mês */}
+                            <p className="text-lg font-semibold text-gray-900">
+                              {formatCurrency(stats.total || 0)}
+                            </p>
+
+                            {/* Quantidade de parcelas nesse status */}
+                            <p className={`text-sm font-medium ${cfg.valueColor}`}>
+                              {stats.count} {stats.count === 1 ? "despesa" : "despesas"}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
@@ -544,8 +646,8 @@ export function Despesas() {
                   
                   {(!fixedExpensesThisMonth || fixedExpensesThisMonth.length === 0) && (
                     <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
-                      <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm">Nenhuma despesa fixa este mês</p>
+                      <RefreshCcw className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm">Nenhuma despesa fixa neste período</p>
                     </div>
                   )}
                 </div>
@@ -557,6 +659,7 @@ export function Despesas() {
                 className="
                   overflow-x-auto -mx-4 px-4
                   sm:overflow-visible sm:mx-0 sm:px-0
+                  scrollbar-hide
                 "
                 style={{ scrollBehavior: "smooth" }}
               >
@@ -571,7 +674,7 @@ export function Despesas() {
                   <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="p-1.5 rounded-lg bg-gray-700 text-white">
-                        <Calendar className="w-3 h-3" />
+                        <RefreshCcw className="w-3 h-3" />
                       </span>
                       <p className="text-xs text-gray-500">Total</p>
                     </div>
@@ -619,7 +722,7 @@ export function Despesas() {
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Lançamentos de Despesas</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Tudo</CardTitle>
             </CardHeader>
             <CardContent className="py-0 px-1 sm:px-6">
               {isLoading ? (
