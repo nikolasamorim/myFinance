@@ -180,10 +180,10 @@
   .dark .bg-red-50 .text-gray-600 { @apply text-[#F87168]; }
 
   /* ÍNDIGO → roxo Atlassian */
-  .dark .bg-indigo-50 .text-gray-900,
-  .dark .bg-indigo-50 .text-indigo-700,
-  .dark .bg-indigo-50 .text-gray-500,
-  .dark .bg-indigo-50 .text-gray-600 { @apply text-[#9F8FEF]; }
+  .dark .bg-purple-50 .text-gray-900,
+  .dark .bg-purple-50 .text-purple-700,
+  .dark .bg-purple-50 .text-gray-500,
+  .dark .bg-purple-50 .text-gray-600 { @apply text-[#9F8FEF]; }
 
   /* desaturação leve (genérica) para utilitárias */
   .dark .text-green-600  { @apply text-[#4BCE97]; }

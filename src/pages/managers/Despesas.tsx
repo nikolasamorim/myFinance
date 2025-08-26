@@ -125,28 +125,6 @@ export function Despesas() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'text-green-600 bg-green-50';
-      case 'pending':
-        return 'text-red-600 bg-red-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'Paga';
-      case 'pending':
-        return 'Pendente';
-      default:
-        return status;
-    }
-  };
-
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'avulsa':
@@ -160,6 +138,44 @@ export function Despesas() {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'text-green-600 bg-green-50 border border-green-200';
+      case 'pending':
+        return 'text-yellow-600 bg-yellow-50 border border-yellow-200';
+      case 'open':
+        return 'text-blue-600 bg-blue-50 border border-green-200';
+      case 'overdue':
+        return 'text-red-600 bg-red-50 border border-green-200';
+      case 'scheduled':
+        return 'text-purple-600 bg-purple-50 border border-green-200';
+      case 'canceled':
+        return 'text-gray-600 bg-gray-50 border border-green-200';
+      default:
+        return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'Paga';
+      case 'pending':
+        return 'Pendente';
+      case 'open':
+        return 'Aberta';
+      case 'overdue':
+        return 'Vencida';
+      case 'scheduled':
+        return 'Agendada';
+      case 'canceled':
+        return 'Canceladas';
+      default:
+        return status;
+    }
+  };
+
   const statusConfig: Record<string, {
     label: string;
     Icon: any;
@@ -168,12 +184,12 @@ export function Despesas() {
     valueColor: string;
     border: string;
   }> = {
-    paid:      { label: "Pagas",     Icon: CheckCircle, cardBg: "bg-green-50",  titleColor: "text-gray-500", valueColor: "text-green-700",  border: "border-green-200" },
-    pending:   { label: "Pendentes", Icon: Clock,       cardBg: "bg-yellow-50", titleColor: "text-gray-500", valueColor: "text-yellow-700", border: "border-yellow-200" },
-    open:      { label: "Abertas",   Icon: Circle,      cardBg: "bg-blue-50",   titleColor: "text-gray-500", valueColor: "text-blue-700",   border: "border-blue-200" },
-    overdue:   { label: "Vencidas",  Icon: AlertCircle, cardBg: "bg-red-50",    titleColor: "text-gray-500", valueColor: "text-red-700",    border: "border-red-200" },
-    scheduled: { label: "Agendadas", Icon: Calendar,    cardBg: "bg-indigo-50", titleColor: "text-gray-500", valueColor: "text-indigo-700", border: "border-indigo-200" },
-    canceled:  { label: "Canceladas",Icon: XCircle,     cardBg: "bg-gray-50",   titleColor: "text-gray-500", valueColor: "text-gray-700",   border: "border-gray-200" },
+    paid:      { label: "Pagas",     Icon: CheckCircle, cardBg: "bg-green-50",  titleColor: "text-gray-500", valueColor: "text-green-600",  border: "border-green-200" },
+    pending:   { label: "Pendentes", Icon: Clock,       cardBg: "bg-yellow-50", titleColor: "text-gray-500", valueColor: "text-yellow-600", border: "border-yellow-200" },
+    open:      { label: "Abertas",   Icon: Circle,      cardBg: "bg-blue-50",   titleColor: "text-gray-500", valueColor: "text-blue-600",   border: "border-blue-200" },
+    overdue:   { label: "Vencidas",  Icon: AlertCircle, cardBg: "bg-red-50",    titleColor: "text-gray-500", valueColor: "text-red-600",    border: "border-red-200" },
+    scheduled: { label: "Agendadas", Icon: Calendar,    cardBg: "bg-purple-50", titleColor: "text-gray-500", valueColor: "text-purple-600", border: "border-purple-200" },
+    canceled:  { label: "Canceladas",Icon: XCircle,     cardBg: "bg-gray-50",   titleColor: "text-gray-500", valueColor: "text-gray-600",   border: "border-gray-200" },
   };
   
   // Agrega quantidade e total por status
@@ -198,7 +214,7 @@ export function Despesas() {
       case "overdue":
         return <AlertCircle className="p-1.5 rounded-lg bg-red-600 text-red-50" />;
       case "scheduled":
-        return <Calendar className="p-1.5 rounded-lg bg-indigo-500 text-indigo-50" />;
+        return <Calendar className="p-1.5 rounded-lg bg-purple-500 text-purple-50" />;
       case "canceled":
         return <XCircle className="p-1.5 rounded-lg bg-gray-500 text-gray-50" />;
       default:
@@ -496,7 +512,7 @@ export function Despesas() {
                   pending:   { label: "Pendentes", cardBg: "bg-yellow-50", titleColor: "text-gray-500", valueColor: "text-yellow-700", border: "border-yellow-200", Icon: Clock },
                   open:      { label: "Abertas",   cardBg: "bg-blue-50",   titleColor: "text-gray-500", valueColor: "text-blue-700",   border: "border-blue-200",   Icon: Circle },
                   overdue:   { label: "Vencidas",  cardBg: "bg-red-50",    titleColor: "text-gray-500", valueColor: "text-red-700",    border: "border-red-200",    Icon: AlertCircle },
-                  scheduled: { label: "Agendadas", cardBg: "bg-indigo-50", titleColor: "text-gray-500", valueColor: "text-indigo-700", border: "border-indigo-200", Icon: Calendar },
+                  scheduled: { label: "Agendadas", cardBg: "bg-purple-50", titleColor: "text-gray-500", valueColor: "text-purple-700", border: "border-purple-200", Icon: Calendar },
                   canceled:  { label: "Canceladas",cardBg: "bg-gray-50",   titleColor: "text-gray-500", valueColor: "text-gray-700",   border: "border-gray-200",   Icon: XCircle },
                 };
 
@@ -867,7 +883,7 @@ export function Despesas() {
                   pending:   { label: "Pendentes", border: "border-yellow-300",text: "text-yellow-700",bg: "bg-yellow-50" },
                   open:      { label: "Abertas",   border: "border-blue-300",  text: "text-blue-700",  bg: "bg-blue-50" },
                   overdue:   { label: "Vencidas",  border: "border-red-300",   text: "text-red-700",   bg: "bg-red-50" },
-                  scheduled: { label: "Agendadas", border: "border-indigo-300",text: "text-indigo-700",bg: "bg-indigo-50" },
+                  scheduled: { label: "Agendadas", border: "border-purple-300",text: "text-purple-700",bg: "bg-purple-50" },
                   canceled:  { label: "Canceladas",border: "border-gray-300",  text: "text-gray-700",  bg: "bg-gray-50" },
                 };
 
