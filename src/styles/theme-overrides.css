@@ -65,6 +65,10 @@
   .dark .focus\:ring-gray-200:focus,
   .dark .focus\:ring-gray-300:focus { @apply ring-[var(--ds-focus)]; }
 
+  .dark hr {
+    @apply border-[var(--ds-border)];
+  }
+
   /* -------- Hovers / estados de superfície -------- */
   .dark .hover\:bg-gray-50:hover,
   .dark .hover\:bg-gray-100:hover,
@@ -191,7 +195,6 @@
 
   /* ===== Links / estados focados ===== */
   .dark a { @apply text-[var(--ds-link)]; }
-  .dark a:hover { @apply underline; }
   .dark .ring-blue-500 { @apply ring-[var(--ds-focus)]; }
 }
 

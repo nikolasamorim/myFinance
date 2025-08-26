@@ -74,9 +74,9 @@ export function Dropdown({ options, value, onChange, placeholder = 'Selecione...
                 key={option.value}
                 type="button"
                 className={cn(
-                  'w-full flex items-center text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50 min-w-0',
+                  'w-full flex items-center text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50 min-w-0 text-black',
                   isMobile ? 'px-3 py-2.5 text-sm' : 'px-2 py-1.5 text-sm',
-                  value === option.value && 'bg-gray-50 text-black'
+                  value === option.value && 'bg-gray-100'
                 )}
                 onClick={() => {
                   onChange(option.value);
