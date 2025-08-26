@@ -154,22 +154,27 @@
     .dark .bg-green-50 .text-gray-900 {@apply text-emerald-600}
     .dark .bg-green-50 .text-green-700 {@apply text-emerald-600}
     .dark .bg-green-50 .text-gray-500 {@apply text-emerald-600}
+    .dark .bg-green-50 .text-gray-600 {@apply text-emerald-600}
 
     .dark .bg-yellow-50 .text-gray-900 {@apply text-amber-600}
     .dark .bg-yellow-50 .text-yellow-700 {@apply text-amber-600}
     .dark .bg-yellow-50 .text-gray-500 {@apply text-amber-600}
+    .dark .bg-yellow-50 .text-gray-600 {@apply text-amber-600}
 
     .dark .bg-blue-50 .text-gray-900 {@apply text-sky-600}
     .dark .bg-blue-50 .text-blue-700 {@apply text-sky-600}
     .dark .bg-blue-50 .text-gray-500 {@apply text-sky-600}
+    .dark .bg-blue-50 .text-gray-600 {@apply text-sky-600}
 
     .dark .bg-red-50 .text-gray-900 {@apply text-rose-600}
     .dark .bg-red-50 .text-red-700 {@apply text-rose-600}
     .dark .bg-red-50 .text-gray-500 {@apply text-rose-600}
+    .dark .bg-red-50 .text-gray-600 {@apply text-rose-600}
 
     .dark .bg-indigo-50 .text-gray-900 {@apply text-sky-700}
     .dark .bg-indigo-50 .text-indigo-700 {@apply text-sky-700}
     .dark .bg-indigo-50 .text-gray-500 {@apply text-sky-700}
+    .dark .bg-indigo-50 .text-gray-600 {@apply text-sky-700}
   
   /* desaturar leve (opcional) */
     .dark .text-green-600 { @apply text-emerald-400; }

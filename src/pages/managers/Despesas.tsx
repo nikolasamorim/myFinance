@@ -722,7 +722,7 @@ export function Despesas() {
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Tudo</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Lançamentos</CardTitle>
             </CardHeader>
             <CardContent className="py-0 px-1 sm:px-6">
               {isLoading ? (
@@ -731,81 +731,83 @@ export function Despesas() {
                 </div>
               ) : (
                 <div className="w-full overflow-x-auto">
-                  <table className="w-full min-w-[800px]">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Título</th>
-                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Valor</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Status</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Vencimento</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Pagamento</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Tipo</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Parcela</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {despesas.map((despesa) => (
-                        <tr key={despesa.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-2 sm:py-3 px-2 sm:px-4">
-                            <div>
-                              <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{despesa.title}</p>
-                              {despesa.subtitle && (
-                                <p className="text-xs text-gray-500 truncate">{despesa.subtitle}</p>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
-                            {formatCurrency(Number(despesa.amount))}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
-                            <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getStatusColor(despesa.status)}`}>
-                              {getStatusLabel(despesa.status)}
-                            </span>
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            {formatDate(despesa.transaction_date)}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            {despesa.status === 'paid' ? formatDate(despesa.transaction_date) : '-'}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            {getTypeLabel(despesa.repeat_type)}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            {despesa.is_installment ? `${despesa.installment_number}/${despesa.installment_total}` : '-'}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4">
-                            <div className="flex justify-center space-x-1 sm:space-x-2">
-                              {despesa.status === 'pending' && (
-                                <button
-                                  onClick={() => handleMarkAsPaid(despesa.id)}
-                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-green-600 transition-colors"
-                                  title="Marcar como paga"
-                                >
-                                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                              )}
-                              <button
-                                onClick={() => handleEditDespesa(despesa)}
-                                className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                title="Editar"
-                              >
-                                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteDespesa(despesa.id)}
-                                className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </button>
-                            </div>
-                          </td>
+                  <div className="max-h-[560px] overflow-y-auto">
+                    <table className="w-full min-w-[800px]">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Título</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Valor</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Status</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Vencimento</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Pagamento</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Tipo</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Parcela</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {despesas.map((despesa) => (
+                          <tr key={despesa.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-2 sm:py-3 px-2 sm:px-4">
+                              <div>
+                                <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{despesa.title}</p>
+                                {despesa.subtitle && (
+                                  <p className="text-xs text-gray-500 truncate">{despesa.subtitle}</p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
+                              {formatCurrency(Number(despesa.amount))}
+                            </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                              <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${getStatusColor(despesa.status)}`}>
+                                {getStatusLabel(despesa.status)}
+                              </span>
+                            </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                              {formatDate(despesa.transaction_date)}
+                            </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                              {despesa.status === 'paid' ? formatDate(despesa.transaction_date) : '-'}
+                            </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                              {getTypeLabel(despesa.repeat_type)}
+                            </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                              {despesa.is_installment ? `${despesa.installment_number}/${despesa.installment_total}` : '-'}
+                            </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4">
+                              <div className="flex justify-center space-x-1 sm:space-x-2">
+                                {despesa.status === 'pending' && (
+                                  <button
+                                    onClick={() => handleMarkAsPaid(despesa.id)}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-green-600 transition-colors"
+                                    title="Marcar como paga"
+                                  >
+                                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleEditDespesa(despesa)}
+                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteDespesa(despesa.id)}
+                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   
                   {despesas.length === 0 && (
                     <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
@@ -816,6 +818,105 @@ export function Despesas() {
                   )}
                 </div>
               )}
+            </CardContent>
+            <CardContent className="py-0 px-1 sm:px-6">
+              {/* Sumário compacto da Tabela (mobile-first, diferente dos containers) */}
+              {(() => {
+                const totalCount = despesas?.length || 0;
+                const totalValue =
+                  despesas?.reduce((acc, d) => acc + Number(d.amount || 0), 0) || 0;
+
+                const byStatus: Record<string, { count: number; total: number }> =
+                  (despesas ?? []).reduce((acc, d: any) => {
+                    const s = d.status ?? "pending";
+                    const v = Number(d.amount) || 0;
+                    if (!acc[s]) acc[s] = { count: 0, total: 0 };
+                    acc[s].count += 1;
+                    acc[s].total += v;
+                    return acc;
+                  }, {} as Record<string, { count: number; total: number }>);
+
+                const chipConfig: Record<
+                  string,
+                  { label: string; border: string; text: string; bg: string }
+                > = {
+                  __total:   { label: "Total",     border: "border-gray-300",  text: "text-gray-900",  bg: "bg-gray-50" },
+                  paid:      { label: "Pagas",     border: "border-green-300", text: "text-green-700", bg: "bg-green-50" },
+                  pending:   { label: "Pendentes", border: "border-yellow-300",text: "text-yellow-700",bg: "bg-yellow-50" },
+                  open:      { label: "Abertas",   border: "border-blue-300",  text: "text-blue-700",  bg: "bg-blue-50" },
+                  overdue:   { label: "Vencidas",  border: "border-red-300",   text: "text-red-700",   bg: "bg-red-50" },
+                  scheduled: { label: "Agendadas", border: "border-indigo-300",text: "text-indigo-700",bg: "bg-indigo-50" },
+                  canceled:  { label: "Canceladas",border: "border-gray-300",  text: "text-gray-700",  bg: "bg-gray-50" },
+                };
+
+                const order = ["__total", "paid", "pending", "open", "overdue", "scheduled", "canceled"];
+
+                return (
+                  <div
+                    className="
+                      pt-3
+                      mb-3 sm:mb-4
+                      overflow-x-auto -mx-1 px-1
+                      sm:overflow-visible sm:mx-0 sm:px-0
+                      scrollbar-hide
+                    "
+                    style={{ scrollBehavior: "smooth" }}
+                  >
+                    <div
+                      className="
+                        flex gap-2 w-max snap-x snap-mandatory
+                        sm:grid sm:w-auto sm:snap-none sm:gap-3
+                        sm:auto-cols-fr sm:grid-flow-col
+                      "
+                    >
+                      {/* Card TOTAL */}
+                      <div
+                        className={`
+                          min-w-[180px] sm:min-w-0 snap-start
+                          rounded-lg border ${chipConfig.__total.border} ${chipConfig.__total.bg}
+                          px-3 py-2 flex items-center justify-between
+                        `}
+                      >
+                        <span className="text-xs font-medium text-gray-600">Total</span>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {formatCurrency(totalValue)}
+                          </p>
+                          <p className="text-[10px] text-gray-500">
+                            {totalCount} {totalCount === 1 ? "lançamento" : "lançamentos"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Cards por STATUS */}
+                      {order.slice(1).map((key) => {
+                        const cfg = chipConfig[key];
+                        const stats = byStatus[key] ?? { count: 0, total: 0 };
+                        return (
+                          <div
+                            key={key}
+                            className={`
+                              min-w-[180px] sm:min-w-0 snap-start
+                              rounded-lg border ${cfg.border} ${cfg.bg}
+                              px-3 py-2 flex items-center justify-between
+                            `}
+                          >
+                            <span className="text-xs font-medium text-gray-600">{cfg.label}</span>
+                            <div className="text-right">
+                              <p className={`text-sm font-semibold ${cfg.text}`}>
+                                {formatCurrency(stats.total || 0)}
+                              </p>
+                              <p className="text-[10px] text-gray-500">
+                                {stats.count} {stats.count === 1 ? "lançamento" : "lançamentos"}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
