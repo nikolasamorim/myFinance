@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, User, LogOut, Settings, Building, Users, X, LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, CreditCard, Wallet, Tag, Target, History, Plus } from 'lucide-react';
+import { Bell, User, LogOut, Settings, Building, Users, X, LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, CreditCard, Wallet, Tag, Target, History, Plus, SunMoon } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
@@ -7,6 +7,7 @@ import { Dropdown } from '../ui/Dropdown';
 import { TransactionTypeSelector } from '../ui/TransactionTypeSelector';
 import { SidebarToggleButton } from '../ui/SidebarToggleButton';
 import { Sidebar } from './Sidebar';
+import { useTheme } from '../../hooks/useTheme';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -63,6 +64,8 @@ export function Navbar() {
     // TODO: Implement notifications panel
   };
 
+  const { toggle } = useTheme();
+
   return (
     <>
       <nav className="bg-white border-b border-gray-200 px-4 md:px-6 py-2">
@@ -79,8 +82,27 @@ export function Navbar() {
             
             {/* Logo */}
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <img src="/logo-black.png" width="20" height="20" alt="Logo" className="sm:w-6 sm:h-6 md:w-7 md:h-7" />
-              <h1 className="font-serifTitle font-bold text-gray-900 hidden sm:block mr-3">Azami</h1> 
+              {/* Logo light */}
+              <img
+                src="/logo-black.png"
+                width="20"
+                height="20"
+                alt="Logo"
+                className="sm:w-6 sm:h-6 md:w-7 md:h-7 dark:hidden"
+              />
+
+              {/* Logo dark */}
+              <img
+                src="/logo-white.png"
+                width="20"
+                height="20"
+                alt="Logo"
+                className="hidden dark:block sm:w-6 sm:h-6 md:w-7 md:h-7"
+              />
+
+              <h1 className="font-serifTitle font-bold text-gray-900 dark:text-gray-100 hidden sm:block mr-3">
+                Azami
+              </h1>
             </div>
             
             {/* Workspace Selector */}
@@ -168,6 +190,16 @@ export function Navbar() {
                   >
                     <History className="w-4 h-4 mr-3" />
                     Histórico
+                  </button>
+                  <button 
+                    onClick={() => {
+                      toggle();
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <SunMoon className="w-4 h-4 mr-3" />
+                    Alterar Tema (Beta)
                   </button>
                   <button
                     onClick={() => {

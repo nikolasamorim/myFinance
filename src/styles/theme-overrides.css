@@ -1,0 +1,163 @@
+/* ===== Dark overrides (neutros) ===== */
+@layer utilities {
+    /* -------- Superfícies -------- */
+    /* fundo global e containers comuns */
+    .dark .bg-white                { @apply bg-neutral-900; }
+    .dark .bg-gray-50              { @apply bg-neutral-900; }
+    .dark .bg-gray-100             { @apply bg-neutral-900; }
+    .dark .bg-gray-200             { @apply bg-neutral-800; }
+    .dark .bg-gray-300             { @apply bg-neutral-700; }
+    .dark .bg-slate-50             { @apply bg-neutral-900; }
+    .dark .bg-slate-100            { @apply bg-neutral-900; }
+  
+    /* cartões / painéis */
+    .dark .bg-slate-100\/50         { @apply bg-neutral-900/50; }
+    .dark .bg-slate-200\/60         { @apply bg-neutral-800/60; }
+  
+    /* dropdowns/menus/modais (muito usados como bg-white) */
+    .dark .shadow-lg               { @apply shadow-black/40; } /* sombra mais contida no dark */
+  
+    /* -------- Tipografia -------- */
+    .dark .text-black              { @apply text-neutral-100; }
+    .dark .text-gray-900           { @apply text-neutral-100; }
+    .dark .text-gray-800           { @apply text-neutral-100; }
+    .dark .text-gray-700           { @apply text-neutral-200; }
+    .dark .text-gray-600           { @apply text-neutral-300; }
+    .dark .text-gray-500           { @apply text-neutral-400; }
+    .dark .text-gray-400           { @apply text-neutral-400; }
+  
+    /* títulos “brand” que estavam esbranquiçados */
+    .dark .text-slate-900          { @apply text-neutral-100; }
+    .dark .text-slate-700          { @apply text-neutral-200; }
+  
+    /* -------- Bordas / divisórias -------- */
+    .dark .border-gray-100         { @apply border-neutral-800; }
+    .dark .border-gray-200         { @apply border-neutral-800; }
+    .dark .border-gray-300         { @apply border-neutral-700; }
+    .dark .divide-gray-200         { @apply divide-neutral-800; }
+    .dark .ring-gray-200           { @apply ring-neutral-800; }
+  
+    /* focus ring acessível */
+    .dark .focus\:ring-gray-200:focus { @apply ring-neutral-700; }
+    .dark .focus\:ring-gray-300:focus { @apply ring-neutral-600; }
+  
+    /* -------- Hovers / estados -------- */
+    .dark .hover\:bg-gray-50:hover   { @apply bg-neutral-800; }
+    .dark .hover\:bg-gray-100:hover  { @apply bg-neutral-800; }
+    .dark .hover\:bg-gray-200:hover  { @apply bg-neutral-700; }
+    .dark .hover\:text-gray-900:hover{ @apply text-neutral-100; }
+  
+    /* ------- Inputs / selects / textareas ------- */
+    /* inputs normalmente bg-white/border-gray-200/text-gray-900 */
+    .dark input:not([type="checkbox"]):not([type="radio"]),
+    .dark select,
+    .dark textarea {
+      @apply bg-neutral-900 text-neutral-100 placeholder-neutral-500 border border-neutral-800;
+    }
+    .dark input:focus,
+    .dark select:focus,
+    .dark textarea:focus {
+      @apply outline-none ring-2 ring-neutral-600 border-neutral-700;
+    }
+    .dark .disabled\:bg-gray-100:disabled { @apply bg-neutral-800; }
+  
+    /* ------- Botões neutros / ghost ------- */
+    .dark .bg-gray-100.text-gray-700,
+    .dark .text-gray-700.bg-transparent {
+      @apply text-neutral-200;
+    }
+    .dark .hover\:bg-gray-100:hover { @apply bg-neutral-800; }
+  
+    /* ------- Badges / chips suaves ------- */
+    .dark .bg-gray-100.text-gray-800 { @apply bg-neutral-800 text-neutral-200; }
+    .dark .bg-gray-200.text-gray-800 { @apply bg-neutral-700 text-neutral-100; }
+  
+    /* ------- Tabelas ------- */
+    .dark table { @apply text-neutral-200; }
+    .dark thead th { @apply bg-neutral-900 text-neutral-400 border-b border-neutral-800; }
+    .dark tbody tr { @apply border-b border-neutral-800; }
+    .dark tbody tr:hover { @apply bg-neutral-800/60; }
+    .dark td { @apply text-neutral-200; }
+  
+    /* ------- Sidebar / Nav ------- */
+    /* superfícies */
+    .dark .sidebar,
+    .dark nav,
+    .dark .menu-surface {
+      @apply bg-neutral-950 border-neutral-900;
+    }
+    /* itens */
+    .dark .nav-item,
+    .dark .menu-item {
+      @apply text-neutral-300;
+    }
+    .dark .nav-item:hover,
+    .dark .menu-item:hover {
+      @apply bg-neutral-900 text-neutral-100;
+    }
+    .dark .nav-item-active,
+    .dark .menu-item-active {
+      @apply bg-neutral-900 text-neutral-100 border border-neutral-800;
+    }
+  
+    /* ------- Cards / sections ------- */
+    .dark .card {
+      @apply bg-neutral-900 border border-neutral-800 text-neutral-200;
+    }
+  
+    /* ------- Tooltip / badge de notificação ------- */
+    .dark .tooltip { @apply bg-neutral-800 text-neutral-100 border border-neutral-700; }
+    .dark .badge-dot { @apply ring-2 ring-neutral-900; } /* se usa dot com ring */
+  
+    /* ------- Scrollbars (opcional) ------- */
+    .dark *::-webkit-scrollbar        { width: 10px; height: 10px; }
+    .dark *::-webkit-scrollbar-track  { @apply bg-neutral-950; }
+    .dark *::-webkit-scrollbar-thumb  { @apply bg-neutral-800 rounded-md; }
+    .dark *::-webkit-scrollbar-thumb:hover { @apply bg-neutral-700; }
+  
+    /* ------- Ícones comuns (cinza médio no dark) ------- */
+    .dark .text-gray-600 svg,
+    .dark svg.text-gray-600 { @apply text-neutral-300; }
+    .dark .text-gray-400 svg,
+    .dark svg.text-gray-400 { @apply text-neutral-400; }
+  
+    /* ------- Skeletons / pulse ------- */
+    .dark .animate-pulse { --tw-gradient-from: transparent; } /* evita brilho azulado */
+    .dark .skeleton      { @apply bg-neutral-800; }
+
+    /* ===== Card do mês vigente ===== */
+    .dark #selected-month-card {
+        @apply bg-neutral-900 ring-2 ring-neutral-500;
+    }
+
+    .dark #selected-month-card:hover {
+        @apply bg-neutral-800;
+    }
+
+    /* neutralizar utilitárias azuis herdadas no dark */
+    .dark #selected-month-card.bg-blue-50        { @apply bg-neutral-900; }
+    .dark #selected-month-card.hover\:bg-blue-50:hover { @apply bg-neutral-800; }
+    .dark #selected-month-card.border-blue-200   { @apply border-neutral-700; }
+    .dark #selected-month-card.ring-blue-500     { @apply ring-neutral-500; }
+
+    /* textos dentro do card, se houver azul */
+    .dark #selected-month-card .text-blue-600 { @apply text-neutral-100; }
+    .dark #selected-month-card .text-blue-500 { @apply text-neutral-200; }
+
+  }
+  
+  /* ===== Opções de marca (não mexe nas suas cores de status) =====
+     Mantemos os acentos (verde = success, vermelho = danger, laranja = warning)
+     para leitura rápida. Se quiser “desaturar” no dark, ative os blocos abaixo.
+  */
+  
+  /* desaturar leve (opcional) */
+  @layer utilities {
+    .dark .text-green-600 { @apply text-emerald-400; }
+    .dark .text-red-600   { @apply text-rose-400; }
+    .dark .text-orange-600{ @apply text-orange-400; }
+    .dark .text-blue-600  { @apply text-sky-400; }
+    .dark .text-purple-600{ @apply text-violet-400; }
+    .dark .text-yellow-600{ @apply text-amber-400; }
+  }
+  
