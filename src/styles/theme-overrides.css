@@ -144,15 +144,34 @@
     .dark #selected-month-card .text-blue-600 { @apply text-neutral-100; }
     .dark #selected-month-card .text-blue-500 { @apply text-neutral-200; }
 
-  }
   
   /* ===== Opções de marca (não mexe nas suas cores de status) =====
      Mantemos os acentos (verde = success, vermelho = danger, laranja = warning)
      para leitura rápida. Se quiser “desaturar” no dark, ative os blocos abaixo.
   */
+
+  /* Alterando cores dos sumário dos containers */
+    .dark .bg-green-50 .text-gray-900 {@apply text-emerald-600}
+    .dark .bg-green-50 .text-green-700 {@apply text-emerald-600}
+    .dark .bg-green-50 .text-gray-500 {@apply text-emerald-600}
+
+    .dark .bg-yellow-50 .text-gray-900 {@apply text-amber-600}
+    .dark .bg-yellow-50 .text-yellow-700 {@apply text-amber-600}
+    .dark .bg-yellow-50 .text-gray-500 {@apply text-amber-600}
+
+    .dark .bg-blue-50 .text-gray-900 {@apply text-sky-600}
+    .dark .bg-blue-50 .text-blue-700 {@apply text-sky-600}
+    .dark .bg-blue-50 .text-gray-500 {@apply text-sky-600}
+
+    .dark .bg-red-50 .text-gray-900 {@apply text-rose-600}
+    .dark .bg-red-50 .text-red-700 {@apply text-rose-600}
+    .dark .bg-red-50 .text-gray-500 {@apply text-rose-600}
+
+    .dark .bg-indigo-50 .text-gray-900 {@apply text-sky-700}
+    .dark .bg-indigo-50 .text-indigo-700 {@apply text-sky-700}
+    .dark .bg-indigo-50 .text-gray-500 {@apply text-sky-700}
   
   /* desaturar leve (opcional) */
-  @layer utilities {
     .dark .text-green-600 { @apply text-emerald-400; }
     .dark .text-red-600   { @apply text-rose-400; }
     .dark .text-orange-600{ @apply text-orange-400; }
