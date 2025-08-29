@@ -8,6 +8,7 @@ import { SidebarProvider } from './context/SidebarContext';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
+import { Invoice } from './pages/Invoice';
 import { Onboarding } from './pages/Onboarding';
 import { Settings } from './pages/Settings';
 import { Receitas } from './pages/managers/Receitas';
@@ -42,6 +43,16 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <Dashboard />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/invoice"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Invoice />
                         </Layout>
                       </ProtectedRoute>
                     }

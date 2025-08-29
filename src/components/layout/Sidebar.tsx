@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Menu, X, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, Building, Wallet, FolderOpen, Tag, Target, CreditCard, LayoutDashboard } from 'lucide-react';
+import { ChevronDown, ChevronRight, Menu, X, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, Building, Wallet, FolderOpen, Tag, Target, CreditCard, LayoutDashboard, SquareKanban } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebar } from '../../context/SidebarContext';
 
@@ -154,14 +154,26 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
       {/* Navigation */}
       <nav className={cn('flex-1 space-y-6 overflow-y-auto', isCollapsed ? 'p-2' : 'p-4')}>
         {/* Dashboard - No grouping */}
-        <div className="space-y-1">
-          <SidebarItem
-            to="/dashboard"
-            icon={<LayoutDashboard className="w-5 h-5 text-blue-600" />}
-            label="Dashboard"
-            isActive={location.pathname === '/dashboard'}
-            isCollapsed={isCollapsed}
-          />
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <SidebarItem
+              to="/dashboard"
+              icon={<LayoutDashboard className="w-5 h-5 text-blue-600" />}
+              label="Dashboard"
+              isActive={location.pathname === '/dashboard'}
+              isCollapsed={isCollapsed}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <SidebarItem
+              to="/invoice"
+              icon={<SquareKanban className="w-5 h-5 text-purple-600" />}
+              label="Fatura"
+              isActive={location.pathname === '/invoice'}
+              isCollapsed={isCollapsed}
+            />
+          </div>
         </div>
 
         <SidebarGroup title="Gerenciadores" isCollapsed={isCollapsed}>
