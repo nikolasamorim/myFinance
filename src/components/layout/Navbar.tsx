@@ -223,7 +223,7 @@ export function Navbar() {
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black bg-opacity-50"
+            className="fixed inset-0 bg-black bg-opacity-50 ignoreOverride"
             onClick={() => setShowMobileSidebar(false)}
           />
           
