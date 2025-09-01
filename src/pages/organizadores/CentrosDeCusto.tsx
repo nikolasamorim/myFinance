@@ -177,7 +177,7 @@ export function CentrosDeCusto() {
 
   return (
     <>
-      <div className="space-y-4 sm:space-y-6 w-full min-w-0 overflow-x-hidden">
+      <div className="space-y-4 sm:space-y-6 w-full min-w-0 ">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">

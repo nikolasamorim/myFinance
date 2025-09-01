@@ -122,7 +122,7 @@ export function TransactionTypeSelector({ onSelect, trigger, className }: Transa
                   className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
                 >
                   <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${type.color} flex items-center justify-center flex-shrink-0`}>
-                    <div className="text-white">
+                    <div className="text-white ignoreOverride">
                       {type.icon}
                     </div>
                   </div>

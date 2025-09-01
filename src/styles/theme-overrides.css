@@ -9,10 +9,24 @@
     --ds-hover: #2C333A;              /* hover de superfície */
     --ds-overlay: rgba(9, 30, 66, .31); /* sombras/overlays Atlassian */
 
+    /* Cores para contraste */
+    --ds-surface-ct: #FFFFFF;          /* fundo base */
+    --ds-surface-raised-ct: #F7F8F9;   /* cartões/painéis */
+    --ds-surface-sunken-ct: #F1F2F4;   /* áreas “afundadas”, sidebar */
+    --ds-border-ct: #DFE1E6;           /* bordas/divisórias */
+    --ds-hover-ct: #EBECF0;            /* hover de superfície */
+
     --ds-text: #DEE4EA;               /* texto alto contraste */
     --ds-text-secondary: #B6C2CF;     /* texto médio */
     --ds-text-subtle: #9FADBC;        /* texto sutil */
     --ds-icon: #9FADBC;               /* ícones padrão */
+
+    /* Cores para contraste */
+    --ds-text-ct: #172B4D;            /* texto alto contraste */
+    --ds-text-secondary-ct: #44546F;  /* texto médio */
+    --ds-text-subtle-ct: #626F86;     /* texto sutil */
+    --ds-icon-ct: #626F86;            /* ícones padrão */
+
 
     --ds-link: #579DFF;               /* links */
     --ds-focus: #1D7AFC;              /* foco e “selected” */
@@ -26,55 +40,60 @@
   }
 
   /* -------- Superfícies -------- */
-  .dark .bg-white,
-  .dark .bg-gray-50,
-  .dark .bg-gray-100,
-  .dark .bg-slate-50,
-  .dark .bg-slate-100 { @apply bg-[var(--ds-surface)]; }
+  .dark .bg-white:not(.ignoreOverride),
+  .dark .bg-gray-50:not(.ignoreOverride),
+  .dark .bg-gray-100:not(.ignoreOverride),
+  .dark .bg-slate-50:not(.ignoreOverride),
+  .dark .bg-slate-100:not(.ignoreOverride) { @apply bg-[var(--ds-surface)]; }
 
-  .dark .bg-gray-200,
-  .dark .bg-gray-300,
-  .dark .bg-slate-200\/60,
-  .dark .bg-slate-100\/50 { @apply bg-[var(--ds-surface-raised)]; }
+  .dark .bg-black:not(.ignoreOverride) {@apply bg-[var(--ds-surface-ct)];}
+
+  .dark .bg-gray-200:not(.ignoreOverride),
+  .dark .bg-gray-300:not(.ignoreOverride),
+  .dark .bg-slate-200\/60:not(.ignoreOverride),
+  .dark .bg-slate-100\/50:not(.ignoreOverride) { @apply bg-[var(--ds-surface-raised)]; }
 
   /* sombras/overlays contidas no dark */
-  .dark .shadow-lg { @apply shadow-[0_12px_32px_var(--ds-overlay)]; }
+  .dark .shadow-lg:not(.ignoreOverride) { @apply shadow-[0_12px_32px_var(--ds-overlay)]; }
 
   /* -------- Tipografia -------- */
-  .dark .text-black,
-  .dark .text-gray-900,
-  .dark .text-slate-900 { @apply text-[var(--ds-text)]; }
-
-  .dark .text-gray-800,
-  .dark .text-gray-700,
-  .dark .text-slate-700 { @apply text-[var(--ds-text-secondary)]; }
-
-  .dark .text-gray-600,
-  .dark .text-gray-500,
-  .dark .text-gray-400 { @apply text-[var(--ds-text-subtle)]; }
-
-  /* -------- Bordas / divisórias / rings -------- */
-  .dark .border-gray-100,
-  .dark .border-gray-200,
-  .dark .border-gray-300 { @apply border-[var(--ds-border)]; }
-
-  .dark .divide-gray-200 { @apply divide-[var(--ds-border)]; }
-  .dark .ring-gray-200 { @apply ring-[var(--ds-border)]; }
-
-  /* focus ring consistente (A11y) */
-  .dark .focus\:ring-gray-200:focus,
-  .dark .focus\:ring-gray-300:focus { @apply ring-[var(--ds-focus)]; }
-
-  .dark hr {
-    @apply border-[var(--ds-border)];
+  .dark .text-black:not(.ignoreOverride),
+  .dark .text-gray-900:not(.ignoreOverride),
+  .dark .text-slate-900:not(.ignoreOverride) { 
+    @apply text-[var(--ds-text)]; 
   }
 
-  /* -------- Hovers / estados de superfície -------- */
-  .dark .hover\:bg-gray-50:hover,
-  .dark .hover\:bg-gray-100:hover,
-  .dark .hover\:bg-gray-200:hover { @apply bg-[var(--ds-hover)]; }
+  .dark .text-white:not(.fix):not(.ignoreOverride) { 
+    @apply text-[var(--ds-text-ct)]; 
+  }
 
-  .dark .hover\:text-gray-900:hover { @apply text-[var(--ds-text)]; }
+  .dark .text-gray-800:not(.ignoreOverride),
+  .dark .text-gray-700:not(.ignoreOverride),
+  .dark .text-slate-700:not(.ignoreOverride) { 
+    @apply text-[var(--ds-text-secondary)]; 
+  }
+
+  .dark .text-gray-600:not(.ignoreOverride),
+  .dark .text-gray-500:not(.ignoreOverride),
+  .dark .text-gray-400:not(.ignoreOverride) { 
+    @apply text-[var(--ds-text-subtle)]; 
+  }
+
+  /* -------- Bordas / divisórias / rings -------- */
+  .dark .border-gray-100:not(.ignoreOverride),
+  .dark .border-gray-200:not(.ignoreOverride),
+  .dark .border-gray-300:not(.ignoreOverride) { 
+    @apply border-[var(--ds-border)]; 
+  }
+
+  /* -------- Hovers / estados -------- */
+  .dark .hover\:bg-gray-50:hover:not(.ignoreOverride),
+  .dark .hover\:bg-gray-100:hover:not(.ignoreOverride),
+  .dark .hover\:bg-gray-200:hover:not(.ignoreOverride) { 
+    @apply bg-[var(--ds-hover)]; 
+  }
+
+  .dark .hover\:text-gray-900:hover:not(.ignoreOverride) { @apply text-[var(--ds-text)]; }
 
   /* ------- Inputs / selects / textareas ------- */
   .dark input:not([type="checkbox"]):not([type="radio"]),
