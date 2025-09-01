@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Filter, Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle,
-   Landmark, CreditCard, LayoutDashboard, CheckCircle, Clock, Circle, AlertCircle,
+   Landmark, CreditCard, SquareKanban, CheckCircle, Clock, Circle, AlertCircle,
    XCircle
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
@@ -12,7 +12,7 @@ import { TransactionModal } from '../components/transactions/TransactionModal';
 import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
 import { useAdvancedTransactions } from '../hooks/useAdvancedTransactions';
 // import { MonthlyChart } from '../components/Dashboard/MonthlyChart';
-// import { useDashboardData } from '../hooks/useIDashboardData';
+import { useInvoiceData } from '../hooks/useInvoiceData';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { cn } from '../lib/utils';
@@ -298,7 +298,7 @@ export function Invoice() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
-              <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
+              <SquareKanban className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Faturas</h1>
