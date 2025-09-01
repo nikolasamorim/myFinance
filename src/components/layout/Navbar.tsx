@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, User, LogOut, Settings, Building, Users, X, LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, CreditCard, Wallet, Tag, Target, History, Plus, SunMoon } from 'lucide-react';
+import { Bell, User, LogOut, Settings, Building, Users, X, LayoutDashboard, SquareKanban, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, CreditCard, Wallet, Tag, Target, History, Plus, SunMoon } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
@@ -253,6 +253,14 @@ export function Navbar() {
                     <LayoutDashboard className="w-5 h-5 text-blue-600" />
                     <span>Dashboard</span>
                   </Link>
+                  <Link
+                    to="/invoice"
+                    onClick={() => setShowMobileSidebar(false)}
+                    className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <SquareKanban className="w-5 h-5 text-purple-600" />
+                    <span>Fatura</span>
+                  </Link>
                 </div>
 
                 {/* Gerenciadores */}
@@ -301,14 +309,6 @@ export function Navbar() {
                     Organizadores
                   </h3>
                   <div className="space-y-1 pl-2">
-                    <Link
-                      to="/organizadores/instituicoes"
-                      onClick={() => setShowMobileSidebar(false)}
-                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                    >
-                      <Building className="w-5 h-5 text-blue-600" />
-                      <span>Instituições</span>
-                    </Link>
                     <Link
                       to="/organizadores/cartoes"
                       onClick={() => setShowMobileSidebar(false)}
