@@ -69,7 +69,7 @@ export function CreditCardWallet({ cards, onEdit, onDelete }: CreditCardWalletPr
         return (
           <div
             key={card.id}
-            className="group relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            className="group relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 ignoreOverride"
             style={{
               background: card.color 
                 ? `linear-gradient(135deg, ${card.color}, ${card.color}dd)`
@@ -79,7 +79,7 @@ export function CreditCardWallet({ cards, onEdit, onDelete }: CreditCardWalletPr
             {/* Card Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                <div className="p-2 bg-white bg-opacity-20 rounded-lg ignoreOverride">
                   {renderIcon(card.icon)}
                 </div>
                 <div>
@@ -96,7 +96,7 @@ export function CreditCardWallet({ cards, onEdit, onDelete }: CreditCardWalletPr
               <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => onEdit(card)}
-                  className="p-1.5 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors"
+                  className="p-1.5 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors ignoreOverride"
                   title="Editar"
                 >
                   <Edit className="w-3.5 h-3.5" />
@@ -142,7 +142,7 @@ export function CreditCardWallet({ cards, onEdit, onDelete }: CreditCardWalletPr
                   <span>Utilização</span>
                   <span>{utilizationPercentage.toFixed(1)}%</span>
                 </div>
-                <div className="w-full bg-white bg-opacity-20 rounded-full h-2">
+                <div className="w-full bg-white bg-opacity-20 rounded-full h-2 ignoreOverride">
                   <div
                     className={cn('h-2 rounded-full transition-all', utilizationColor)}
                     style={{ width: `${utilizationPercentage}%` }}
