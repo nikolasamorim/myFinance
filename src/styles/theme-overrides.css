@@ -86,6 +86,14 @@
     @apply border-[var(--ds-border)]; 
   }
 
+  /* focus ring consistente (A11y) */
+  .dark .focus\:ring-gray-200:focus,
+  .dark .focus\:ring-gray-300:focus { @apply ring-[var(--ds-focus)]; }
+
+  .dark hr {
+    @apply border-[var(--ds-border)];
+  }
+
   /* -------- Hovers / estados -------- */
   .dark .hover\:bg-gray-50:hover:not(.ignoreOverride),
   .dark .hover\:bg-gray-100:hover:not(.ignoreOverride),
