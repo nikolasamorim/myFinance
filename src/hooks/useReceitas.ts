@@ -21,12 +21,10 @@ export function useReceitas(filters: ReceitaFilters) {
     queryFn: () => receitaService.getReceitas(currentWorkspace!.workspace_id, filters),
     enabled: !!currentWorkspace?.workspace_id,
     staleTime: 30 * 1000,
-    retry: (failureCount, error) => {
-      // Don't retry on authentication errors
+    retry: (failureCount, error: any) => {
       if (error.message?.includes('Authentication failed') || error.message?.includes('User not authenticated')) {
         return false;
       }
-      // Retry network errors up to 3 times
       if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
         return failureCount < 3;
       }
@@ -36,11 +34,45 @@ export function useReceitas(filters: ReceitaFilters) {
     refetchOnWindowFocus: false,
   });
 
+  // === NOVO: summary (espelha despesas) ===
+  const summaryQuery = useQuery({
+    queryKey: ['receitas-summary', currentWorkspace?.workspace_id, filters],
+    queryFn: () => receitaService.getReceitasSummary(currentWorkspace!.workspace_id, filters),
+    enabled: !!currentWorkspace?.workspace_id,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // === NOVO: receitas parceladas do mês ===
+  const installmentsQuery = useQuery({
+    queryKey: ['receitas-installments', currentWorkspace?.workspace_id],
+    queryFn: () => receitaService.getInstallmentsThisMonth(currentWorkspace!.workspace_id),
+    enabled: !!currentWorkspace?.workspace_id,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // === NOVO: receitas fixas do mês ===
+  const fixedIncomesQuery = useQuery({
+    queryKey: ['receitas-fixed', currentWorkspace?.workspace_id],
+    queryFn: () => receitaService.getFixedIncomesThisMonth(currentWorkspace!.workspace_id),
+    enabled: !!currentWorkspace?.workspace_id,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
+    queryClient.invalidateQueries({ queryKey: ['receitas-summary', currentWorkspace?.workspace_id] });
+    queryClient.invalidateQueries({ queryKey: ['receitas-installments', currentWorkspace?.workspace_id] });
+    queryClient.invalidateQueries({ queryKey: ['receitas-fixed', currentWorkspace?.workspace_id] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
+  };
+
   const createReceita = useMutation({
     mutationFn: (data: ReceitaData) => receitaService.createReceita(currentWorkspace!.workspace_id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
+      invalidateAll();
     },
   });
 
@@ -48,31 +80,31 @@ export function useReceitas(filters: ReceitaFilters) {
     mutationFn: ({ id, updates }: { id: string; updates: Partial<ReceitaData> }) =>
       receitaService.updateReceita(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
+      invalidateAll();
     },
   });
 
   const deleteReceita = useMutation({
     mutationFn: (id: string) => receitaService.deleteReceita(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
+      invalidateAll();
     },
   });
 
   const markAsReceived = useMutation({
     mutationFn: (id: string) => receitaService.markAsReceived(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
-      // Force refetch of receitas data
+      invalidateAll();
+      // opcional: força refetch imediato da lista
       queryClient.refetchQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
     },
   });
 
   return {
     ...query,
+    summary: summaryQuery.data,
+    installmentsThisMonth: installmentsQuery.data,
+    fixedIncomesThisMonth: fixedIncomesQuery.data,
     createReceita,
     updateReceita,
     deleteReceita,
