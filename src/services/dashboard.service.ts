@@ -171,19 +171,66 @@ export const dashboardService = {
       const unpaidExpenses = sumAmounts(unpaidTransactions.filter(t => t.transaction_type === 'expense'));
       const unpaidInvested = sumAmounts(unpaidTransactions.filter(t => t.transaction_type === investmentType));
 
+      // ===================== HOTFIX TEMPORÁRIO: incluir recorrentes (qualquer data) =====================
+      const INCLUDE_RECURRING_ANY_DATE = true; // <— para remover depois, basta apagar este bloco inteiro
+
+      // usamos variáveis ajustadas para não mexer nas originais (fácil de remover)
+      let adjPaidIncome   = paidIncome;
+      let adjPaidExpenses = paidExpenses;
+      let adjUnpaidIncome = unpaidIncome;
+      let adjUnpaidExpenses = unpaidExpenses;
+
+      if (INCLUDE_RECURRING_ANY_DATE) {
+        // 1) Busca TODAS as recorrentes do workspace, sem filtro de data
+        const { data: recurringAnyDate, error: recurringErr } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('transaction_workspace_id', workspaceId)
+          .eq('recurring', true);
+
+        if (!recurringErr && Array.isArray(recurringAnyDate)) {
+          // 2) O que já está considerado no período atual (recorrentes) — para evitar contagem dupla
+          const inPeriodRecurring = expandedTransactions.filter((t: any) => t.recurring === true);
+
+          // Helpers locais
+          const paidR   = (arr: any[]) => arr.filter(isPaidLike);
+          const unpaidR = (arr: any[]) => arr.filter(isUnpaidLike);
+          const typeIs  = (typ: 'income' | 'expense') => (t: any) => t.transaction_type === typ;
+
+          // 3) Somatórios (todas as datas)
+          const any_paid_income   = sumAmounts(paidR(recurringAnyDate).filter(typeIs('income')));
+          const any_paid_expense  = sumAmounts(paidR(recurringAnyDate).filter(typeIs('expense')));
+          const any_unpaid_income = sumAmounts(unpaidR(recurringAnyDate).filter(typeIs('income')));
+          const any_unpaid_expense= sumAmounts(unpaidR(recurringAnyDate).filter(typeIs('expense')));
+
+          // 4) Somatórios recorrentes JÁ considerados no período atual (para tirar do adicional)
+          const in_paid_income    = sumAmounts(paidR(inPeriodRecurring).filter(typeIs('income')));
+          const in_paid_expense   = sumAmounts(paidR(inPeriodRecurring).filter(typeIs('expense')));
+          const in_unpaid_income  = sumAmounts(unpaidR(inPeriodRecurring).filter(typeIs('income')));
+          const in_unpaid_expense = sumAmounts(unpaidR(inPeriodRecurring).filter(typeIs('expense')));
+
+          // 5) Deltas a adicionar (qualquer data – já no período)
+          adjPaidIncome    += (any_paid_income   - in_paid_income);
+          adjPaidExpenses  += (any_paid_expense  - in_paid_expense);
+          adjUnpaidIncome  += (any_unpaid_income - in_unpaid_income);
+          adjUnpaidExpenses+= (any_unpaid_expense- in_unpaid_expense);
+        }
+      }
+      // ===================== FIM HOTFIX TEMPORÁRIO =====================
+
       // Saídas legadas + novas
       const paidSummary: PaidSummary = {
-        currentBalance: paidIncome - paidExpenses, // legado
-        totalIncome: paidIncome,
-        totalExpenses: paidExpenses,
-        totalDebts: paidInvested,                  // legado: continua como "debts"
+        currentBalance: adjPaidIncome - adjPaidExpenses, // saldo pago ajustado
+        totalIncome: adjPaidIncome,                      // receitas pagas ajustadas
+        totalExpenses: adjPaidExpenses,                  // despesas pagas ajustadas
+        totalDebts: paidInvested,                        // mantém investidos como estavam
       };
-
+      
       const summary: Summary = {
-        balancePaid: paidIncome - paidExpenses,
-        income:   { paid: paidIncome,   unpaid: unpaidIncome },
-        expenses: { paid: paidExpenses, unpaid: unpaidExpenses },
-        invested: { paid: paidInvested, unpaid: unpaidInvested },
+        balancePaid: adjPaidIncome - adjPaidExpenses,    // saldo pago ajustado
+        income:   { paid: adjPaidIncome,   unpaid: adjUnpaidIncome },   // receitas ajustadas
+        expenses: { paid: adjPaidExpenses, unpaid: adjUnpaidExpenses }, // despesas ajustadas
+        invested: { paid: paidInvested,    unpaid: unpaidInvested },    // investidos inalterados
       };
 
       // Breakdown mensal (todas as transações, por data)
