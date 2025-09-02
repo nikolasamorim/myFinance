@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Filter, Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle,
    Landmark, CreditCard, LayoutDashboard, CheckCircle, Clock, Circle, AlertCircle,
-   XCircle
+   XCircle, PiggyBank
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -371,7 +371,7 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Summary Cards - Paid Transactions Only */}
+        {/* Summary Cards – usam "summary" (pagos e não pagos) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 px-1 sm:px-0">
           <Card>
             <CardContent className="p-3 sm:p-4 lg:p-6">
@@ -379,13 +379,11 @@ export function Dashboard() {
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Saldo</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.currentBalance || 0) /* Total de lançamentos */} 
-                  </p>
-                  <p className="text-xs sm:text-sm font-medium text-gray-400 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.currentBalance || 0) /* Lançamentos pagos */} (Pago)
-                  </p>
-                  <p className="text-xs sm:text-sm font-medium text-gray-400 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.currentBalance || 0) /* Lançamentos não pagos */} (Não pago)
+                    {
+                      // Saldo considerando SOMENTE lançamentos pagos/recebidos no período filtrado:
+                      // (receitas pagas - despesas pagas)
+                      formatCurrency(dashboardData?.summary?.balancePaid ?? 0)
+                    }
                   </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
@@ -401,13 +399,17 @@ export function Dashboard() {
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Receitas</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.totalIncome || 0)}
+                    {
+                      // Total de RECEITAS PAGAS no período filtrado
+                      formatCurrency(dashboardData?.summary?.income?.paid ?? 0)
+                    }
                   </p>
                   <p className="text-xs sm:text-sm font-medium text-green-400 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.totalIncome || 0) /* Lançamentos pagos */} (Pago)
-                  </p>
-                  <p className="text-xs sm:text-sm font-medium text-green-400 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.totalIncome || 0) /* Lançamentos não pagos */} (Não pago)
+                    {
+                      // Total de RECEITAS NÃO PAGAS (pendentes/agendadas/abertas) no período filtrado
+                      formatCurrency(dashboardData?.summary?.income?.unpaid ?? 0)
+                    }{" "}
+                    (Não pago)
                   </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-green-100 rounded-lg flex-shrink-0">
@@ -423,13 +425,17 @@ export function Dashboard() {
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Despesas</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.totalExpenses || 0)}
+                    {
+                      // Total de DESPESAS PAGAS no período filtrado
+                      formatCurrency(dashboardData?.summary?.expenses?.paid ?? 0)
+                    }
                   </p>
                   <p className="text-xs sm:text-sm font-medium text-red-400 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.totalExpenses || 0) /* Lançamentos pagos */} (Pago)
-                  </p>
-                  <p className="text-xs sm:text-sm font-medium text-red-400 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.totalExpenses || 0) /* Lançamentos não pagos */} (Não pago)
+                    {
+                      // Total de DESPESAS NÃO PAGAS (pendentes/agendadas/abertas) no período filtrado
+                      formatCurrency(dashboardData?.summary?.expenses?.unpaid ?? 0)
+                    }{" "}
+                    (Não pago)
                   </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-red-100 rounded-lg flex-shrink-0">
@@ -443,19 +449,24 @@ export function Dashboard() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Dívidas</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-orange-600 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.totalDebts || 0)}
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Investido</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 mt-1">
+                    {
+                      // Total de INVESTIMENTOS PAGOS no período filtrado
+                      // Obs.: o serviço detecta automaticamente se você usa 'investment' ou 'debt' como tipo.
+                      formatCurrency(dashboardData?.summary?.invested?.paid ?? 0)
+                    }
                   </p>
-                  <p className="text-xs sm:text-sm font-medium text-orange-400 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.totalDebts || 0) /* Lançamentos pagos */} (Pago)
-                  </p>
-                  <p className="text-xs sm:text-sm font-medium text-orange-400 mt-1">
-                    {formatCurrency(dashboardData?.paidSummary?.totalDebts || 0) /* Lançamentos não pagos */} (Não pago)
+                  <p className="text-xs sm:text-sm font-medium text-blue-400 mt-1">
+                    {
+                      // Total de INVESTIMENTOS NÃO PAGOS no período filtrado
+                      formatCurrency(dashboardData?.summary?.invested?.unpaid ?? 0)
+                    }{" "}
+                    (Não pago)
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-orange-100 rounded-lg flex-shrink-0">
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-orange-600" />
+                <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
+                  <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
                 </div>
               </div>
             </CardContent>

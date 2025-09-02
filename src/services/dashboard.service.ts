@@ -1,6 +1,9 @@
 import { supabase } from '../lib/supabase';
 import type { Transaction, MonthlyData } from '../types';
 
+/* =========================
+ *      Tipagens
+ * ========================= */
 interface DashboardFilters {
   period: string;
   category: string;
@@ -23,65 +26,122 @@ interface MonthlyBreakdown {
   };
 }
 
+interface Summary {
+  balancePaid: number;                 // Saldo considerando apenas pagos (receitas pagas - despesas pagas)
+  income: { paid: number; unpaid: number };      // Receitas pagas / não pagas
+  expenses: { paid: number; unpaid: number };    // Despesas pagas / não pagas
+  invested: { paid: number; unpaid: number };    // Investimentos pagos / não pagos
+}
+
 interface DashboardData {
-  paidSummary: PaidSummary;
+  paidSummary: PaidSummary;            // legado
+  summary: Summary;                    // novo
   monthlyBreakdown: MonthlyBreakdown;
   monthlyComparison: MonthlyData[];
   recentTransactions: Transaction[];
 }
 
+/* =========================
+ *      Helpers locais
+ * ========================= */
+
+// Converte Date -> 'YYYY-MM-DD'
+const toISODate = (d: Date) => d.toISOString().split('T')[0];
+
+// Monta range de datas a partir do filtro de período
+function getPeriodRange(period?: string): { start?: string; end?: string } {
+  if (!period || period === 'custom') return {};
+  const now = new Date();
+
+  let startDate: Date;
+  let endDate: Date;
+
+  switch (period) {
+    case 'current_month':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      break;
+    case 'last_month':
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+      break;
+    case 'current_year':
+      startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = new Date(now.getFullYear(), 11, 31);
+      break;
+    default:
+      startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = new Date(now.getFullYear(), 11, 31);
+  }
+
+  return { start: toISODate(startDate), end: toISODate(endDate) };
+}
+
+// Chave do mês: 'YYYY-MM'
+const monthKeyFrom = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+// Status helpers
+const isPaidLike = (t: any) => t.transaction_status === 'paid' || t.transaction_status === 'received';
+const isUnpaidLike = (t: any) => !isPaidLike(t);
+
+// Soma segura
+const sumAmounts = (arr: any[]) => arr.reduce((acc, t) => acc + Number(t.transaction_amount || 0), 0);
+
+// Define tipo usado para investido (compat: 'investment' ou 'debt')
+function detectInvestmentType(transactions: any[]): 'investment' | 'debt' {
+  return transactions.some(t => t.transaction_type === 'investment') ? 'investment' : 'debt';
+}
+
+// Calcula comparação mensal (últimos 12 meses) a partir do breakdown
+function buildMonthlyComparison(breakdown: MonthlyBreakdown): MonthlyData[] {
+  const out: MonthlyData[] = [];
+  const currentDate = new Date();
+
+  for (let i = 11; i >= 0; i--) {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+    const key = monthKeyFrom(date);
+    const monthData = breakdown[key] || { income: 0, expense: 0, debtIn: 0, debtOut: 0 };
+
+    out.push({
+      month: date.toLocaleDateString('pt-BR', { month: 'short' }),
+      income: monthData.income,
+      expenses: monthData.expense,
+    });
+  }
+
+  return out;
+}
+
+/* =========================
+ *      Service
+ * ========================= */
 export const dashboardService = {
   async getDashboardData(workspaceId: string, filters?: DashboardFilters): Promise<DashboardData> {
-    if (!workspaceId) {
-      throw new Error('Workspace ID is required');
-    }
+    if (!workspaceId) throw new Error('Workspace ID is required');
 
     console.log('Fetching dashboard data for workspace:', workspaceId);
 
     try {
-      // Get all transactions including recurring expansions
+      // Base query
       let query = supabase
         .from('transactions')
         .select('*')
         .eq('transaction_workspace_id', workspaceId)
         .order('transaction_date', { ascending: false });
 
-      // Apply search filter if provided
+      // Filtro de busca
       if (filters?.search) {
         query = query.ilike('transaction_description', `%${filters.search}%`);
       }
 
-      // Apply period filter
-      if (filters?.period && filters.period !== 'custom') {
-        const now = new Date();
-        let startDate: Date;
-        let endDate: Date;
-
-        switch (filters.period) {
-          case 'current_month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            break;
-          case 'last_month':
-            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-            break;
-          case 'current_year':
-            startDate = new Date(now.getFullYear(), 0, 1);
-            endDate = new Date(now.getFullYear(), 11, 31);
-            break;
-          default:
-            startDate = new Date(now.getFullYear(), 0, 1);
-            endDate = new Date(now.getFullYear(), 11, 31);
-        }
-
-        query = query
-          .gte('transaction_date', startDate.toISOString().split('T')[0])
-          .lte('transaction_date', endDate.toISOString().split('T')[0]);
+      // Filtro de período
+      const { start, end } = getPeriodRange(filters?.period);
+      if (start && end) {
+        query = query.gte('transaction_date', start).lte('transaction_date', end);
       }
 
+      // Execução
       const { data: transactions, error } = await query;
-
       if (error) {
         console.error('Error fetching transactions:', error);
         throw error;
@@ -91,96 +151,85 @@ export const dashboardService = {
 
       const allTransactions = transactions || [];
 
-      // Expand recurring transactions for monthly view
+      // Expansão de recorrência (para visão mensal/visuais)
       const expandedTransactions = await this.expandRecurringTransactions(allTransactions);
 
-      // Calculate paid summary (only paid/received transactions)
-      const paidTransactions = expandedTransactions.filter(t => 
-        t.transaction_status === 'paid' || t.transaction_status === 'received'
-      );
+      // Detecta tipo "investido" compatível
+      const investmentType = detectInvestmentType(expandedTransactions);
 
-      const paidIncome = paidTransactions
-        .filter(t => t.transaction_type === 'income')
-        .reduce((acc, t) => acc + Number(t.transaction_amount), 0);
+      // Particiona por status
+      const paidTransactions = expandedTransactions.filter(isPaidLike);
+      const unpaidTransactions = expandedTransactions.filter(isUnpaidLike);
 
-      const paidExpenses = paidTransactions
-        .filter(t => t.transaction_type === 'expense')
-        .reduce((acc, t) => acc + Number(t.transaction_amount), 0);
+      // Somatórios pagos
+      const paidIncome   = sumAmounts(paidTransactions.filter(t => t.transaction_type === 'income'));
+      const paidExpenses = sumAmounts(paidTransactions.filter(t => t.transaction_type === 'expense'));
+      const paidInvested = sumAmounts(paidTransactions.filter(t => t.transaction_type === investmentType));
 
-      const paidDebts = paidTransactions
-        .filter(t => t.transaction_type === 'debt')
-        .reduce((acc, t) => acc + Number(t.transaction_amount), 0);
+      // Somatórios não pagos
+      const unpaidIncome   = sumAmounts(unpaidTransactions.filter(t => t.transaction_type === 'income'));
+      const unpaidExpenses = sumAmounts(unpaidTransactions.filter(t => t.transaction_type === 'expense'));
+      const unpaidInvested = sumAmounts(unpaidTransactions.filter(t => t.transaction_type === investmentType));
 
+      // Saídas legadas + novas
       const paidSummary: PaidSummary = {
-        currentBalance: paidIncome - paidExpenses,
+        currentBalance: paidIncome - paidExpenses, // legado
         totalIncome: paidIncome,
         totalExpenses: paidExpenses,
-        totalDebts: paidDebts,
+        totalDebts: paidInvested,                  // legado: continua como "debts"
       };
 
-      // Calculate monthly breakdown (all transactions, regardless of status, grouped by transaction_date)
+      const summary: Summary = {
+        balancePaid: paidIncome - paidExpenses,
+        income:   { paid: paidIncome,   unpaid: unpaidIncome },
+        expenses: { paid: paidExpenses, unpaid: unpaidExpenses },
+        invested: { paid: paidInvested, unpaid: unpaidInvested },
+      };
+
+      // Breakdown mensal (todas as transações, por data)
       const monthlyBreakdown: MonthlyBreakdown = {};
-      
-      expandedTransactions.forEach(transaction => {
+      for (const transaction of expandedTransactions) {
         const date = new Date(transaction.transaction_date);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        
-        if (!monthlyBreakdown[monthKey]) {
-          monthlyBreakdown[monthKey] = {
-            income: 0,
-            expense: 0,
-            debtIn: 0,
-            debtOut: 0,
-          };
+        const key = monthKeyFrom(date);
+
+        if (!monthlyBreakdown[key]) {
+          monthlyBreakdown[key] = { income: 0, expense: 0, debtIn: 0, debtOut: 0 };
         }
 
         const amount = Number(transaction.transaction_amount);
-        
+
         switch (transaction.transaction_type) {
           case 'income':
-            monthlyBreakdown[monthKey].income += amount;
+            monthlyBreakdown[key].income += amount;
             break;
           case 'expense':
-            monthlyBreakdown[monthKey].expense += amount;
+            monthlyBreakdown[key].expense += amount;
             break;
-          case 'debt':
-            // Debt logic: assume debt transactions have a flow indicator
-            // For now, we'll use a simple logic based on description or amount sign
-            // This should be adjusted based on your actual debt flow logic
-            const isDebtIn = transaction.transaction_description?.toLowerCase().includes('receb') || 
-                           transaction.transaction_description?.toLowerCase().includes('entrada') ||
-                           transaction.transaction_status === 'received';
-            
-            if (isDebtIn) {
-              monthlyBreakdown[monthKey].debtIn += amount;
-            } else {
-              monthlyBreakdown[monthKey].debtOut += amount;
-            }
-            break;
-        }
-      });
+          case 'debt': {
+            // Heurística para fluxo de dívida (entrada/saída)
+            const desc = (transaction.transaction_description || '').toLowerCase();
+            const isDebtIn =
+              desc.includes('receb') ||
+              desc.includes('entrada') ||
+              transaction.transaction_status === 'received';
 
-      // Calculate monthly comparison for charts (last 12 months)
-      const monthlyComparison: MonthlyData[] = [];
-      const currentDate = new Date();
-      
-      for (let i = 11; i >= 0; i--) {
-        const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const monthData = monthlyBreakdown[monthKey] || { income: 0, expense: 0, debtIn: 0, debtOut: 0 };
-        
-        monthlyComparison.push({
-          month: date.toLocaleDateString('pt-BR', { month: 'short' }),
-          income: monthData.income,
-          expenses: monthData.expense,
-        });
+            if (isDebtIn) monthlyBreakdown[key].debtIn += amount;
+            else monthlyBreakdown[key].debtOut += amount;
+            break;
+          }
+        }
       }
 
-      // Get recent transactions (last 10)
+      // Comparação mensal (últimos 12 meses)
+      const monthlyComparison = buildMonthlyComparison(monthlyBreakdown);
+
+      // Últimas 10 transações (após expansão)
       const recentTransactions = expandedTransactions.slice(0, 10);
 
+      // Retorno FINAL (sem alterar contrato)
       return {
-        paidSummary,
+        paidSummary,     // Mantém código legado
+        summary,         // novo objeto recomendado
         monthlyBreakdown,
         monthlyComparison,
         recentTransactions,
@@ -192,18 +241,19 @@ export const dashboardService = {
     }
   },
 
+  // Mantida a assinatura e a lógica geral (apenas organização mínima interna)
   async expandRecurringTransactions(transactions: any[]): Promise<any[]> {
     const expanded = [...transactions];
     const currentDate = new Date();
     const futureLimit = new Date();
     futureLimit.setFullYear(currentDate.getFullYear() + 2); // Expand 2 years into future
 
-    // Find recurring transactions
+    // Transações com regra de recorrência
     const recurringTransactions = transactions.filter(t => t.recurrence_rule_id);
 
     for (const transaction of recurringTransactions) {
       try {
-        // Get recurrence rule
+        // Busca a regra
         const { data: rule, error } = await supabase
           .from('recurrence_rules')
           .select('*')
@@ -212,27 +262,28 @@ export const dashboardService = {
 
         if (error || !rule || rule.status !== 'active') continue;
 
-        // Generate future instances
+        // Gera futuras ocorrências
         const startDate = new Date(rule.start_date);
         const endDate = rule.end_date ? new Date(rule.end_date) : futureLimit;
+
         let currentInstanceDate = new Date(startDate);
         let instanceCount = 0;
-        const maxInstances = rule.repeat_count || 100; // Reasonable limit
+        const maxInstances = rule.repeat_count || 100; // limite razoável
 
         while (currentInstanceDate <= endDate && instanceCount < maxInstances) {
-          // Skip the original transaction date to avoid duplicates
-          if (currentInstanceDate.toISOString().split('T')[0] !== transaction.transaction_date) {
+          // Evita duplicar a data original
+          if (toISODate(currentInstanceDate) !== transaction.transaction_date) {
             const futureInstance = {
               ...transaction,
               transaction_id: `${transaction.transaction_id}-future-${instanceCount}`,
-              transaction_date: currentInstanceDate.toISOString().split('T')[0],
-              transaction_status: 'pending', // Future instances are always pending
-              is_future_instance: true, // Mark as future instance
+              transaction_date: toISODate(currentInstanceDate),
+              transaction_status: 'pending',   // futuras sempre pendentes
+              is_future_instance: true,        // marca como futura
             };
             expanded.push(futureInstance);
           }
 
-          // Calculate next occurrence
+          // Próxima ocorrência
           switch (rule.recurrence_type) {
             case 'daily':
               currentInstanceDate.setDate(currentInstanceDate.getDate() + 1);
@@ -252,7 +303,7 @@ export const dashboardService = {
         }
       } catch (error) {
         console.error('Error expanding recurring transaction:', transaction.transaction_id, error);
-        // Continue with other transactions if one fails
+        // Continua para as próximas mesmo em caso de falha nesta
       }
     }
 
