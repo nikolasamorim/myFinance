@@ -243,8 +243,8 @@ export const despesaService = {
         amount: item.transaction_amount,
         transaction_date: item.transaction_date,
         status: item.transaction_status || 'pending',
-        installment_number: 1, // Would need proper parsing
-        installment_total: 1, // Would need proper parsing
+        installment_number: item.installment_number,
+        installment_total: item.installment_total,
       }));
     } catch (error) {
       console.error('Error in getInstallmentsThisMonth:', error);
