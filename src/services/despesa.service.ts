@@ -119,35 +119,90 @@ export const despesaService = {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw new Error('Authentication failed: ' + userError.message);
       if (!user) throw new Error('User not authenticated');
-
-      // Get all expenses for the workspace
-      const { data: expenses, error } = await supabase
+  
+      // 1) Consulta principal COM os mesmos filtros da listagem
+      let baseQuery = supabase
         .from('transactions')
-        .select('transaction_amount, transaction_status')
+        .select('transaction_id, transaction_amount, transaction_status, transaction_description, transaction_date')
         .eq('transaction_workspace_id', workspaceId)
         .eq('transaction_type', 'expense');
-
-      if (error) throw new Error('Failed to fetch expenses summary: ' + error.message);
-
+  
+      if (filters.search) {
+        baseQuery = baseQuery.ilike('transaction_description', `%${filters.search}%`);
+      }
+  
+      if (filters.status !== 'all') {
+        baseQuery = baseQuery.eq('transaction_status', filters.status);
+      }
+  
+      if (filters.period === 'current_month') {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
+        baseQuery = baseQuery
+          .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
+          .lte('transaction_date', endOfMonth.toISOString().split('T')[0]);
+      } else if (filters.period === 'last_month') {
+        const now = new Date();
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+  
+        baseQuery = baseQuery
+          .gte('transaction_date', startOfLastMonth.toISOString().split('T')[0])
+          .lte('transaction_date', endOfLastMonth.toISOString().split('T')[0]);
+      }
+  
+      const { data: expenses, error: baseErr } = await baseQuery;
+      if (baseErr) throw new Error('Failed to fetch expenses summary: ' + baseErr.message);
+  
       const allExpenses = expenses || [];
-      
-      const totalPaid = allExpenses
-        .filter(e => e.transaction_status === 'paid')
-        .reduce((acc, e) => acc + Number(e.transaction_amount), 0);
-
-      const totalPending = allExpenses
-        .filter(e => e.transaction_status === 'pending')
-        .reduce((acc, e) => acc + Number(e.transaction_amount), 0);
-
-      // For now, assume installments based on description patterns
+      const seenIds = new Set(allExpenses.map(e => e.transaction_id));
+  
+      // 2) Consulta EXTRA só de recorrentes, SEM filtro de período
+      let recurQuery = supabase
+        .from('transactions')
+        .select('transaction_id, transaction_amount, transaction_status, transaction_description, transaction_date')
+        .eq('transaction_workspace_id', workspaceId)
+        .eq('transaction_type', 'expense')
+        .eq('recurring', true); // troque para .eq('transaction_recurring', true) se for o seu caso
+  
+      // Mantém search/status para respeitar o filtro atual, mas sem período
+      if (filters.search) {
+        recurQuery = recurQuery.ilike('transaction_description', `%${filters.search}%`);
+      }
+      if (filters.status !== 'all') {
+        recurQuery = recurQuery.eq('transaction_status', filters.status);
+      }
+  
+      const { data: recurringRows, error: recurErr } = await recurQuery;
+      if (recurErr) throw new Error('Failed to fetch recurring expenses: ' + recurErr.message);
+  
+      // Evita duplicar recorrentes que já entraram pela consulta principal (período)
+      const recurringOnly = (recurringRows || []).filter(r => !seenIds.has(r.transaction_id));
+  
+      // ===== Cálculos =====
+      const sum = (arr: any[]) => arr.reduce((acc, e) => acc + Number(e.transaction_amount || 0), 0);
+  
+      // Base
+      const basePaid = sum(allExpenses.filter(e => e.transaction_status === 'paid'));
+      const basePending = sum(allExpenses.filter(e => e.transaction_status === 'pending'));
+  
+      // Recorrentes (fora de período)
+      const recurPaid = sum(recurringOnly.filter(e => e.transaction_status === 'paid'));
+      const recurPending = sum(recurringOnly.filter(e => e.transaction_status === 'pending'));
+  
+      const totalPaid = basePaid + recurPaid;
+      const totalPending = basePending + recurPending;
+  
+      // Heurística de parcelas (mantida como no seu código)
       const totalInstallments = allExpenses
-        .filter(e => e.transaction_description?.includes('/'))
+        .filter(e => (e.transaction_description || '').includes('/'))
         .reduce((acc, e) => acc + Number(e.transaction_amount), 0);
-
-      const monthlyAverage = allExpenses.length > 0 
-        ? allExpenses.reduce((acc, e) => acc + Number(e.transaction_amount), 0) / 12
-        : 0;
-
+  
+      const total = allExpenses.reduce((acc, e) => acc + Number(e.transaction_amount), 0);
+      const monthlyAverage = allExpenses.length > 0 ? total / 12 : 0;
+  
       return {
         totalPaid,
         totalPending,
@@ -158,7 +213,8 @@ export const despesaService = {
       console.error('Error in getDespesasSummary:', error);
       throw error;
     }
-  },
+  }
+  ,
 
   async getInstallmentsThisMonth(workspaceId: string) {
     try {
