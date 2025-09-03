@@ -321,6 +321,121 @@ export function Receitas() {
           </Card>
         </div>
 
+        {/* Receitas Fixas */}
+        <div className="px-1 sm:px-0">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <RefreshCcw className="w-5 h-5 mr-2" />
+                Receitas Fixas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-0 px-1 sm:px-6">
+              <div className="overflow-x-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                <div className="flex space-x-4 p-4 sm:p-6" style={{ width: 'max-content', scrollSnapType: 'x mandatory', paddingLeft: '0', paddingRight: '0' }}>
+                  {fixedIncomesThisMonth?.map((income: any) => (
+                    <div key={income.id} className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all" style={{ scrollSnapAlign: 'start' }}>
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900 truncate">{income.title}</h3>
+                          <p className="text-xs text-gray-500">Receita Fixa</p>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Vencimento:</span>
+                            <span className="font-medium text-gray-900">{formatDate(income.transaction_date)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Valor:</span>
+                            <span className="font-medium text-emerald-500">{formatCurrency(Number(income.amount))}</span>
+                          </div>
+                          {income.category && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Categoria:</span>
+                              <span className="font-medium text-gray-900 truncate">{income.category}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="pt-2 border-t border-gray-100">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(income.status)}`}>
+                              {getStatusLabel(income.status)}
+                            </span>
+                          </div>
+                          <div className="flex space-x-1">
+                            {income.status === 'pending' && (
+                              <button
+                                onClick={() => handleMarkAsReceived(income.id)}
+                                className="flex-1 p-1 text-xs text-emerald-500 hover:bg-emerald-50 rounded transition-colors"
+                                title="Marcar como recebida"
+                              >
+                                <CheckCircle className="w-3 h-3 mx-auto" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleEditReceita(income)}
+                              className="flex-1 p-1 text-xs text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                              title="Editar"
+                            >
+                              <Edit className="w-3 h-3 mx-auto" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteReceita(income.id)}
+                              className="flex-1 p-1 text-xs text-rose-500 hover:bg-rose-50 rounded transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-3 h-3 mx-auto" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!fixedIncomesThisMonth || fixedIncomesThisMonth.length === 0) && (
+                    <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
+                      <RefreshCcw className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm">Nenhuma receita fixa neste período</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+            <CardContent className="p-4 pt-0 sm:px-6 sm:pt-0">
+              <div className="overflow-x-auto -mx-4 px-4 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: "smooth" }}>
+                <div className="flex gap-3 w-max snap-x snap-mandatory sm:grid sm:w-auto sm:snap-none sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
+                  <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="p-1.5 rounded-lg bg-gray-500 text-white"><RefreshCcw className="w-3 h-3" /></span>
+                      <p className="text-xs text-gray-500">Total</p>
+                    </div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {fixedIncomesThisMonth?.length || 0} {(fixedIncomesThisMonth?.length || 0) === 1 ? "receita" : "receitas"}
+                    </p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {formatCurrency(fixedIncomesThisMonth?.reduce((acc: number, e: any) => acc + Number(e.amount), 0) || 0)}
+                    </p>
+                  </div>
+
+                  {Object.entries(statusConfig).map(([key, cfg]) => {
+                    const stats = byStatusFixed[key] ?? { count: 0, total: 0 };
+                    const Icon = cfg.Icon;
+                    return (
+                      <div key={key} className={`min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border ${cfg.border} ${cfg.cardBg} text-left`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Icon className="w-3 h-3" />
+                          <p className={`text-xs ${cfg.titleColor}`}>{cfg.label}</p>
+                        </div>
+                        <p className="text-lg font-semibold text-gray-900">{formatCurrency(stats.total || 0)}</p>
+                        <p className={`text-sm font-medium ${cfg.valueColor}`}>{stats.count} {stats.count === 1 ? "receita" : "receitas"}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Parcelas */}
         <div className="px-1 sm:px-0">
           <Card>
@@ -440,121 +555,6 @@ export function Receitas() {
                   </div>
                 );
               })()}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Receitas Fixas */}
-        <div className="px-1 sm:px-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <RefreshCcw className="w-5 h-5 mr-2" />
-                Receitas Fixas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-0 px-1 sm:px-6">
-              <div className="overflow-x-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
-                <div className="flex space-x-4 p-4 sm:p-6" style={{ width: 'max-content', scrollSnapType: 'x mandatory', paddingLeft: '0', paddingRight: '0' }}>
-                  {fixedIncomesThisMonth?.map((income: any) => (
-                    <div key={income.id} className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all" style={{ scrollSnapAlign: 'start' }}>
-                      <div className="space-y-3">
-                        <div>
-                          <h3 className="font-semibold text-gray-900 truncate">{income.title}</h3>
-                          <p className="text-xs text-gray-500">Receita Fixa</p>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Vencimento:</span>
-                            <span className="font-medium text-gray-900">{formatDate(income.transaction_date)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Valor:</span>
-                            <span className="font-medium text-emerald-500">{formatCurrency(Number(income.amount))}</span>
-                          </div>
-                          {income.category && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Categoria:</span>
-                              <span className="font-medium text-gray-900 truncate">{income.category}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="pt-2 border-t border-gray-100">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(income.status)}`}>
-                              {getStatusLabel(income.status)}
-                            </span>
-                          </div>
-                          <div className="flex space-x-1">
-                            {income.status === 'pending' && (
-                              <button
-                                onClick={() => handleMarkAsReceived(income.id)}
-                                className="flex-1 p-1 text-xs text-emerald-500 hover:bg-emerald-50 rounded transition-colors"
-                                title="Marcar como recebida"
-                              >
-                                <CheckCircle className="w-3 h-3 mx-auto" />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleEditReceita(income)}
-                              className="flex-1 p-1 text-xs text-gray-600 hover:bg-gray-50 rounded transition-colors"
-                              title="Editar"
-                            >
-                              <Edit className="w-3 h-3 mx-auto" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteReceita(income.id)}
-                              className="flex-1 p-1 text-xs text-rose-500 hover:bg-rose-50 rounded transition-colors"
-                              title="Excluir"
-                            >
-                              <Trash2 className="w-3 h-3 mx-auto" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {(!fixedIncomesThisMonth || fixedIncomesThisMonth.length === 0) && (
-                    <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
-                      <RefreshCcw className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm">Nenhuma receita fixa neste período</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-            <CardContent className="p-4 pt-0 sm:px-6 sm:pt-0">
-              <div className="overflow-x-auto -mx-4 px-4 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: "smooth" }}>
-                <div className="flex gap-3 w-max snap-x snap-mandatory sm:grid sm:w-auto sm:snap-none sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
-                  <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="p-1.5 rounded-lg bg-gray-500 text-white"><RefreshCcw className="w-3 h-3" /></span>
-                      <p className="text-xs text-gray-500">Total</p>
-                    </div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {fixedIncomesThisMonth?.length || 0} {(fixedIncomesThisMonth?.length || 0) === 1 ? "receita" : "receitas"}
-                    </p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {formatCurrency(fixedIncomesThisMonth?.reduce((acc: number, e: any) => acc + Number(e.amount), 0) || 0)}
-                    </p>
-                  </div>
-
-                  {Object.entries(statusConfig).map(([key, cfg]) => {
-                    const stats = byStatusFixed[key] ?? { count: 0, total: 0 };
-                    const Icon = cfg.Icon;
-                    return (
-                      <div key={key} className={`min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border ${cfg.border} ${cfg.cardBg} text-left`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Icon className="w-3 h-3" />
-                          <p className={`text-xs ${cfg.titleColor}`}>{cfg.label}</p>
-                        </div>
-                        <p className="text-lg font-semibold text-gray-900">{formatCurrency(stats.total || 0)}</p>
-                        <p className={`text-sm font-medium ${cfg.valueColor}`}>{stats.count} {stats.count === 1 ? "receita" : "receitas"}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>
