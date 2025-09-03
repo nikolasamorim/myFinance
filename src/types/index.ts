@@ -37,6 +37,9 @@ export interface Transaction {
   installment_number?: number;
   installment_total?: number;
   transaction_status?: 'pending' | 'paid' | 'received';
+  transaction_account: string;
+  transaction_account_color: string;
+  transaction_account_icon: string;
 }
 
 export interface AdvancedTransactionData {

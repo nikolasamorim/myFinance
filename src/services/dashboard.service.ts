@@ -125,9 +125,9 @@ export const dashboardService = {
       // Base query
       let query = supabase
         .from('transactions')
-        .select('*')
+        .select('*, accounts:transaction_bank_id ( id, title, color, icon )')
         .eq('transaction_workspace_id', workspaceId)
-        .order('transaction_date', { ascending: false });
+        .order('transaction_description', { ascending: false });
 
       // Filtro de busca
       if (filters?.search) {
@@ -149,7 +149,12 @@ export const dashboardService = {
 
       console.log('Fetched transactions:', transactions?.length || 0);
 
-      const allTransactions = transactions || [];
+      const allTransactions = (transactions || []).map((t:any)=>({
+        ...t,
+        transaction_account: t.accounts?.title ?? null,
+        transaction_account_color: t.accounts?.color ?? null,
+        transaction_account_icon: t.accounts?.icon ?? null,
+      }));
 
       // Expansão de recorrência (para visão mensal/visuais)
       const expandedTransactions = await this.expandRecurringTransactions(allTransactions);

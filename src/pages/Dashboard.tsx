@@ -3,6 +3,7 @@ import { Filter, Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle,
    Landmark, CreditCard, LayoutDashboard, CheckCircle, Clock, Circle, AlertCircle,
    XCircle, PiggyBank
 } from 'lucide-react';
+import * as Lucide from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -618,6 +619,9 @@ export function Dashboard() {
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">
                             Valor
                           </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                            Conta Bancária
+                          </th>
                         </tr>
                       </thead>
 
@@ -658,6 +662,29 @@ export function Dashboard() {
 
                             <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium">
                               {formatCurrency(Number(transaction.transaction_amount))}
+                            </td>
+
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
+                              <div className="flex items-center gap-2">
+                                {/* Quadrado com cor e ícone Lucide centralizado */}
+                                <div
+                                  className="flex items-center justify-center text-white p-1.5 rounded-lg" /* tamanho consistente por linha */
+                                  style={{ backgroundColor: transaction.transaction_account_color || 'unset' }}
+                                >
+                                  {(() => {
+                                    const iconKey = (transaction.transaction_account_icon || '') as keyof typeof Lucide;
+                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                    return DynamicIcon ? (
+                                      <DynamicIcon className="w-3 h-3" />
+                                    ) : null;
+                                  })()}
+                                </div>
+
+                                {/* Nome da conta */}
+                                <span className="truncate block max-w-[140px] sm:max-w-none">
+                                  {transaction.transaction_account}
+                                </span>
+                              </div>
                             </td>
                           </tr>
                         ))}
