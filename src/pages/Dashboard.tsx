@@ -590,64 +590,89 @@ export function Dashboard() {
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
-              <CardTitle>Lançamentos</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Lançamentos</CardTitle>
             </CardHeader>
             <CardContent className="py-0 px-1 sm:px-6">
-              <div className="w-full overflow-x-auto">
-                <table className="w-full min-w-[600px]">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[50px]">Tipo</th>
-                      <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[50px]">Status</th>
-                      <th className="text-left py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[120px]">Título</th>
-                      <th className="text-center py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 w-[100px]">Data</th>
-                      <th className="text-right py-2 px-2 sm:px-3 text-xs font-medium text-gray-600 min-w-[100px]">Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentTransactions?.map((transaction) => (
-                      <tr 
-                        key={transaction.transaction_id} 
-                        className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                        onClick={() => handleEditTransaction(transaction)}
-                      >
-                        <td className="py-2 px-2 sm:px-3 text-center">
-                          <span
-                            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
-                            title={getTypeLabel(transaction.transaction_type)} // Tooltip nativo
-  >                            {getTypeIcon(transaction.transaction_type)}
-                          </span>
-                        </td>
-                        <td className="py-2 px-2 sm:px-3 text-center">
-                          <span
-                            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
-                            title={getStatusLabel(transaction.transaction_status || "pending")} // tooltip nativo
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
+                </div>
+              ) : (
+                <div className="w-full overflow-x-auto">
+                  <div className="max-h-[560px] overflow-y-auto">
+                    <table className="w-full min-w-[800px]">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[60px]">
+                            Tipo
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[70px]">
+                            Status
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                            Título
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                            Data
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">
+                            Valor
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {recentTransactions?.map((transaction) => (
+                          <tr
+                            key={transaction.transaction_id}
+                            className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                            onClick={() => handleEditTransaction(transaction)}
                           >
-                            {getStatusIcon(transaction.transaction_status || "pending")}
-                          </span>
-                        </td>
-                        <td className="py-2 px-2 sm:px-3 text-xs text-gray-900">
-                          <span className="truncate block max-w-[100px] sm:max-w-none">
-                            {transaction.transaction_description}
-                          </span>
-                        </td>
-                        <td className="py-2 px-2 sm:px-3 text-center text-xs text-gray-600">
-                          {formatDate(transaction.transaction_date)}
-                        </td>
-                        <td className="py-2 px-2 sm:px-3 text-xs text-right font-medium">
-                          {formatCurrency(Number(transaction.transaction_amount))}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                
-                {(!recentTransactions || recentTransactions.length === 0) && (
-                  <div className="text-center py-4 sm:py-6 text-xs text-gray-500 px-4">
-                    Nenhuma transação encontrada
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                              <span
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
+                                title={getTypeLabel(transaction.transaction_type)}
+                              >
+                                {getTypeIcon(transaction.transaction_type)}
+                              </span>
+                            </td>
+
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                              <span
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
+                                title={getStatusLabel(transaction.transaction_status || "pending")}
+                              >
+                                {getStatusIcon(transaction.transaction_status || "pending")}
+                              </span>
+                            </td>
+
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
+                              <span className="truncate block max-w-[140px] sm:max-w-none">
+                                {transaction.transaction_description}
+                              </span>
+                            </td>
+
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                              {formatDate(transaction.transaction_date)}
+                            </td>
+
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium">
+                              {formatCurrency(Number(transaction.transaction_amount))}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )}
-              </div>
+
+                  {(!recentTransactions || recentTransactions.length === 0) && (
+                    <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
+                      <p className="text-base sm:text-lg font-medium">Nenhuma transação encontrada</p>
+                      <p className="text-xs sm:text-sm">Comece criando sua primeira transação</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

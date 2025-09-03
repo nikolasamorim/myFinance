@@ -271,7 +271,7 @@ export const dashboardService = {
       const monthlyComparison = buildMonthlyComparison(monthlyBreakdown);
 
       // Últimas 10 transações (após expansão)
-      const recentTransactions = expandedTransactions.slice(0, 10);
+      const recentTransactions = expandedTransactions.slice(0, 50);
 
       // Retorno FINAL (sem alterar contrato)
       return {
