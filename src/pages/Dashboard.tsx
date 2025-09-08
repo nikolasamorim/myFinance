@@ -277,6 +277,8 @@ export function Dashboard() {
     switch (status) {
       case "paid":
         return <CheckCircle className="p-1.5 rounded-lg bg-green-600 text-green-50" />;
+      case "received":
+        return <CheckCircle className="p-1.5 rounded-lg bg-green-600 text-green-50" />;
       case "pending":
         return <Clock className="p-1.5 rounded-lg bg-yellow-500 text-yellow-50" />;
       case "open":
