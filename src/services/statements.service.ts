@@ -27,7 +27,7 @@ export const statementsService = {
   async ensureOpenStatement(cardId: string, periodStart: string) {
     const { data, error } = await supabase.rpc('ensure_open_statement', {
       card_id: cardId,
-      p_period_start: periodStart,
+      period_start: periodStart,
     });
 
     if (error) throw new Error('Failed to ensure open statement: ' + error.message);
