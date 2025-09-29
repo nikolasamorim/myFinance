@@ -16,8 +16,8 @@ const PaymentDataSchema = z.object({
 export const statementsService = {
   async computeStatementWindow(cardId: string, anchorDate: string) {
     const { data, error } = await supabase.rpc('compute_statement_window', {
-      card_id: cardId,
       anchor_date: anchorDate,
+      card_id: cardId,
     });
 
     if (error) throw new Error('Failed to compute statement window: ' + error.message);
