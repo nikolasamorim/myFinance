@@ -28,7 +28,7 @@ const paymentMethodOptions = [
   { value: 'dda', label: 'Débito Automático' },
 ];
 
-export function Invoice() {
+function Invoice() {
   const { currentWorkspace } = useWorkspace();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -479,3 +479,5 @@ export function Invoice() {
     </>
   );
 }
+
+export default Invoice;

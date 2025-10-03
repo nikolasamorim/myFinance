@@ -20,6 +20,7 @@ import { Contas } from './pages/organizadores/Contas';
 import { Categorias } from './pages/organizadores/Categorias';
 import { CentrosDeCusto } from './pages/organizadores/CentrosDeCusto';
 import { History } from './pages/History';
+import Invoice from './pages/Invoice';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -142,6 +143,16 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <History />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/invoice"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Invoice />
                         </Layout>
                       </ProtectedRoute>
                     }
