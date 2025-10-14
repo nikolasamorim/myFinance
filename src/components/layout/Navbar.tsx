@@ -88,7 +88,7 @@ export function Navbar() {
                 width="20"
                 height="20"
                 alt="Logo"
-                className="sm:w-6 sm:h-6 md:w-7 md:h-7 dark:hidden"
+                className="sm:w-6 sm:h-6 md:w-7 md:h-7"
               />
 
               {/* Logo dark */}
@@ -97,10 +97,10 @@ export function Navbar() {
                 width="20"
                 height="20"
                 alt="Logo"
-                className="hidden dark:block sm:w-6 sm:h-6 md:w-7 md:h-7"
+                className="hidden sm:w-6 sm:h-6 md:w-7 md:h-7"
               />
 
-              <h1 className="font-serifTitle font-bold text-gray-900 dark:text-gray-100 hidden sm:block mr-3">
+              <h1 className="font-serifTitle font-bold text-gray-900 hidden sm:block mr-3">
                 Azami
               </h1>
             </div>
