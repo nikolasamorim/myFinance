@@ -555,15 +555,9 @@ export function Dashboard() {
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Dívida recebida:</span>
-                            <span className="font-medium text-orange-600">
+                            <span className="text-gray-600">Investimento:</span>
+                            <span className="font-medium text-blue-600">
                               {formatCurrency(month.debtReceived)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Dívida paga:</span>
-                            <span className="font-medium text-orange-800">
-                              {formatCurrency(month.debtPaid)}
                             </span>
                           </div>
                           <hr className="my-2" />
