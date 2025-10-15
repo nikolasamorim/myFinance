@@ -53,6 +53,7 @@ export function Dashboard() {
     category: 'all',
     search: '',
   });
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   // Dados principais (respeitam os filtros para cards de resumo/tabela)
   const { 
@@ -172,6 +173,33 @@ export function Dashboard() {
 
   const handleFilterChange = (key: keyof DashboardFilters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value as any }));
+  };
+
+  const handleMonthClick = (monthKey: string) => {
+    setSelectedMonth(monthKey);
+  };
+
+  const handleApplyMonthFilter = () => {
+    if (!selectedMonth) return;
+
+    // Parse the month key (YYYY-MM)
+    const [year, month] = selectedMonth.split('-');
+    const startDate = new Date(Number(year), Number(month) - 1, 1);
+    const endDate = new Date(Number(year), Number(month), 0);
+
+    // Format dates as YYYY-MM-DD
+    const startDateStr = `${year}-${month}-01`;
+    const endDateStr = `${year}-${month}-${String(endDate.getDate()).padStart(2, '0')}`;
+
+    setFilters(prev => ({
+      ...prev,
+      period: 'custom',
+      startDate: startDateStr,
+      endDate: endDateStr,
+    }));
+
+    // Clear selected month after applying
+    setSelectedMonth(null);
   };
 
   const handleCreateTransaction = (type: 'income' | 'expense' | 'debt' | 'investment') => {
@@ -486,14 +514,14 @@ export function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="py-0 px-1 sm:px-6">
-              <div 
-                className="overflow-x-auto scrollbar-hide" 
+              <div
+                className="overflow-x-auto scrollbar-hide"
                 id="monthly-scroll"
                 style={{ scrollBehavior: 'smooth' }}
               >
-                <div 
-                  className="flex space-x-4 p-4 sm:p-6"
-                  style={{ 
+                <div
+                  className="flex space-x-4 p-4 sm:p-6 relative"
+                  style={{
                     width: 'max-content',
                     scrollSnapType: 'x mandatory',
                     paddingLeft: '0',
@@ -511,19 +539,23 @@ export function Dashboard() {
                     const positiveBalance = (month.income - month.expense) >= 0;
 
                     const isHighlighted = month.isSelected; // << unifica destaque
+                    const isUserSelected = selectedMonth === month.month;
 
                     return (
                       <div
                         key={month.month}
                         id={idAttr}
+                        onClick={() => handleMonthClick(month.month)}
                         className={cn(
                           'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md',
-                          isHighlighted
-                            ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500' // << MESMA aparência para selecionados e mês atual
+                          isUserSelected
+                            ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-400 shadow-lg'
+                            : isHighlighted
+                            ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500'
                             : 'border-gray-200 bg-white hover:border-gray-300'
                         )}
                         style={{ scrollSnapAlign: 'start' }}
-                        title={month.isSelected ? 'Selecionado pelo período' : undefined}
+                        title={isUserSelected ? 'Clique em Aplicar para filtrar' : month.isSelected ? 'Selecionado pelo período' : 'Clique para selecionar'}
                       >
                         <div className="text-center mb-3">
                           <h3
@@ -571,9 +603,20 @@ export function Dashboard() {
                       </div>
                     );
                   })}
-
                 </div>
               </div>
+
+              {/* Apply Button */}
+              {selectedMonth && (
+                <div className="flex justify-center pb-4 pt-2">
+                  <Button
+                    onClick={handleApplyMonthFilter}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+                  >
+                    Aplicar Filtro
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
