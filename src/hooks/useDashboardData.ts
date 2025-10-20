@@ -5,6 +5,8 @@ interface DashboardFilters {
   period: string;
   category: string;
   search: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export function useDashboardData(workspaceId?: string, filters?: DashboardFilters) {

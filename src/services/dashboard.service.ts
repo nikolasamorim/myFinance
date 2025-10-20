@@ -8,6 +8,8 @@ interface DashboardFilters {
   period: string;
   category: string;
   search: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface PaidSummary {
@@ -49,10 +51,18 @@ interface DashboardData {
 const toISODate = (d: Date) => d.toISOString().split('T')[0];
 
 // Monta range de datas a partir do filtro de período
-function getPeriodRange(period?: string): { start?: string; end?: string } {
-  if (!period || period === 'custom') return {};
-  const now = new Date();
+function getPeriodRange(period?: string, customStart?: string, customEnd?: string): { start?: string; end?: string } {
+  if (!period) return {};
 
+  // Handle custom period with explicit date range
+  if (period === 'custom') {
+    if (customStart && customEnd) {
+      return { start: customStart, end: customEnd };
+    }
+    return {};
+  }
+
+  const now = new Date();
   let startDate: Date;
   let endDate: Date;
 
@@ -135,7 +145,14 @@ export const dashboardService = {
       }
 
       // Filtro de período
-      const { start, end } = getPeriodRange(filters?.period);
+      const { start, end } = getPeriodRange(filters?.period, filters?.startDate, filters?.endDate);
+      console.log('Dashboard filter period range:', {
+        period: filters?.period,
+        customStart: filters?.startDate,
+        customEnd: filters?.endDate,
+        calculatedStart: start,
+        calculatedEnd: end
+      });
       if (start && end) {
         query = query.gte('transaction_date', start).lte('transaction_date', end);
       }

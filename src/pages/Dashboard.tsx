@@ -188,8 +188,14 @@ export function Dashboard() {
     const endDate = new Date(Number(year), Number(month), 0);
 
     // Format dates as YYYY-MM-DD
-    const startDateStr = `${year}-${month}-01`;
-    const endDateStr = `${year}-${month}-${String(endDate.getDate()).padStart(2, '0')}`;
+    const startDateStr = `${year}-${month.padStart(2, '0')}-01`;
+    const endDateStr = `${year}-${month.padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+
+    console.log('Applying month filter:', {
+      selectedMonth,
+      startDateStr,
+      endDateStr
+    });
 
     setFilters(prev => ({
       ...prev,
@@ -547,15 +553,15 @@ export function Dashboard() {
                         id={idAttr}
                         onClick={() => handleMonthClick(month.month)}
                         className={cn(
-                          'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md',
+                          'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-md',
                           isUserSelected
-                            ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-400 shadow-lg'
+                            ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-400 shadow-lg transform scale-105'
                             : isHighlighted
                             ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
+                            : 'border-gray-200 bg-white hover:border-gray-300 hover:scale-102'
                         )}
                         style={{ scrollSnapAlign: 'start' }}
-                        title={isUserSelected ? 'Clique em Aplicar para filtrar' : month.isSelected ? 'Selecionado pelo período' : 'Clique para selecionar'}
+                        title={isUserSelected ? 'Click Apply Filter to apply' : month.isSelected ? 'Selected by period filter' : 'Click to select month'}
                       >
                         <div className="text-center mb-3">
                           <h3
@@ -608,12 +614,12 @@ export function Dashboard() {
 
               {/* Apply Button */}
               {selectedMonth && (
-                <div className="flex justify-center pb-4 pt-2">
+                <div className="flex justify-center pb-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
                   <Button
                     onClick={handleApplyMonthFilter}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                   >
-                    Aplicar Filtro
+                    Apply Filter
                   </Button>
                 </div>
               )}
