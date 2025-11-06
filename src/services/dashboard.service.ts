@@ -54,7 +54,11 @@ const toISODate = (d: Date) => d.toISOString().split('T')[0];
 function getPeriodRange(period?: string, customStart?: string, customEnd?: string): { start?: string; end?: string } {
   if (!period) return {};
 
-  // Handle custom period with explicit date range
+  if (period === 'all') {
+    // << NÃO filtra nada para o carrossel/visão geral
+    return {};
+  }
+
   if (period === 'custom') {
     if (customStart && customEnd) {
       return { start: customStart, end: customEnd };
@@ -80,8 +84,8 @@ function getPeriodRange(period?: string, customStart?: string, customEnd?: strin
       endDate = new Date(now.getFullYear(), 11, 31);
       break;
     default:
-      startDate = new Date(now.getFullYear(), 0, 1);
-      endDate = new Date(now.getFullYear(), 11, 31);
+      // deixa explícito: se cair aqui, não filtra
+      return {};
   }
 
   return { start: toISODate(startDate), end: toISODate(endDate) };
@@ -174,7 +178,10 @@ export const dashboardService = {
       }));
 
       // Expansão de recorrência (para visão mensal/visuais)
-      const expandedTransactions = await this.expandRecurringTransactions(allTransactions);
+      const expandedTransactions = await this.expandRecurringTransactions(allTransactions, {
+        startDate: start ? new Date(start) : undefined,
+        endDate: end ? new Date(end) : undefined,
+      });
 
       // Detecta tipo "investido" compatível
       const investmentType = detectInvestmentType(expandedTransactions);
@@ -311,71 +318,112 @@ export const dashboardService = {
   },
 
   // Mantida a assinatura e a lógica geral (apenas organização mínima interna)
-  async expandRecurringTransactions(transactions: any[]): Promise<any[]> {
+  async expandRecurringTransactions(
+    transactions: any[],
+    opts?: { startDate?: Date; endDate?: Date }
+  ): Promise<any[]> {
     const expanded = [...transactions];
-    const currentDate = new Date();
-    const futureLimit = new Date();
-    futureLimit.setFullYear(currentDate.getFullYear() + 2); // Expand 2 years into future
 
-    // Transações com regra de recorrência
-    const recurringTransactions = transactions.filter(t => t.recurrence_rule_id);
+    // 1) Busque todas as transações recorrentes do workspace, sem filtrar por data
+    const workspaceId = transactions[0]?.transaction_workspace_id;
+    if (!workspaceId) return expanded;
 
-    for (const transaction of recurringTransactions) {
-      try {
-        // Busca a regra
-        const { data: rule, error } = await supabase
-          .from('recurrence_rules')
-          .select('*')
-          .eq('id', transaction.recurrence_rule_id)
-          .single();
+    const { data: recurringTemplates, error: recErr } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('transaction_workspace_id', workspaceId)
+      .not('recurrence_rule_id', 'is', null);
 
-        if (error || !rule || rule.status !== 'active') continue;
+    if (recErr || !Array.isArray(recurringTemplates)) return expanded;
 
-        // Gera futuras ocorrências
-        const startDate = new Date(rule.start_date);
-        const endDate = rule.end_date ? new Date(rule.end_date) : futureLimit;
+    // 2) Carregue todas as regras envolvidas numa passada (evita 1 query por item)
+    const ruleIds = [...new Set(recurringTemplates.map(t => t.recurrence_rule_id))];
+    const { data: rules, error: rulesErr } = await supabase
+      .from('recurrence_rules')
+      .select('*')
+      .in('id', ruleIds);
 
-        let currentInstanceDate = new Date(startDate);
-        let instanceCount = 0;
-        const maxInstances = rule.repeat_count || 100; // limite razoável
+    if (rulesErr || !Array.isArray(rules)) return expanded;
 
-        while (currentInstanceDate <= endDate && instanceCount < maxInstances) {
-          // Evita duplicar a data original
-          if (toISODate(currentInstanceDate) !== transaction.transaction_date) {
-            const futureInstance = {
-              ...transaction,
-              transaction_id: `${transaction.transaction_id}-future-${instanceCount}`,
-              transaction_date: toISODate(currentInstanceDate),
-              transaction_status: 'pending',   // futuras sempre pendentes
-              is_future_instance: true,        // marca como futura
-            };
-            expanded.push(futureInstance);
-          }
+    const rulesById = new Map(rules.map(r => [r.id, r]));
 
-          // Próxima ocorrência
-          switch (rule.recurrence_type) {
-            case 'daily':
-              currentInstanceDate.setDate(currentInstanceDate.getDate() + 1);
-              break;
-            case 'weekly':
-              currentInstanceDate.setDate(currentInstanceDate.getDate() + 7);
-              break;
-            case 'monthly':
-              currentInstanceDate.setMonth(currentInstanceDate.getMonth() + 1);
-              break;
-            case 'yearly':
-              currentInstanceDate.setFullYear(currentInstanceDate.getFullYear() + 1);
-              break;
-          }
+    // Janela de geração
+    const hardFutureLimit = new Date();
+    hardFutureLimit.setFullYear(hardFutureLimit.getFullYear() + 2);
 
-          instanceCount++;
+    // Helper de status (mesmo campo transaction_status)
+    const toISODate = (d: Date) => d.toISOString().split('T')[0];
+    const normStatus = (base: string | null | undefined, isoDate: string) => {
+      if (base === 'paid' || base === 'received' || base === 'canceled') return base;
+      const today = toISODate(new Date());
+      if (isoDate > today) return 'scheduled';
+      if (isoDate < today) return 'overdue';
+      return 'pending';
+    };
+
+    for (const template of recurringTemplates) {
+      const rule = rulesById.get(template.recurrence_rule_id);
+      if (!rule || rule.status !== 'active') continue;
+
+      const start = new Date(rule.start_date);
+      const end = rule.end_date ? new Date(rule.end_date) : hardFutureLimit;
+
+      // Gera apenas o que cruza o filtro (se houver)
+      const clipStart = opts?.startDate ? new Date(Math.max(start.getTime(), opts.startDate.getTime())) : start;
+      const clipEnd   = opts?.endDate   ? new Date(Math.min(end.getTime(),   opts.endDate.getTime()))   : end;
+      if (clipStart > clipEnd) continue;
+
+      // Caminha na frequência até clipEnd
+      let d = new Date(start);
+      let i = 0;
+      const maxInstances = rule.repeat_count || 100;
+
+      const pushInstance = (instDate: Date) => {
+        const iso = toISODate(instDate);
+        // Só adiciona se cair dentro da janela “clipada” e não for a data original
+        if (instDate < clipStart || instDate > clipEnd) return;
+        if (iso === template.transaction_date) return;
+
+        expanded.push({
+          ...template,
+          transaction_id: `${template.transaction_id}-rec-${iso}`,
+          transaction_date: iso,
+          transaction_status: normStatus(template.transaction_status, iso), // <<< normalizado
+          is_future_instance: true,
+        });
+      };
+
+      while (d <= end && i < maxInstances) {
+        pushInstance(d);
+
+        switch (rule.recurrence_type) {
+          case 'daily':   d.setDate(d.getDate() + 1); break;
+          case 'weekly':  d.setDate(d.getDate() + 7); break;
+          case 'monthly': d.setMonth(d.getMonth() + 1); break;
+          case 'yearly':  d.setFullYear(d.getFullYear() + 1); break;
+          default:        d.setMonth(d.getMonth() + 1);
         }
-      } catch (error) {
-        console.error('Error expanding recurring transaction:', transaction.transaction_id, error);
-        // Continua para as próximas mesmo em caso de falha nesta
+        i++;
       }
     }
 
-    return expanded;
+    // NORMALIZA TUDO (originais + geradas) ANTES DE DEDUP E RETORNAR
+    const normalized = expanded.map(t => {
+      const iso = typeof t.transaction_date === 'string'
+        ? t.transaction_date
+        : toISODate(new Date(t.transaction_date));
+      const status = normStatus(t.transaction_status, iso);
+      // evita recriar objetos se não mudou
+      return status === t.transaction_status ? t : { ...t, transaction_status: status };
+    });
+
+    // Evita duplicatas (se a template original já estava em `transactions`)
+    const byKey = new Map<string, any>();
+    for (const t of normalized) {
+      const key = `${t.transaction_id}|${t.transaction_date}`;
+      if (!byKey.has(key)) byKey.set(key, t);
+    }
+
+    return Array.from(byKey.values());
   },
 };
