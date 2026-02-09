@@ -67,7 +67,7 @@ interface SidebarGroupProps {
   isCollapsed?: boolean;
 }
 
-function SidebarGroup({ title, children, defaultExpanded = true, isCollapsed }: SidebarGroupProps) {
+function SidebarGroup({ title, children, defaultExpanded = false, isCollapsed }: SidebarGroupProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const shouldShowContent = isCollapsed || isExpanded;
 
@@ -76,7 +76,7 @@ function SidebarGroup({ title, children, defaultExpanded = true, isCollapsed }: 
       {!isCollapsed && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
+          className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
         >
           <span>{title}</span>
           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -236,7 +236,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
       {/* Navigation */}
       <nav
         className={cn(
-          'flex-1 space-y-6 overflow-y-auto',
+          'flex-1 space-y-5 overflow-y-auto',
           isCollapsed ? 'p-2' : 'p-4'
         )}
         onClick={() => {
