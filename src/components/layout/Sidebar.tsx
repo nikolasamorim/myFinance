@@ -20,7 +20,7 @@ function SidebarItem({ to, icon, label, isActive, isCollapsed }: SidebarItemProp
         'flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
         isCollapsed ? 'justify-center' : 'space-x-3',
         isActive
-          ? 'bg-blue-100 text-blue-700 border-1 border-blue-700'
+          ? 'bg-white text-gray-800 border border-gray-200 shadow-sm'
           : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
       )}
       title={isCollapsed ? label : undefined}
@@ -134,12 +134,12 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
 
   return (
     <div className={cn(
-      'flex flex-col max-h-screen border-r border-gray-200 transition-all duration-300',
+      'flex flex-col max-h-screen transition-all duration-300',
       isCollapsed ? 'w-16' : 'w-64'
     )}>
       {/* Mobile Header */}
       <div className={cn(
-        'flex items-center border-b border-gray-200 lg:hidden',
+        'flex items-center lg:hidden',
         isCollapsed ? 'justify-center p-2' : 'justify-between p-4'
       )}>
         {!isCollapsed && <h2 className="text-lg font-semibold text-gray-900">Menu</h2>}
