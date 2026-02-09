@@ -30,6 +30,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Dropdown } from '../ui/Dropdown';
 import { useTheme } from '../../hooks/useTheme';
+import { SidebarToggleButton } from '../ui/SidebarToggleButton';
 
 interface SidebarItemProps {
   to: string;
@@ -196,7 +197,26 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
       {/* Mobile Header */}
       {showMobileHeader && (
         <div className={cn('min-w-0 flex items-center lg:hidden', isCollapsed ? 'justify-center p-2' : 'justify-between p-4')}>
-          {!isCollapsed && <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-gray-900">Menu</h2>}
+          {!isCollapsed && 
+            // /* Workspace selector */
+            <div className={cn('mt-3 min-w-0', isCollapsed ? 'hidden' : 'block')}>
+            {loading ? (
+              <div className="w-full h-9 bg-gray-200 rounded-lg animate-pulse" />
+            ) : (
+              <div className="min-w-0">
+                {/* Dropdown já deve cuidar do truncate internamente, mas se precisar, envolvemos */}
+                <Dropdown
+                  options={workspaceOptions}
+                  value={currentWorkspace?.workspace_id}
+                  onChange={handleWorkspaceChange}
+                  placeholder="Workspace"
+                  className="text-sm"
+                  isMobile={isMobile}
+                />
+              </div>
+            )}
+          </div>
+          }
           <button
             onClick={() => {
               closeAllBottomMenus();
@@ -213,13 +233,18 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
       {/* Top: Logo + Workspace */}
       <div className={cn('border-b border-gray-200 min-w-0', isCollapsed ? 'p-2' : 'p-4')}>
         <div className={cn('min-w-0 flex items-center', isCollapsed ? 'justify-center' : 'gap-2')}>
-          <img src="/logo-black.png" width="22" height="22" alt="Logo" className="w-6 h-6 flex-shrink-0" />
-
           {!isCollapsed && (
+            <>
+            <img src="/logo-black.png" width="22" height="22" alt="Logo" className="w-6 h-6 flex-shrink-0" />
             <h1 className="min-w-0 flex-1 truncate font-serifTitle font-bold text-gray-900 leading-none">
               Azami
             </h1>
+            </>
           )}
+
+        <div className="hidden lg:block">
+          <SidebarToggleButton />
+        </div>
         </div>
 
         {/* Workspace selector */}
