@@ -134,7 +134,7 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
 
   return (
     <div className={cn(
-      'flex flex-col h-full border-r border-gray-200 transition-all duration-300',
+      'flex flex-col max-h-screen border-r border-gray-200 transition-all duration-300',
       isCollapsed ? 'w-16' : 'w-64'
     )}>
       {/* Mobile Header */}
