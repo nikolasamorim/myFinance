@@ -46,7 +46,7 @@ function SidebarItem({ to, icon, label, isActive, isCollapsed, onClick }: Sideba
       to={to}
       onClick={onClick}
       className={cn(
-        'flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+        'min-w-0 flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 overflow-hidden',
         isCollapsed ? 'justify-center' : 'space-x-3',
         isActive
           ? 'bg-white text-gray-800 border border-gray-200 shadow-sm'
@@ -55,7 +55,10 @@ function SidebarItem({ to, icon, label, isActive, isCollapsed, onClick }: Sideba
       title={isCollapsed ? label : undefined}
     >
       <span className="flex-shrink-0">{icon}</span>
-      {!isCollapsed && <span className="truncate">{label}</span>}
+
+      {!isCollapsed && (
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+      )}
     </Link>
   );
 }
@@ -72,19 +75,20 @@ function SidebarGroup({ title, children, defaultExpanded = false, isCollapsed }:
   const shouldShowContent = isCollapsed || isExpanded;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 min-w-0">
       {!isCollapsed && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
+          className="min-w-0 flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
         >
-          <span>{title}</span>
-          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {/* ✅ titulo com truncate também */}
+          <span className="min-w-0 flex-1 truncate text-left">{title}</span>
+          {isExpanded ? <ChevronDown className="w-4 h-4 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 flex-shrink-0" />}
         </button>
       )}
 
       {shouldShowContent && (
-        <div className={cn('space-y-1 transition-all duration-200', isCollapsed ? 'pl-0' : 'pl-2')}>
+        <div className={cn('space-y-1 transition-all duration-200 min-w-0', isCollapsed ? 'pl-0' : 'pl-2')}>
           {children}
         </div>
       )}
@@ -185,20 +189,20 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
   return (
     <div
       className={cn(
-        'flex flex-col h-full min-h-0 transition-all duration-300 border-gray-200',
+        'min-w-0 flex flex-col h-full min-h-0 transition-all duration-300 border-gray-200',
         isCollapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Mobile Header */}
       {showMobileHeader && (
-        <div className={cn('flex items-center lg:hidden', isCollapsed ? 'justify-center p-2' : 'justify-between p-4')}>
-          {!isCollapsed && <h2 className="text-lg font-semibold text-gray-900">Menu</h2>}
+        <div className={cn('min-w-0 flex items-center lg:hidden', isCollapsed ? 'justify-center p-2' : 'justify-between p-4')}>
+          {!isCollapsed && <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-gray-900">Menu</h2>}
           <button
             onClick={() => {
               closeAllBottomMenus();
               onMobileClose?.();
             }}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
             title="Fechar"
           >
             <X className="w-5 h-5" />
@@ -207,28 +211,33 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
       )}
 
       {/* Top: Logo + Workspace */}
-      <div className={cn('border-b border-gray-200', isCollapsed ? 'p-2' : 'p-4')}>
-        <div className={cn('flex items-center', isCollapsed ? 'justify-center' : 'gap-2')}>
-          {/* Logo */}
-          <img src="/logo-black.png" width="22" height="22" alt="Logo" className="w-6 h-6" />
+      <div className={cn('border-b border-gray-200 min-w-0', isCollapsed ? 'p-2' : 'p-4')}>
+        <div className={cn('min-w-0 flex items-center', isCollapsed ? 'justify-center' : 'gap-2')}>
+          <img src="/logo-black.png" width="22" height="22" alt="Logo" className="w-6 h-6 flex-shrink-0" />
+
           {!isCollapsed && (
-            <h1 className="font-serifTitle font-bold text-gray-900 leading-none">Azami</h1>
+            <h1 className="min-w-0 flex-1 truncate font-serifTitle font-bold text-gray-900 leading-none">
+              Azami
+            </h1>
           )}
         </div>
 
         {/* Workspace selector */}
-        <div className={cn('mt-3', isCollapsed ? 'hidden' : 'block')}>
+        <div className={cn('mt-3 min-w-0', isCollapsed ? 'hidden' : 'block')}>
           {loading ? (
             <div className="w-full h-9 bg-gray-200 rounded-lg animate-pulse" />
           ) : (
-            <Dropdown
-              options={workspaceOptions}
-              value={currentWorkspace?.workspace_id}
-              onChange={handleWorkspaceChange}
-              placeholder="Workspace"
-              className="text-sm"
-              isMobile={isMobile}
-            />
+            <div className="min-w-0">
+              {/* Dropdown já deve cuidar do truncate internamente, mas se precisar, envolvemos */}
+              <Dropdown
+                options={workspaceOptions}
+                value={currentWorkspace?.workspace_id}
+                onChange={handleWorkspaceChange}
+                placeholder="Workspace"
+                className="text-sm"
+                isMobile={isMobile}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -236,16 +245,12 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
       {/* Navigation */}
       <nav
         className={cn(
-          'flex-1 space-y-5 overflow-y-auto',
+          'min-w-0 min-h-0 flex-1 space-y-5 overflow-y-auto',
           isCollapsed ? 'p-2' : 'p-4'
         )}
-        onClick={() => {
-          // se clicar na área do menu, fecha dropdowns de baixo
-          closeAllBottomMenus();
-        }}
+        onClick={() => closeAllBottomMenus()}
       >
-        {/* Dashboard + Fatura */}
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0">
           <SidebarItem
             to="/dashboard"
             icon={<LayoutDashboard className="w-5 h-5 text-blue-600" />}
@@ -294,11 +299,11 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
         </SidebarGroup>
       </nav>
 
-      {/* Bottom fixed actions (Notifications + User) */}
-      <div className={cn('border-t border-gray-200', isCollapsed ? 'p-2' : 'p-3')}>
-        <div className={cn('relative', isCollapsed ? '' : '')}>
+      {/* Bottom fixed actions */}
+      <div className={cn('border-t border-gray-200 min-w-0', isCollapsed ? 'p-2' : 'p-3')}>
+        <div className="relative min-w-0">
           {/* Notifications */}
-          <div className="relative">
+          <div className="relative min-w-0">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -306,21 +311,25 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
                 setShowUserMenu(false);
               }}
               className={cn(
-                'w-full flex items-center rounded-lg transition-colors',
+                'w-full min-w-0 overflow-hidden flex items-center rounded-lg transition-colors',
                 isCollapsed ? 'justify-center p-2' : 'justify-between px-3 py-2',
                 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
               )}
               title="Notificações"
             >
-              <span className={cn('flex items-center', isCollapsed ? '' : 'gap-3')}>
-                <span className="relative">
+              <span className={cn('min-w-0 flex items-center', isCollapsed ? '' : 'gap-3', isCollapsed ? '' : 'flex-1')}>
+                <span className="relative flex-shrink-0">
                   <Bell className="w-5 h-5" />
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
                 </span>
-                {!isCollapsed && <span className="text-sm font-medium">Notificações</span>}
+
+                {!isCollapsed && (
+                  <span className="min-w-0 truncate text-sm font-medium">Notificações</span>
+                )}
               </span>
+
               {!isCollapsed && (
-                <ChevronDown className={cn('w-4 h-4 transition-transform', showNotifications && 'rotate-180')} />
+                <ChevronDown className={cn('w-4 h-4 flex-shrink-0 transition-transform', showNotifications && 'rotate-180')} />
               )}
             </button>
 
@@ -328,27 +337,25 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
               <div
                 className={cn(
                   'absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200',
-                  // abre "pra cima" e NÃO ocupa layout
                   'bottom-full mb-2',
-                  // alinhamento
                   isCollapsed ? 'left-full ml-2 w-72' : 'left-0 right-0'
                 )}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="p-3 border-b border-gray-100">
-                  <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 truncate">Notificações</h3>
                 </div>
                 <div className="p-3">
-                  <p className="text-sm text-gray-500 text-center">Nenhuma notificação no momento</p>
+                  <p className="text-sm text-gray-500 text-center truncate">Nenhuma notificação no momento</p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className={cn(isCollapsed ? 'h-2' : 'h-2')} />
+          <div className="h-2" />
 
           {/* User menu */}
-          <div className="relative">
+          <div className="relative min-w-0">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -356,26 +363,31 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
                 setShowNotifications(false);
               }}
               className={cn(
-                'w-full flex items-center rounded-lg transition-colors',
+                'w-full min-w-0 overflow-hidden flex items-center rounded-lg transition-colors',
                 isCollapsed ? 'justify-center p-2' : 'justify-between px-3 py-2',
                 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
               )}
               title="Usuário"
             >
-              <span className={cn('flex items-center', isCollapsed ? '' : 'gap-3')}>
+              <span className={cn('min-w-0 flex items-center', isCollapsed ? '' : 'gap-3', isCollapsed ? '' : 'flex-1')}>
                 <div className="w-7 h-7 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                   <User className="w-4 h-4" />
                 </div>
+
                 {!isCollapsed && (
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'Usuário'}</p>
-                    <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
+                  <div className="min-w-0 ">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user?.name || user?.email || 'Usuário'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user?.email || ''}
+                    </p>
                   </div>
                 )}
               </span>
 
               {!isCollapsed && (
-                <ChevronDown className={cn('w-4 h-4 transition-transform', showUserMenu && 'rotate-180')} />
+                <ChevronDown className={cn('w-4 h-4 flex-shrink-0 transition-transform', showUserMenu && 'rotate-180')} />
               )}
             </button>
 
@@ -383,27 +395,25 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
               <div
                 className={cn(
                   'absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1',
-                  // abre "pra cima" e NÃO ocupa layout
                   'bottom-full mb-2',
-                  // alinhamento
                   isCollapsed ? 'left-full ml-2 w-56' : 'left-0 right-0'
                 )}
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   onClick={() => handleNavigate('/settings')}
-                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="min-w-0 w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  <Settings className="w-4 h-4 mr-3" />
-                  Configurações
+                  <Settings className="w-4 h-4 mr-3 flex-shrink-0" />
+                  <span className="min-w-0 truncate">Configurações</span>
                 </button>
 
                 <button
                   onClick={() => handleNavigate('/history')}
-                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="min-w-0 w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  <History className="w-4 h-4 mr-3" />
-                  Histórico
+                  <History className="w-4 h-4 mr-3 flex-shrink-0" />
+                  <span className="min-w-0 truncate">Histórico</span>
                 </button>
 
                 <button
@@ -411,10 +421,10 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
                     toggle();
                     closeAllBottomMenus();
                   }}
-                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="min-w-0 w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  <SunMoon className="w-4 h-4 mr-3" />
-                  Alterar Tema (Beta)
+                  <SunMoon className="w-4 h-4 mr-3 flex-shrink-0" />
+                  <span className="min-w-0 truncate">Alterar Tema (Beta)</span>
                 </button>
 
                 <div className="h-px bg-gray-100 my-1" />
@@ -424,10 +434,10 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
                     logout();
                     closeAllBottomMenus();
                   }}
-                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="min-w-0 w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  <LogOut className="w-4 h-4 mr-3" />
-                  Sair
+                  <LogOut className="w-4 h-4 mr-3 flex-shrink-0" />
+                  <span className="min-w-0 truncate">Sair</span>
                 </button>
               </div>
             )}
@@ -435,14 +445,10 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
 
           {/* Click-outside */}
           {(showNotifications || showUserMenu) && (
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => closeAllBottomMenus()}
-            />
+            <div className="fixed inset-0 z-40" onClick={() => closeAllBottomMenus()} />
           )}
         </div>
       </div>
-
     </div>
   );
 }
@@ -450,7 +456,6 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
 export function Sidebar(props: SidebarExternalControlProps) {
   const { isCollapsed } = useSidebar();
 
-  // internal fallback
   const [internalMobileOpen, setInternalMobileOpen] = useState(false);
 
   const mobileOpen = props.mobileOpen ?? internalMobileOpen;
@@ -468,19 +473,9 @@ export function Sidebar(props: SidebarExternalControlProps) {
       {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 ignoreOverride"
-            onClick={onMobileClose}
-          />
-
-          {/* Sidebar */}
+          <div className="fixed inset-0 bg-black bg-opacity-50 ignoreOverride" onClick={onMobileClose} />
           <div className="fixed inset-y-0 left-0">
-            <SidebarContent
-              showMobileHeader
-              onMobileClose={onMobileClose}
-              onAnyNavigate={onMobileClose}
-            />
+            <SidebarContent showMobileHeader onMobileClose={onMobileClose} onAnyNavigate={onMobileClose} />
           </div>
         </div>
       )}
