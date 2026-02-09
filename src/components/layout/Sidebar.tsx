@@ -1,8 +1,35 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Menu, X, TrendingUp, TrendingDown, AlertTriangle, PiggyBank, Building, Wallet, FolderOpen, Tag, Target, CreditCard, LayoutDashboard, SquareKanban } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  ChevronDown,
+  ChevronRight,
+  X,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  PiggyBank,
+  Wallet,
+  Tag,
+  Target,
+  CreditCard,
+  LayoutDashboard,
+  SquareKanban,
+  Bell,
+  User,
+  LogOut,
+  Settings,
+  History,
+  SunMoon,
+  Users,
+  Building,
+} from 'lucide-react';
+
 import { cn } from '../../lib/utils';
 import { useSidebar } from '../../context/SidebarContext';
+import { useAuth } from '../../context/AuthContext';
+import { useWorkspace } from '../../context/WorkspaceContext';
+import { Dropdown } from '../ui/Dropdown';
+import { useTheme } from '../../hooks/useTheme';
 
 interface SidebarItemProps {
   to: string;
@@ -10,12 +37,14 @@ interface SidebarItemProps {
   label: string;
   isActive?: boolean;
   isCollapsed?: boolean;
+  onClick?: () => void;
 }
 
-function SidebarItem({ to, icon, label, isActive, isCollapsed }: SidebarItemProps) {
+function SidebarItem({ to, icon, label, isActive, isCollapsed, onClick }: SidebarItemProps) {
   return (
     <Link
       to={to}
+      onClick={onClick}
       className={cn(
         'flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
         isCollapsed ? 'justify-center' : 'space-x-3',
@@ -40,8 +69,6 @@ interface SidebarGroupProps {
 
 function SidebarGroup({ title, children, defaultExpanded = true, isCollapsed }: SidebarGroupProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
-  // Always show content when collapsed (icon-only mode)
   const shouldShowContent = isCollapsed || isExpanded;
 
   return (
@@ -52,19 +79,12 @@ function SidebarGroup({ title, children, defaultExpanded = true, isCollapsed }: 
           className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
         >
           <span>{title}</span>
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
+          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>
       )}
-      
+
       {shouldShowContent && (
-        <div className={cn(
-          'space-y-1 transition-all duration-200',
-          isCollapsed ? 'pl-0' : 'pl-2'
-        )}>
+        <div className={cn('space-y-1 transition-all duration-200', isCollapsed ? 'pl-0' : 'pl-2')}>
           {children}
         </div>
       )}
@@ -72,108 +92,177 @@ function SidebarGroup({ title, children, defaultExpanded = true, isCollapsed }: 
   );
 }
 
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+type SidebarExternalControlProps =
+  | {
+      mobileOpen: boolean;
+      onMobileClose: () => void;
+      onMobileOpen?: () => void;
+    }
+  | {
+      mobileOpen?: undefined;
+      onMobileClose?: undefined;
+      onMobileOpen?: undefined;
+    };
+
+interface SidebarContentProps {
+  onAnyNavigate?: () => void;
+  showMobileHeader?: boolean;
+  onMobileClose?: () => void;
 }
 
-function SidebarContent({ isOpen, onClose }: SidebarProps) {
+function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: SidebarContentProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isCollapsed } = useSidebar();
+  const { user, logout } = useAuth();
+  const { currentWorkspace, workspaces, setCurrentWorkspace, loading } = useWorkspace();
+  const { toggle } = useTheme();
+
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const getWorkspaceIcon = (workspace: any) => {
+    if (workspace?.workspace_icon) return <span className="text-lg">{workspace.workspace_icon}</span>;
+
+    switch (workspace?.workspace_type) {
+      case 'family':
+        return <Users className="w-4 h-4 text-gray-600" />;
+      case 'business':
+        return <Building className="w-4 h-4 text-gray-600" />;
+      default:
+        return <User className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const workspaceOptions = useMemo(
+    () =>
+      (workspaces || []).map((workspace: any) => ({
+        value: workspace.workspace_id,
+        label: workspace.workspace_name,
+        icon: getWorkspaceIcon(workspace),
+      })),
+    [workspaces]
+  );
+
+  const handleWorkspaceChange = (workspaceId: string) => {
+    const workspace = (workspaces || []).find((w: any) => w.workspace_id === workspaceId);
+    if (workspace) setCurrentWorkspace(workspace);
+  };
 
   const managerItems = [
-    {
-      to: '/gerenciadores/receitas',
-      icon: <TrendingUp className="w-5 h-5 text-green-600" />,
-      label: 'Receitas',
-    },
-    {
-      to: '/gerenciadores/despesas',
-      icon: <TrendingDown className="w-5 h-5 text-red-600" />,
-      label: 'Despesas',
-    },
-    {
-      to: '/gerenciadores/dividas',
-      icon: <AlertTriangle className="w-5 h-5 text-orange-600" />,
-      label: 'Dívidas',
-    },
-    {
-      to: '/gerenciadores/investimentos',
-      icon: <PiggyBank className="w-5 h-5 text-blue-600" />,
-      label: 'Investimentos',
-    },
+    { to: '/gerenciadores/receitas', icon: <TrendingUp className="w-5 h-5 text-green-600" />, label: 'Receitas' },
+    { to: '/gerenciadores/despesas', icon: <TrendingDown className="w-5 h-5 text-red-600" />, label: 'Despesas' },
+    { to: '/gerenciadores/dividas', icon: <AlertTriangle className="w-5 h-5 text-orange-600" />, label: 'Dívidas' },
+    { to: '/gerenciadores/investimentos', icon: <PiggyBank className="w-5 h-5 text-blue-600" />, label: 'Investimentos' },
   ];
 
   const organizadorItems = [
-    // {
-    //   to: '/organizadores/instituicoes',
-    //   icon: <Building className="w-5 h-5 text-blue-600" />,
-    //   label: 'Instituições',
-    // },
-    {
-      to: '/organizadores/contas',
-      icon: <Wallet className="w-5 h-5 text-green-600" />,
-      label: 'Caixa / Conta',
-    },
-    {
-      to: '/organizadores/cartoes',
-      icon: <CreditCard className="w-5 h-5 text-purple-600" />,
-      label: 'Cartões de Crédito',
-    },
-    {
-      to: '/organizadores/categorias',
-      icon: <Tag className="w-5 h-5 text-yellow-600" />,
-      label: 'Categoria',
-    },
-    {
-      to: '/organizadores/centros-de-custo',
-      icon: <Target className="w-5 h-5 text-indigo-600" />,
-      label: 'Centro de Custo',
-    },
+    { to: '/organizadores/contas', icon: <Wallet className="w-5 h-5 text-green-600" />, label: 'Caixa / Conta' },
+    { to: '/organizadores/cartoes', icon: <CreditCard className="w-5 h-5 text-purple-600" />, label: 'Cartões de Crédito' },
+    { to: '/organizadores/categorias', icon: <Tag className="w-5 h-5 text-yellow-600" />, label: 'Categoria' },
+    { to: '/organizadores/centros-de-custo', icon: <Target className="w-5 h-5 text-indigo-600" />, label: 'Centro de Custo' },
   ];
 
+  const closeAllBottomMenus = () => {
+    setShowNotifications(false);
+    setShowUserMenu(false);
+  };
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    closeAllBottomMenus();
+    onAnyNavigate?.();
+  };
+
   return (
-    <div className={cn(
-      'flex flex-col max-h-screen transition-all duration-300',
-      isCollapsed ? 'w-16' : 'w-64'
-    )}>
+    <div
+      className={cn(
+        'flex flex-col h-full min-h-0 transition-all duration-300 border-gray-200',
+        isCollapsed ? 'w-16' : 'w-64'
+      )}
+    >
       {/* Mobile Header */}
-      <div className={cn(
-        'flex items-center lg:hidden',
-        isCollapsed ? 'justify-center p-2' : 'justify-between p-4'
-      )}>
-        {!isCollapsed && <h2 className="text-lg font-semibold text-gray-900">Menu</h2>}
-        <button
-          onClick={onClose}
-          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+      {showMobileHeader && (
+        <div className={cn('flex items-center lg:hidden', isCollapsed ? 'justify-center p-2' : 'justify-between p-4')}>
+          {!isCollapsed && <h2 className="text-lg font-semibold text-gray-900">Menu</h2>}
+          <button
+            onClick={() => {
+              closeAllBottomMenus();
+              onMobileClose?.();
+            }}
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            title="Fechar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Top: Logo + Workspace */}
+      <div className={cn('border-b border-gray-200', isCollapsed ? 'p-2' : 'p-4')}>
+        <div className={cn('flex items-center', isCollapsed ? 'justify-center' : 'gap-2')}>
+          {/* Logo */}
+          <img src="/logo-black.png" width="22" height="22" alt="Logo" className="w-6 h-6" />
+          {!isCollapsed && (
+            <h1 className="font-serifTitle font-bold text-gray-900 leading-none">Azami</h1>
+          )}
+        </div>
+
+        {/* Workspace selector */}
+        <div className={cn('mt-3', isCollapsed ? 'hidden' : 'block')}>
+          {loading ? (
+            <div className="w-full h-9 bg-gray-200 rounded-lg animate-pulse" />
+          ) : (
+            <Dropdown
+              options={workspaceOptions}
+              value={currentWorkspace?.workspace_id}
+              onChange={handleWorkspaceChange}
+              placeholder="Workspace"
+              className="text-sm"
+              isMobile={isMobile}
+            />
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className={cn('flex-1 space-y-6 overflow-y-auto', isCollapsed ? 'p-2' : 'p-4')}>
-        {/* Dashboard - No grouping */}
+      <nav
+        className={cn(
+          'flex-1 space-y-6 overflow-y-auto',
+          isCollapsed ? 'p-2' : 'p-4'
+        )}
+        onClick={() => {
+          // se clicar na área do menu, fecha dropdowns de baixo
+          closeAllBottomMenus();
+        }}
+      >
+        {/* Dashboard + Fatura */}
         <div className="space-y-2">
-          <div className="space-y-1">
-            <SidebarItem
-              to="/dashboard"
-              icon={<LayoutDashboard className="w-5 h-5 text-blue-600" />}
-              label="Dashboard"
-              isActive={location.pathname === '/dashboard'}
-              isCollapsed={isCollapsed}
-            />
-          </div>
+          <SidebarItem
+            to="/dashboard"
+            icon={<LayoutDashboard className="w-5 h-5 text-blue-600" />}
+            label="Dashboard"
+            isActive={location.pathname === '/dashboard'}
+            isCollapsed={isCollapsed}
+            onClick={onAnyNavigate}
+          />
 
-          <div className="space-y-1">
-            <SidebarItem
-              to="/invoice"
-              icon={<SquareKanban className="w-5 h-5 text-purple-600" />}
-              label="Fatura"
-              isActive={location.pathname === '/invoice'}
-              isCollapsed={isCollapsed}
-            />
-          </div>
+          <SidebarItem
+            to="/invoice"
+            icon={<SquareKanban className="w-5 h-5 text-purple-600" />}
+            label="Fatura"
+            isActive={location.pathname === '/invoice'}
+            isCollapsed={isCollapsed}
+            onClick={onAnyNavigate}
+          />
         </div>
 
         <SidebarGroup title="Gerenciadores" isCollapsed={isCollapsed}>
@@ -185,6 +274,7 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
               label={item.label}
               isActive={location.pathname === item.to}
               isCollapsed={isCollapsed}
+              onClick={onAnyNavigate}
             />
           ))}
         </SidebarGroup>
@@ -198,41 +288,198 @@ function SidebarContent({ isOpen, onClose }: SidebarProps) {
               label={item.label}
               isActive={location.pathname === item.to}
               isCollapsed={isCollapsed}
+              onClick={onAnyNavigate}
             />
           ))}
         </SidebarGroup>
       </nav>
+
+      {/* Bottom fixed actions (Notifications + User) */}
+      <div className={cn('border-t border-gray-200', isCollapsed ? 'p-2' : 'p-3')}>
+        <div className={cn('relative', isCollapsed ? '' : '')}>
+          {/* Notifications */}
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowNotifications((v) => !v);
+                setShowUserMenu(false);
+              }}
+              className={cn(
+                'w-full flex items-center rounded-lg transition-colors',
+                isCollapsed ? 'justify-center p-2' : 'justify-between px-3 py-2',
+                'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+              )}
+              title="Notificações"
+            >
+              <span className={cn('flex items-center', isCollapsed ? '' : 'gap-3')}>
+                <span className="relative">
+                  <Bell className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+                </span>
+                {!isCollapsed && <span className="text-sm font-medium">Notificações</span>}
+              </span>
+              {!isCollapsed && (
+                <ChevronDown className={cn('w-4 h-4 transition-transform', showNotifications && 'rotate-180')} />
+              )}
+            </button>
+
+            {showNotifications && (
+              <div
+                className={cn(
+                  'absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200',
+                  // abre "pra cima" e NÃO ocupa layout
+                  'bottom-full mb-2',
+                  // alinhamento
+                  isCollapsed ? 'left-full ml-2 w-72' : 'left-0 right-0'
+                )}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-3 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
+                </div>
+                <div className="p-3">
+                  <p className="text-sm text-gray-500 text-center">Nenhuma notificação no momento</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className={cn(isCollapsed ? 'h-2' : 'h-2')} />
+
+          {/* User menu */}
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowUserMenu((v) => !v);
+                setShowNotifications(false);
+              }}
+              className={cn(
+                'w-full flex items-center rounded-lg transition-colors',
+                isCollapsed ? 'justify-center p-2' : 'justify-between px-3 py-2',
+                'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+              )}
+              title="Usuário"
+            >
+              <span className={cn('flex items-center', isCollapsed ? '' : 'gap-3')}>
+                <div className="w-7 h-7 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <User className="w-4 h-4" />
+                </div>
+                {!isCollapsed && (
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'Usuário'}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
+                  </div>
+                )}
+              </span>
+
+              {!isCollapsed && (
+                <ChevronDown className={cn('w-4 h-4 transition-transform', showUserMenu && 'rotate-180')} />
+              )}
+            </button>
+
+            {showUserMenu && (
+              <div
+                className={cn(
+                  'absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1',
+                  // abre "pra cima" e NÃO ocupa layout
+                  'bottom-full mb-2',
+                  // alinhamento
+                  isCollapsed ? 'left-full ml-2 w-56' : 'left-0 right-0'
+                )}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => handleNavigate('/settings')}
+                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <Settings className="w-4 h-4 mr-3" />
+                  Configurações
+                </button>
+
+                <button
+                  onClick={() => handleNavigate('/history')}
+                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <History className="w-4 h-4 mr-3" />
+                  Histórico
+                </button>
+
+                <button
+                  onClick={() => {
+                    toggle();
+                    closeAllBottomMenus();
+                  }}
+                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <SunMoon className="w-4 h-4 mr-3" />
+                  Alterar Tema (Beta)
+                </button>
+
+                <div className="h-px bg-gray-100 my-1" />
+
+                <button
+                  onClick={() => {
+                    logout();
+                    closeAllBottomMenus();
+                  }}
+                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <LogOut className="w-4 h-4 mr-3" />
+                  Sair
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Click-outside */}
+          {(showNotifications || showUserMenu) && (
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => closeAllBottomMenus()}
+            />
+          )}
+        </div>
+      </div>
+
     </div>
   );
 }
 
-export function Sidebar() {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+export function Sidebar(props: SidebarExternalControlProps) {
   const { isCollapsed } = useSidebar();
+
+  // internal fallback
+  const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+
+  const mobileOpen = props.mobileOpen ?? internalMobileOpen;
+  const onMobileClose = props.onMobileClose ?? (() => setInternalMobileOpen(false));
 
   return (
     <>
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0">
         <div className={cn('transition-all duration-300', isCollapsed ? 'w-16' : 'w-64')}>
-          <SidebarContent isOpen={true} onClose={() => {}} />
+          <SidebarContent />
         </div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
-      {isMobileOpen && (
+      {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black bg-opacity-50 ignoreOverride"
-            onClick={() => setIsMobileOpen(false)}
+            onClick={onMobileClose}
           />
-          
+
           {/* Sidebar */}
-          <div className="fixed inset-y-0 left-0 w-64 max-w-xs">
+          <div className="fixed inset-y-0 left-0">
             <SidebarContent
-              isOpen={isMobileOpen}
-              onClose={() => setIsMobileOpen(false)}
+              showMobileHeader
+              onMobileClose={onMobileClose}
+              onAnyNavigate={onMobileClose}
             />
           </div>
         </div>

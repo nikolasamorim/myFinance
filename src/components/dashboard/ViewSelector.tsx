@@ -389,7 +389,7 @@ export function ViewSelector({ screenContext, currentVisualization, onVisualizat
       <button
         ref={refs.setReference}
         {...getReferenceProps()}
-        className="flex items-center space-x-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent transition-colors min-w-40"
+        className="flex items-center space-x-2 px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent transition-colors min-w-40"
       >
         <CurrentIcon className="w-3.5 h-3.5 text-gray-600" />
         <span className="truncate flex-1 text-left">

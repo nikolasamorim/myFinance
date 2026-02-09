@@ -39,7 +39,7 @@ export function Dropdown({ options, value, onChange, placeholder = 'Selecione...
       <button
         type="button"
         className={cn(
-          "w-full flex items-center justify-between bg-white border border-gray-300 rounded-md shadow-sm text-left focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent min-w-0",
+          "w-full flex items-center justify-between bg-white border border-gray-200 rounded-md shadow-sm text-left focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent min-w-0",
           isMobile ? "px-1.5 py-2 text-xs min-h-[32px]" : "px-2 py-1.5 text-sm"
         )}
         onClick={() => setIsOpen(!isOpen)}
