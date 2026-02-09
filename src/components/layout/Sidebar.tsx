@@ -349,7 +349,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
                 </span>
 
                 {!isCollapsed && (
-                  <span className="min-w-0 truncate text-sm font-medium">Notificações</span>
+                  <span className="min-w-0 truncate text-sm font-medium text-left">Notificações</span>
                 )}
               </span>
 
@@ -401,10 +401,10 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
 
                 {!isCollapsed && (
                   <div className="min-w-0 ">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 truncate text-left">
                       {user?.name || user?.email || 'Usuário'}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-gray-500 truncate text-left">
                       {user?.email || ''}
                     </p>
                   </div>
