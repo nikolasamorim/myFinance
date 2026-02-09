@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navbar } from './Navbar';
+// import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 
 interface LayoutProps {
@@ -9,7 +9,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-gray-100 overflow-hidden lg:pt-3 lg:pb-3 lg:pr-3">
-      <Navbar />
+      {/* <Navbar /> */}
       
       <div className="flex gap-1">
         <Sidebar />
