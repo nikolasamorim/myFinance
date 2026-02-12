@@ -53,6 +53,9 @@ export const despesaService = {
           transaction_date,
           transaction_category_id,
           transaction_status,
+          parent_recurrence_rule_id,
+          recurrence_instance_date,
+          recurrence_sequence,
           transaction_created_at,
           transaction_updated_at
         `)
@@ -95,19 +98,25 @@ export const despesaService = {
         throw new Error('Failed to fetch despesas: ' + error.message);
       }
       
-      // Transform data to match expected format
-      return (data || []).map(item => ({
-        id: item.transaction_id,
-        title: item.transaction_description,
-        amount: item.transaction_amount,
-        transaction_date: item.transaction_date,
-        status: item.transaction_status || 'pending',
-        repeat_type: 'avulsa', // Default type
-        is_installment: false,
-        category_id: item.transaction_category_id,
-        created_at: item.transaction_created_at,
-        updated_at: item.transaction_updated_at
-      }));
+      return (data || []).map(item => {
+        const isRecurring = !!item.parent_recurrence_rule_id;
+        const isInstallment = (item.transaction_description || '').includes('/');
+        return {
+          id: item.transaction_id,
+          title: item.transaction_description,
+          amount: item.transaction_amount,
+          transaction_date: item.recurrence_instance_date || item.transaction_date,
+          status: item.transaction_status || 'pending',
+          repeat_type: isRecurring ? 'fixa' : 'avulsa',
+          is_installment: isInstallment,
+          category_id: item.transaction_category_id,
+          parent_recurrence_rule_id: item.parent_recurrence_rule_id,
+          recurrence_instance_date: item.recurrence_instance_date,
+          recurrence_sequence: item.recurrence_sequence,
+          created_at: item.transaction_created_at,
+          updated_at: item.transaction_updated_at
+        };
+      });
     } catch (error) {
       console.error('Error in getDespesas:', error);
       throw error;
@@ -165,7 +174,7 @@ export const despesaService = {
         .select('transaction_id, transaction_amount, transaction_status, transaction_description, transaction_date')
         .eq('transaction_workspace_id', workspaceId)
         .eq('transaction_type', 'expense')
-        .eq('recurring', true); // troque para .eq('transaction_recurring', true) se for o seu caso
+        .not('parent_recurrence_rule_id', 'is', null);
   
       // Mantém search/status para respeitar o filtro atual, mas sem período
       if (filters.search) {
@@ -241,7 +250,7 @@ export const despesaService = {
         id: item.transaction_id,
         title: item.transaction_description,
         amount: item.transaction_amount,
-        transaction_date: item.transaction_date,
+        transaction_date: item.recurrence_instance_date || item.transaction_date,
         status: item.transaction_status || 'pending',
         installment_number: item.installment_number,
         installment_total: item.installment_total,
@@ -267,10 +276,9 @@ export const despesaService = {
         .select('*')
         .eq('transaction_workspace_id', workspaceId)
         .eq('transaction_type', 'expense')
-        .eq('recurring', true)
-        // Comentando o código abaixo para trazer as despesas fixas independente da data que foi criada
-        // .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
-        // .lte('transaction_date', endOfMonth.toISOString().split('T')[0])
+        .not('parent_recurrence_rule_id', 'is', null)
+        .gte('recurrence_instance_date', startOfMonth.toISOString().split('T')[0])
+        .lte('recurrence_instance_date', endOfMonth.toISOString().split('T')[0]);
 
       if (error) throw new Error('Failed to fetch fixed expenses: ' + error.message);
 
@@ -278,9 +286,9 @@ export const despesaService = {
         id: item.transaction_id,
         title: item.transaction_description,
         amount: item.transaction_amount,
-        transaction_date: item.transaction_date,
+        transaction_date: item.recurrence_instance_date || item.transaction_date,
         status: item.transaction_status || 'pending',
-        category: null, // Would need category join
+        category: null,
       }));
     } catch (error) {
       console.error('Error in getFixedExpensesThisMonth:', error);

@@ -60,7 +60,9 @@ export const receitaService = {
           transaction_date,
           transaction_category_id,
           transaction_status,
-          recurring,
+          parent_recurrence_rule_id,
+          recurrence_instance_date,
+          recurrence_sequence,
           transaction_created_at,
           transaction_updated_at
         `)
@@ -99,17 +101,21 @@ export const receitaService = {
 
       return (data || []).map(item => {
         const parsed = parseInstallmentMeta(item.transaction_description || undefined);
+        const isRecurring = !!item.parent_recurrence_rule_id;
         return {
           id: item.transaction_id,
           title: item.transaction_description,
           amount: item.transaction_amount,
-          transaction_date: item.transaction_date,
+          transaction_date: item.recurrence_instance_date || item.transaction_date,
           status: item.transaction_status || 'pending',
-          repeat_type: item.recurring ? 'fixa' : 'avulsa',
+          repeat_type: isRecurring ? 'fixa' : 'avulsa',
           is_installment: !!parsed,
           installment_number: parsed?.number,
           installment_total: parsed?.total,
           category_id: item.transaction_category_id,
+          parent_recurrence_rule_id: item.parent_recurrence_rule_id,
+          recurrence_instance_date: item.recurrence_instance_date,
+          recurrence_sequence: item.recurrence_sequence,
           created_at: item.transaction_created_at,
           updated_at: item.transaction_updated_at
         };
@@ -120,38 +126,86 @@ export const receitaService = {
     }
   },
 
-  async getReceitasSummary(workspaceId: string, _filters: ReceitaFilters): Promise<ReceitaSummary> {
+  async getReceitasSummary(workspaceId: string, filters: ReceitaFilters): Promise<ReceitaSummary> {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw new Error('Authentication failed: ' + userError.message);
       if (!user) throw new Error('User not authenticated');
 
-      // Puxa o necessário para os cálculos (inclui description para identificar parcelas)
-      const { data, error } = await supabase
+      let baseQuery = supabase
         .from('transactions')
-        .select('transaction_amount, transaction_status, transaction_description')
+        .select('transaction_id, transaction_amount, transaction_status, transaction_description, transaction_date, parent_recurrence_rule_id')
         .eq('transaction_workspace_id', workspaceId)
         .eq('transaction_type', 'income');
 
-      if (error) throw new Error('Failed to fetch incomes summary: ' + error.message);
+      if (filters.search) {
+        baseQuery = baseQuery.ilike('transaction_description', `%${filters.search}%`);
+      }
 
-      const all = data || [];
+      if (filters.status !== 'all') {
+        baseQuery = baseQuery.eq('transaction_status', filters.status);
+      }
 
-      const totalPaid = all
-        .filter(r => r.transaction_status === 'received')
-        .reduce((acc, r) => acc + Number(r.transaction_amount), 0);
+      if (filters.period === 'current_month') {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-      const totalPending = all
-        .filter(r => r.transaction_status === 'pending')
-        .reduce((acc, r) => acc + Number(r.transaction_amount), 0);
+        baseQuery = baseQuery
+          .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
+          .lte('transaction_date', endOfMonth.toISOString().split('T')[0]);
+      } else if (filters.period === 'last_month') {
+        const now = new Date();
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-      const totalInstallments = all
-        .filter(r => parseInstallmentMeta(r.transaction_description || undefined))
-        .reduce((acc, r) => acc + Number(r.transaction_amount), 0);
+        baseQuery = baseQuery
+          .gte('transaction_date', startOfLastMonth.toISOString().split('T')[0])
+          .lte('transaction_date', endOfLastMonth.toISOString().split('T')[0]);
+      }
 
-      const monthlyAverage = all.length > 0
-        ? all.reduce((acc, r) => acc + Number(r.transaction_amount), 0) / 12
-        : 0;
+      const { data: incomes, error: baseErr } = await baseQuery;
+      if (baseErr) throw new Error('Failed to fetch incomes summary: ' + baseErr.message);
+
+      const allIncomes = incomes || [];
+      const seenIds = new Set(allIncomes.map(e => e.transaction_id));
+
+      let recurQuery = supabase
+        .from('transactions')
+        .select('transaction_id, transaction_amount, transaction_status, transaction_description, transaction_date, parent_recurrence_rule_id')
+        .eq('transaction_workspace_id', workspaceId)
+        .eq('transaction_type', 'income')
+        .not('parent_recurrence_rule_id', 'is', null);
+
+      if (filters.search) {
+        recurQuery = recurQuery.ilike('transaction_description', `%${filters.search}%`);
+      }
+      if (filters.status !== 'all') {
+        recurQuery = recurQuery.eq('transaction_status', filters.status);
+      }
+
+      const { data: recurringRows, error: recurErr } = await recurQuery;
+      if (recurErr) throw new Error('Failed to fetch recurring incomes: ' + recurErr.message);
+
+      const recurringOnly = (recurringRows || []).filter(r => !seenIds.has(r.transaction_id));
+
+      const sum = (arr: any[]) => arr.reduce((acc, e) => acc + Number(e.transaction_amount || 0), 0);
+
+      const basePaid = sum(allIncomes.filter(e => e.transaction_status === 'received'));
+      const basePending = sum(allIncomes.filter(e => e.transaction_status === 'pending'));
+
+      const recurPaid = sum(recurringOnly.filter(e => e.transaction_status === 'received'));
+      const recurPending = sum(recurringOnly.filter(e => e.transaction_status === 'pending'));
+
+      const totalPaid = basePaid + recurPaid;
+      const totalPending = basePending + recurPending;
+
+      const totalInstallments = allIncomes
+        .filter(e => parseInstallmentMeta(e.transaction_description || undefined))
+        .reduce((acc, e) => acc + Number(e.transaction_amount), 0);
+
+      const total = allIncomes.reduce((acc, e) => acc + Number(e.transaction_amount), 0);
+      const monthlyAverage = allIncomes.length > 0 ? total / 12 : 0;
 
       return {
         totalPaid,
@@ -210,14 +264,18 @@ export const receitaService = {
       if (userError) throw new Error('Authentication failed: ' + userError.message);
       if (!user) throw new Error('User not authenticated');
 
-      // Mesmo critério das despesas: traz todas as recorrentes (indep. da data de criação)
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
         .eq('transaction_workspace_id', workspaceId)
         .eq('transaction_type', 'income')
-        .eq('recurring', true);
-        // .gte/.lte comentados para não filtrar por mês de criação
+        .not('parent_recurrence_rule_id', 'is', null)
+        .gte('recurrence_instance_date', startOfMonth.toISOString().split('T')[0])
+        .lte('recurrence_instance_date', endOfMonth.toISOString().split('T')[0]);
 
       if (error) throw new Error('Failed to fetch fixed incomes: ' + error.message);
 
@@ -225,9 +283,9 @@ export const receitaService = {
         id: item.transaction_id,
         title: item.transaction_description,
         amount: item.transaction_amount,
-        transaction_date: item.transaction_date,
+        transaction_date: item.recurrence_instance_date || item.transaction_date,
         status: item.transaction_status || 'pending',
-        category: null, // se precisar, fazer join de categoria depois
+        category: null,
       }));
     } catch (error) {
       console.error('Error in getFixedIncomesThisMonth:', error);
@@ -256,7 +314,6 @@ export const receitaService = {
             transaction_date: installmentDate.toISOString().split('T')[0],
             transaction_category_id: receitaData.category_id || null,
             transaction_status: receitaData.status || 'pending',
-            recurring: receitaData.repeat_type === 'fixa' ? true : false,
           });
         }
 
@@ -279,7 +336,6 @@ export const receitaService = {
             transaction_date: receitaData.transaction_date,
             transaction_category_id: receitaData.category_id || null,
             transaction_status: receitaData.status || 'pending',
-            recurring: receitaData.repeat_type === 'fixa' ? true : false,
           }])
           .select()
           .single();
@@ -301,7 +357,6 @@ export const receitaService = {
       if (updates.transaction_date !== undefined) updateData.transaction_date = updates.transaction_date;
       if (updates.category_id !== undefined) updateData.transaction_category_id = updates.category_id;
       if (updates.status !== undefined) updateData.transaction_status = updates.status;
-      if (updates.repeat_type !== undefined) updateData.recurring = updates.repeat_type === 'fixa' ? true : false;
 
       const { data, error } = await supabase
         .from('transactions')
