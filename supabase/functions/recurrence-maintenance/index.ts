@@ -233,7 +233,7 @@ Deno.serve(async (req: Request) => {
           transaction_bank_id: rule.account_id,
           transaction_category_id: rule.category_id,
           transaction_status: "pending",
-          transaction_origin: "recurrence",
+          transaction_origin: "recurring",
           parent_recurrence_rule_id: rule.id,
           recurrence_instance_date: date,
           recurrence_sequence: existingCount + i + 1,
