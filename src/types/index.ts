@@ -37,6 +37,12 @@ export interface Transaction {
   installment_number?: number;
   installment_total?: number;
   transaction_status?: 'pending' | 'paid' | 'received';
+  recurrence_instance_date?: string;
+  recurrence_sequence?: number;
+  parent_recurrence_rule_id?: string;
+  is_recurrence_generated?: boolean;
+  generated_at?: string;
+  version?: number;
 }
 
 export interface AdvancedTransactionData {
@@ -66,14 +72,18 @@ export interface InstallmentData {
   amount: number;
 }
 
+export type RecurrenceType = 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+export type DueAdjustment = 'EXACT_DAY' | 'LAST_DAY_OF_MONTH' | 'NEXT_VALID_DAY' | 'SKIP';
+export type RecurrenceStatus = 'ACTIVE' | 'PAUSED' | 'INACTIVE' | 'COMPLETED' | 'ERROR';
+
 export interface RecurrenceData {
   enabled: boolean;
   start_date: string;
   end_date?: string;
-  recurrence_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  recurrence_type: RecurrenceType;
   repeat_count?: number;
-  due_adjustment: 'none' | 'previous_business_day' | 'next_business_day';
-  recurrence_day?: string;
+  due_adjustment: DueAdjustment;
+  recurrence_day?: number;
 }
 
 export interface RecurrenceRule {
@@ -83,14 +93,25 @@ export interface RecurrenceRule {
   transaction_type: 'income' | 'expense' | 'debt' | 'investment';
   description: string;
   start_date: string;
-  recurrence_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  recurrence_type: RecurrenceType;
   repeat_count?: number;
   end_date?: string;
-  due_adjustment: 'none' | 'previous_business_day' | 'next_business_day';
-  recurrence_day?: string;
-  status: 'active' | 'paused' | 'canceled';
+  due_adjustment: DueAdjustment;
+  recurrence_day?: number;
+  status: RecurrenceStatus;
   created_at: string;
   updated_at: string;
+  next_run_at?: string;
+  last_generated_at?: string;
+  generation_count: number;
+  timezone: string;
+  amount?: number;
+  account_id?: string;
+  category_id?: string;
+  notes?: string;
+  error_count: number;
+  last_error_at?: string;
+  last_error_message?: string;
 }
 
 export interface InstallmentGroup {
