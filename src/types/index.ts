@@ -72,9 +72,9 @@ export interface InstallmentData {
   amount: number;
 }
 
-export type RecurrenceType = 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
-export type DueAdjustment = 'EXACT_DAY' | 'LAST_DAY_OF_MONTH' | 'NEXT_VALID_DAY' | 'SKIP';
-export type RecurrenceStatus = 'ACTIVE' | 'PAUSED' | 'INACTIVE' | 'COMPLETED' | 'ERROR';
+export type RecurrenceType = 'daily' | 'weekly' | 'monthly' | 'yearly';
+export type DueAdjustment = 'none' | 'previous_business_day' | 'next_business_day';
+export type RecurrenceStatus = 'active' | 'paused' | 'canceled' | 'completed' | 'error';
 
 export interface RecurrenceData {
   enabled: boolean;
@@ -104,6 +104,7 @@ export interface RecurrenceRule {
   next_run_at?: string;
   last_generated_at?: string;
   generation_count: number;
+  generated_until?: string;
   timezone: string;
   amount?: number;
   account_id?: string;

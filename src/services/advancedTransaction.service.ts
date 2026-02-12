@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { AdvancedTransactionData, InstallmentData, RecurrenceData } from '../types';
+import { generateRecurrences } from './recurrenceEngine.service';
 
 export const advancedTransactionService = {
   async createAdvancedTransaction(workspaceId: string, transactionType: string, data: AdvancedTransactionData) {
@@ -105,7 +106,6 @@ export const advancedTransactionService = {
       throw new Error('Recurrence data is required for recurring transactions');
     }
 
-    // First, create the recurrence rule
     const { data: recurrenceRule, error: ruleError } = await supabase
       .from('recurrence_rules')
       .insert([{
@@ -113,42 +113,30 @@ export const advancedTransactionService = {
         created_by_user_id: userId,
         transaction_type: transactionType,
         description: data.description,
+        amount: data.amount,
         start_date: data.recurrence.start_date,
         recurrence_type: data.recurrence.recurrence_type,
-        repeat_count: data.recurrence.repeat_count,
-        end_date: data.recurrence.end_date,
-        due_adjustment: data.recurrence.due_adjustment,
-        recurrence_day: data.recurrence.recurrence_day,
+        repeat_count: data.recurrence.repeat_count || null,
+        end_date: data.recurrence.end_date || null,
+        due_adjustment: data.recurrence.due_adjustment || 'none',
+        recurrence_day: data.recurrence.recurrence_day?.toString() || null,
+        account_id: data.account_id || null,
+        category_id: data.category_id || null,
         status: 'active',
+        generation_count: 0,
       }])
       .select()
       .single();
 
     if (ruleError) throw new Error('Failed to create recurrence rule: ' + ruleError.message);
 
-    // Create the first transaction instance
-    const { data: transaction, error: transactionError } = await supabase
-      .from('transactions')
-      .insert([{
-        transaction_workspace_id: workspaceId,
-        transaction_created_by_user_id: userId,
-        transaction_type: transactionType,
-        transaction_description: data.description,
-        transaction_amount: data.amount,
-        transaction_date: data.due_date,
-        transaction_bank_id: data.account_id,
-        transaction_card_id: data.credit_card_id || null,
-        payment_method: data.payment_method,
-        recurring: true,
-        recurrence_rule_id: recurrenceRule.id,
-        transaction_status: 'pending',
-      }])
-      .select()
-      .single();
+    const engineResult = await generateRecurrences(recurrenceRule.id, 'on_save');
 
-    if (transactionError) throw new Error('Failed to create recurring transaction: ' + transactionError.message);
+    if (!engineResult.success) {
+      throw new Error('Failed to generate recurrence transactions: ' + (engineResult.error || 'unknown'));
+    }
 
-    return { recurrenceRule, transaction };
+    return { recurrenceRule, generated: engineResult.generated };
   },
 
   async getInstallmentGroup(groupId: string) {
