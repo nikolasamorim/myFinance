@@ -44,7 +44,7 @@ export const recurrenceService = {
         .from('recurrence_rules')
         .insert([{
           workspace_id: workspaceId,
-          user_id: user.id,
+          created_by_user_id: user.id,
           ...ruleData,
         }])
         .select()

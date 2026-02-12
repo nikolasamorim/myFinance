@@ -62,7 +62,6 @@ const fetchEligibleRules = async (
     .from('recurrence_rules')
     .select('*')
     .eq('workspace_id', workspaceId)
-    .eq('user_id', userId)
     .eq('status', 'ACTIVE')
     .lte('next_run_at', todayISO)
     .order('next_run_at', { ascending: true });
@@ -124,7 +123,7 @@ const createRecurringTransaction = async (
       .from('transactions')
       .insert({
         transaction_workspace_id: rule.workspace_id,
-        transaction_user_id: rule.user_id,
+        transaction_user_id: rule.created_by_user_id,
         transaction_type: rule.transaction_type,
         transaction_description: rule.description,
         transaction_amount: rule.amount,

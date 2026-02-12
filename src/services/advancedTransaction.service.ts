@@ -110,7 +110,7 @@ export const advancedTransactionService = {
       .from('recurrence_rules')
       .insert([{
         workspace_id: workspaceId,
-        user_id: userId,
+        created_by_user_id: userId,
         transaction_type: transactionType,
         description: data.description,
         start_date: data.recurrence.start_date,

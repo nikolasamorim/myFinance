@@ -89,7 +89,7 @@ export interface RecurrenceData {
 export interface RecurrenceRule {
   id: string;
   workspace_id: string;
-  user_id: string;
+  created_by_user_id?: string;
   transaction_type: 'income' | 'expense' | 'debt' | 'investment';
   description: string;
   start_date: string;
