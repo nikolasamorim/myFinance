@@ -12,7 +12,9 @@ import { Modal } from '../../components/ui/Modal';
 import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
 import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
 import { FiltersPanel } from '../../components/ui/FiltersPanel';
+import { SortPanel } from '../../components/ui/SortPanel';
 import type { FilterField } from '../../components/ui/FiltersPanel';
+import type { SortOption } from '../../components/ui/SortPanel';
 import { useReceitas } from '../../hooks/useReceitas';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import type { ReceitaData } from '../../services/receita.service';
@@ -24,6 +26,8 @@ interface ReceitaFilters {
   period: string;
   category: string;
   search: string;
+  date_start?: string;
+  date_end?: string;
 }
 
 interface ReceitaFormData {
@@ -93,12 +97,21 @@ const filterFields: FilterField[] = [
   { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar por titulo...' },
 ];
 
+const sortOptions: SortOption[] = [
+  { value: 'date_desc', label: 'Data (mais recente)' },
+  { value: 'date_asc', label: 'Data (mais antiga)' },
+  { value: 'amount_desc', label: 'Valor (maior primeiro)' },
+  { value: 'amount_asc', label: 'Valor (menor primeiro)' },
+];
+
 export function Receitas() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<ReceitaFilters>({ ...DEFAULT_FILTERS });
+  const [sortBy, setSortBy] = useState<string>('date_desc');
   const [showModal, setShowModal] = useState(false);
   const [editingReceita, setEditingReceita] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
 
   const {
     data: receitas = [],
@@ -114,8 +127,27 @@ export function Receitas() {
 
   const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
 
+  const sortedReceitas = [...receitas].sort((a, b) => {
+    switch (sortBy) {
+      case 'date_desc':
+        return new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime();
+      case 'date_asc':
+        return new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+      case 'amount_desc':
+        return Number(b.amount) - Number(a.amount);
+      case 'amount_asc':
+        return Number(a.amount) - Number(b.amount);
+      default:
+        return 0;
+    }
+  });
+
   const handleApplyFilters = (newFilters: Record<string, string>) => {
     setFilters(newFilters as unknown as ReceitaFilters);
+  };
+
+  const handleApplySort = (newSort: string) => {
+    setSortBy(newSort);
   };
 
   const handleCreateReceita = () => {
@@ -235,6 +267,9 @@ export function Receitas() {
             <div className="relative">
               <VisualizationToolbar
                 onFilter={() => setShowFilters(prev => !prev)}
+                onSort={() => setShowSort(prev => !prev)}
+                onShare={() => {}}
+                onSettings={() => {}}
                 activeFilter={hasActiveFilters}
               />
               <FiltersPanel
@@ -244,6 +279,13 @@ export function Receitas() {
                 currentFilters={filters as unknown as Record<string, string>}
                 defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
                 onApply={handleApplyFilters}
+              />
+              <SortPanel
+                isOpen={showSort}
+                onClose={() => setShowSort(false)}
+                options={sortOptions}
+                currentSort={sortBy}
+                onApply={handleApplySort}
               />
             </div>
             <Button onClick={handleCreateReceita} size="sm">
@@ -582,7 +624,7 @@ export function Receitas() {
                         </tr>
                       </thead>
                       <tbody>
-                        {receitas.map((r: any) => (
+                        {sortedReceitas.map((r: any) => (
                           <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
                               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50" title={getStatusLabel(r.status || 'pending')}>

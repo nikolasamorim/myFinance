@@ -9,7 +9,9 @@ import { Modal } from '../../components/ui/Modal';
 import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
 import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
 import { FiltersPanel } from '../../components/ui/FiltersPanel';
+import { SortPanel } from '../../components/ui/SortPanel';
 import type { FilterField } from '../../components/ui/FiltersPanel';
+import type { SortOption } from '../../components/ui/SortPanel';
 import { useDespesas } from '../../hooks/useDespesas';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import type { DespesaData } from '../../services/despesa.service';
@@ -21,6 +23,8 @@ interface DespesaFilters {
   period: string;
   category: string;
   search: string;
+  date_start?: string;
+  date_end?: string;
 }
 
 interface DespesaFormData {
@@ -92,12 +96,21 @@ const filterFields: FilterField[] = [
   { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar por titulo...' },
 ];
 
+const sortOptions: SortOption[] = [
+  { value: 'date_desc', label: 'Data (mais recente)' },
+  { value: 'date_asc', label: 'Data (mais antiga)' },
+  { value: 'amount_desc', label: 'Valor (maior primeiro)' },
+  { value: 'amount_asc', label: 'Valor (menor primeiro)' },
+];
+
 export function Despesas() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<DespesaFilters>({ ...DEFAULT_FILTERS });
+  const [sortBy, setSortBy] = useState<string>('date_desc');
   const [showModal, setShowModal] = useState(false);
   const [editingDespesa, setEditingDespesa] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
 
   const {
     data: despesas = [],
@@ -113,8 +126,27 @@ export function Despesas() {
 
   const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
 
+  const sortedDespesas = [...despesas].sort((a, b) => {
+    switch (sortBy) {
+      case 'date_desc':
+        return new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime();
+      case 'date_asc':
+        return new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+      case 'amount_desc':
+        return Number(b.amount) - Number(a.amount);
+      case 'amount_asc':
+        return Number(a.amount) - Number(b.amount);
+      default:
+        return 0;
+    }
+  });
+
   const handleApplyFilters = (newFilters: Record<string, string>) => {
     setFilters(newFilters as unknown as DespesaFilters);
+  };
+
+  const handleApplySort = (newSort: string) => {
+    setSortBy(newSort);
   };
 
   const handleCreateDespesa = () => {
@@ -260,6 +292,9 @@ export function Despesas() {
             <div className="relative">
               <VisualizationToolbar
                 onFilter={() => setShowFilters(prev => !prev)}
+                onSort={() => setShowSort(prev => !prev)}
+                onShare={() => {}}
+                onSettings={() => {}}
                 activeFilter={hasActiveFilters}
               />
               <FiltersPanel
@@ -269,6 +304,13 @@ export function Despesas() {
                 currentFilters={filters as unknown as Record<string, string>}
                 defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
                 onApply={handleApplyFilters}
+              />
+              <SortPanel
+                isOpen={showSort}
+                onClose={() => setShowSort(false)}
+                options={sortOptions}
+                currentSort={sortBy}
+                onApply={handleApplySort}
               />
             </div>
             <Button onClick={handleCreateDespesa} size="sm">
@@ -755,7 +797,7 @@ export function Despesas() {
                         </tr>
                       </thead>
                       <tbody>
-                        {despesas.map((despesa) => (
+                        {sortedDespesas.map((despesa) => (
                           <tr key={despesa.id} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
                               <span

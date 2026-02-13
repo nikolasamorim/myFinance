@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { Wallet, Plus, Filter, Edit, Trash2, Building, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import { Wallet, Plus, Edit, Trash2, Building, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -7,6 +8,12 @@ import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
 import { ColorPicker } from '../../components/ui/ColorPicker';
 import { IconPicker } from '../../components/ui/IconPicker';
+import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
+import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
+import { FiltersPanel } from '../../components/ui/FiltersPanel';
+import { SortPanel } from '../../components/ui/SortPanel';
+import type { FilterField } from '../../components/ui/FiltersPanel';
+import type { SortOption } from '../../components/ui/SortPanel';
 import { useAccounts } from '../../hooks/useAccounts';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { cn } from '../../lib/utils';
@@ -28,32 +35,69 @@ interface AccountFormData {
   description: string;
 }
 
+const DEFAULT_FILTERS: AccountFilters = {
+  type: 'all',
+  search: '',
+};
+
 const typeOptions = [
   { value: 'all', label: 'Todos' },
   { value: 'cash', label: 'Dinheiro' },
   { value: 'bank', label: 'Banco' },
 ];
 
-export function Contas() {
-  const [filters, setFilters] = useState<AccountFilters>({
-    type: 'all',
-    search: '',
-  });
+const filterFields: FilterField[] = [
+  { key: 'type', label: 'Tipo', type: 'dropdown', options: typeOptions },
+  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar contas...' },
+];
 
+const sortOptions: SortOption[] = [
+  { value: 'name_asc', label: 'Nome (A-Z)' },
+  { value: 'name_desc', label: 'Nome (Z-A)' },
+  { value: 'balance_desc', label: 'Saldo (maior primeiro)' },
+  { value: 'balance_asc', label: 'Saldo (menor primeiro)' },
+];
+
+export function Contas() {
+  const navigate = useNavigate();
+  const [filters, setFilters] = useState<AccountFilters>({ ...DEFAULT_FILTERS });
+  const [sortBy, setSortBy] = useState<string>('name_asc');
   const [showModal, setShowModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
 
-  const { 
-    data: accounts = [], 
-    isLoading, 
-    createAccount, 
-    updateAccount, 
-    deleteAccount 
+  const {
+    data: accounts = [],
+    isLoading,
+    createAccount,
+    updateAccount,
+    deleteAccount
   } = useAccounts(filters);
 
-  const handleFilterChange = (key: keyof AccountFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    switch (sortBy) {
+      case 'name_asc':
+        return a.title.localeCompare(b.title);
+      case 'name_desc':
+        return b.title.localeCompare(a.title);
+      case 'balance_desc':
+        return Number(b.initial_balance) - Number(a.initial_balance);
+      case 'balance_asc':
+        return Number(a.initial_balance) - Number(b.initial_balance);
+      default:
+        return 0;
+    }
+  });
+
+  const handleApplyFilters = (newFilters: Record<string, string>) => {
+    setFilters(newFilters as unknown as AccountFilters);
+  };
+
+  const handleApplySort = (newSort: string) => {
+    setSortBy(newSort);
   };
 
   const handleCreateAccount = () => {
@@ -96,8 +140,12 @@ export function Contas() {
 
   return (
     <>
-      <div className="space-y-4 sm:space-y-6 w-full min-w-0 ">
-        {/* Header */}
+      <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+        <BreadcrumbBar
+          segments={['Organizadores', 'Contas']}
+          onBack={() => navigate('/dashboard')}
+        />
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg flex-shrink-0">
@@ -105,52 +153,40 @@ export function Contas() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Caixa / Conta</h1>
-              <p className="text-sm sm:text-base text-gray-600">Gerencie contas bancárias e caixa</p>
+              <p className="text-sm sm:text-base text-gray-600">Gerencie contas bancarias e caixa</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Filtros
-            </Button>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <VisualizationToolbar
+                onFilter={() => setShowFilters(prev => !prev)}
+                onSort={() => setShowSort(prev => !prev)}
+                onShare={() => {}}
+                onSettings={() => {}}
+                activeFilter={hasActiveFilters}
+              />
+              <FiltersPanel
+                isOpen={showFilters}
+                onClose={() => setShowFilters(false)}
+                fields={filterFields}
+                currentFilters={filters as unknown as Record<string, string>}
+                defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
+                onApply={handleApplyFilters}
+              />
+              <SortPanel
+                isOpen={showSort}
+                onClose={() => setShowSort(false)}
+                options={sortOptions}
+                currentSort={sortBy}
+                onApply={handleApplySort}
+              />
+            </div>
             <Button onClick={handleCreateAccount} size="sm">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Nova Conta
             </Button>
           </div>
         </div>
-
-        {/* Filters */}
-        {showFilters && (
-          <div className="px-1 sm:px-0">
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                    <Dropdown
-                      options={typeOptions}
-                      value={filters.type}
-                      onChange={(value) => handleFilterChange('type', value)}
-                    />
-                  </div>
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
-                    <Input
-                      placeholder="Buscar contas..."
-                      value={filters.search}
-                      onChange={(e) => handleFilterChange('search', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Accounts Table */}
         <div className="px-1 sm:px-0">
@@ -177,7 +213,7 @@ export function Contas() {
                       </tr>
                     </thead>
                     <tbody>
-                      {accounts.map((account) => (
+                      {sortedAccounts.map((account) => (
                         <tr key={account.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-2 sm:py-3 px-2 sm:px-4">
                             <div>
