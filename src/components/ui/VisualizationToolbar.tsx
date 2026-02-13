@@ -1,4 +1,4 @@
-import { Settings, Share2, ArrowUpDown, Filter } from 'lucide-react';
+import { Settings, Share, ArrowUpDown, Filter } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface VisualizationToolbarProps {
@@ -49,20 +49,6 @@ export function VisualizationToolbar({
 }: VisualizationToolbarProps) {
   return (
     <div className={cn('flex items-center gap-0.5', className)}>
-      {onSettings && (
-        <ToolbarButton
-          onClick={onSettings}
-          icon={<Settings className="w-4 h-4" />}
-          title="Configuracoes"
-        />
-      )}
-      {onShare && (
-        <ToolbarButton
-          onClick={onShare}
-          icon={<Share2 className="w-4 h-4" />}
-          title="Compartilhar"
-        />
-      )}
       {onSort && (
         <ToolbarButton
           onClick={onSort}
@@ -76,6 +62,20 @@ export function VisualizationToolbar({
           icon={<Filter className="w-4 h-4" />}
           title="Filtrar"
           active={activeFilter}
+        />
+      )}
+      {onShare && (
+        <ToolbarButton
+          onClick={onShare}
+          icon={<Share className="w-4 h-4" />}
+          title="Compartilhar"
+        />
+      )}
+      {onSettings && (
+        <ToolbarButton
+          onClick={onSettings}
+          icon={<Settings className="w-4 h-4" />}
+          title="Configuracoes"
         />
       )}
     </div>
