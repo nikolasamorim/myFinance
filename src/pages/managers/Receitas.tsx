@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
 import * as Lucide from 'lucide-react';
 import {
-  TrendingUp, Plus, Calendar, DollarSign, Clock, CheckCircle, Edit,
-  AlertCircle, Circle, XCircle, Trash2, CreditCard, RefreshCcw
+  TrendingUp,
+  Plus,
+  Calendar,
+  DollarSign,
+  Clock,
+  CheckCircle,
+  Edit,
+  AlertCircle,
+  Circle,
+  XCircle,
+  Trash2,
+  CreditCard,
+  RefreshCcw,
+  TrendingDown,
+  AlertTriangle,
+  Landmark,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
@@ -105,6 +119,30 @@ const sortOptions: SortOption[] = [
   { value: 'amount_asc', label: 'Valor (menor primeiro)' },
 ];
 
+const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ');
+
+// Helpers para lidar com nomes de campos diferentes (caso o hook retorne em outro formato)
+function pick<T = any>(obj: any, keys: string[], fallback: T): T {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (v !== undefined && v !== null && String(v).trim() !== '') return v as T;
+  }
+  return fallback;
+}
+
+function DynamicLucideIcon({
+  iconKey,
+  className,
+}: {
+  iconKey?: string;
+  className?: string;
+}) {
+  const key = (iconKey || '') as keyof typeof Lucide;
+  const Icon = Lucide[key] as unknown as React.ComponentType<{ className?: string }>;
+  if (!Icon) return null;
+  return <Icon className={className} />;
+}
+
 export function Receitas() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<ReceitaFilters>({ ...DEFAULT_FILTERS });
@@ -123,7 +161,7 @@ export function Receitas() {
     markAsReceived,
     summary,
     installmentsThisMonth,
-    fixedIncomesThisMonth
+    fixedIncomesThisMonth,
   } = useReceitas(filters);
 
   const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
@@ -175,89 +213,154 @@ export function Receitas() {
     }
   };
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'avulsa': return 'Avulsa';
-      case 'fixa': return 'Fixa';
-      case 'recorrente': return 'Recorrente';
-      default: return type;
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'received':  return 'text-emerald-500 bg-emerald-50 border border-emerald-200';
-      case 'pending':   return 'text-amber-500 bg-amber-50 border border-amber-200';
-      case 'open':      return 'text-sky-500 bg-sky-50 border border-sky-200';
-      case 'overdue':   return 'text-rose-500 bg-rose-50 border border-rose-200';
-      case 'scheduled': return 'text-violet-500 bg-violet-50 border border-violet-200';
-      case 'canceled':  return 'text-gray-500 bg-gray-50 border border-gray-200';
-      default:          return 'text-gray-500 bg-gray-50 border border-gray-200';
+      case 'received':
+        return 'text-emerald-500 bg-emerald-50 border border-emerald-200';
+      case 'pending':
+        return 'text-amber-500 bg-amber-50 border border-amber-200';
+      case 'open':
+        return 'text-sky-500 bg-sky-50 border border-sky-200';
+      case 'overdue':
+        return 'text-rose-500 bg-rose-50 border border-rose-200';
+      case 'scheduled':
+        return 'text-violet-500 bg-violet-50 border border-violet-200';
+      case 'canceled':
+        return 'text-gray-500 bg-gray-50 border border-gray-200';
+      default:
+        return 'text-gray-500 bg-gray-50 border border-gray-200';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'received':  return 'Recebida';
-      case 'pending':   return 'A receber';
-      case 'open':      return 'Aberta';
-      case 'overdue':   return 'Atrasada';
-      case 'scheduled': return 'Agendada';
-      case 'canceled':  return 'Cancelada';
-      default:          return status;
+      case 'received':
+        return 'Recebida';
+      case 'pending':
+        return 'A receber';
+      case 'open':
+        return 'Aberta';
+      case 'overdue':
+        return 'Atrasada';
+      case 'scheduled':
+        return 'Agendada';
+      case 'canceled':
+        return 'Cancelada';
+      default:
+        return status;
     }
   };
 
-  const statusConfig: Record<string, {
-    label: string;
-    Icon: any;
-    cardBg: string;
-    titleColor: string;
-    valueColor: string;
-    border: string;
-  }> = {
-    received: { label: "Recebidas", Icon: CheckCircle, cardBg: "bg-emerald-50", titleColor: "text-gray-500", valueColor: "text-emerald-500", border: "border-emerald-200" },
-    pending:  { label: "Pendentes", Icon: Clock,       cardBg: "bg-amber-50",   titleColor: "text-gray-500", valueColor: "text-amber-500",   border: "border-amber-200" },
-    open:     { label: "Abertas",   Icon: Circle,      cardBg: "bg-sky-50",     titleColor: "text-gray-500", valueColor: "text-sky-500",     border: "border-sky-200" },
-    overdue:  { label: "Atrasadas", Icon: AlertCircle, cardBg: "bg-rose-50",    titleColor: "text-gray-500", valueColor: "text-rose-500",    border: "border-rose-200" },
-    scheduled:{ label: "Agendadas", Icon: Calendar,    cardBg: "bg-violet-50",  titleColor: "text-gray-500", valueColor: "text-violet-500",  border: "border-violet-200" },
-    canceled: { label: "Canceladas",Icon: XCircle,     cardBg: "bg-gray-50",    titleColor: "text-gray-500", valueColor: "text-gray-500",    border: "border-gray-200" },
+  function getTypeIcon(type: string) {
+    switch (type) {
+      case 'income':
+        return <TrendingUp className="p-1.5 rounded-lg bg-green-100 text-green-600" />;
+      case 'expense':
+        return <TrendingDown className="p-1.5 rounded-lg bg-red-100 text-red-600" />;
+      case 'debt':
+        return <AlertTriangle className="p-1.5 rounded-lg bg-orange-100 text-orange-600" />;
+      case 'investment':
+        return <Landmark className="p-1.5 rounded-lg bg-blue-100 text-blue-600" />;
+      default:
+        return null;
+    }
+  }
+
+  function getStatusIcon(status: string) {
+    switch (status) {
+      case 'received':
+      case 'paid':
+        return <CheckCircle className="p-1.5 rounded-lg bg-green-600 text-green-50" />;
+      case 'pending':
+        return <Clock className="p-1.5 rounded-lg bg-yellow-500 text-yellow-50" />;
+      case 'open':
+        return <Circle className="p-1.5 rounded-lg bg-blue-500 text-blue-50" />;
+      case 'overdue':
+        return <AlertCircle className="p-1.5 rounded-lg bg-red-600 text-red-50" />;
+      case 'scheduled':
+        return <Calendar className="p-1.5 rounded-lg bg-indigo-500 text-indigo-50" />;
+      case 'canceled':
+        return <XCircle className="p-1.5 rounded-lg bg-gray-500 text-gray-50" />;
+      default:
+        return null;
+    }
+  }
+
+  const statusConfig: Record<
+    string,
+    { label: string; Icon: any; cardBg: string; titleColor: string; valueColor: string; border: string }
+  > = {
+    received: {
+      label: 'Recebidas',
+      Icon: CheckCircle,
+      cardBg: 'bg-emerald-50',
+      titleColor: 'text-gray-500',
+      valueColor: 'text-emerald-500',
+      border: 'border-emerald-200',
+    },
+    pending: {
+      label: 'Pendentes',
+      Icon: Clock,
+      cardBg: 'bg-amber-50',
+      titleColor: 'text-gray-500',
+      valueColor: 'text-amber-500',
+      border: 'border-amber-200',
+    },
+    open: {
+      label: 'Abertas',
+      Icon: Circle,
+      cardBg: 'bg-sky-50',
+      titleColor: 'text-gray-500',
+      valueColor: 'text-sky-500',
+      border: 'border-sky-200',
+    },
+    overdue: {
+      label: 'Atrasadas',
+      Icon: AlertCircle,
+      cardBg: 'bg-rose-50',
+      titleColor: 'text-gray-500',
+      valueColor: 'text-rose-500',
+      border: 'border-rose-200',
+    },
+    scheduled: {
+      label: 'Agendadas',
+      Icon: Calendar,
+      cardBg: 'bg-violet-50',
+      titleColor: 'text-gray-500',
+      valueColor: 'text-violet-500',
+      border: 'border-violet-200',
+    },
+    canceled: {
+      label: 'Canceladas',
+      Icon: XCircle,
+      cardBg: 'bg-gray-50',
+      titleColor: 'text-gray-500',
+      valueColor: 'text-gray-500',
+      border: 'border-gray-200',
+    },
   };
 
-  const byStatusFixed: Record<string, { count: number; total: number }> =
-    (fixedIncomesThisMonth ?? []).reduce((acc: Record<string, { count: number; total: number }>, e: any) => {
-      const s = e.status ?? "pending";
+  const byStatusFixed: Record<string, { count: number; total: number }> = (fixedIncomesThisMonth ?? []).reduce(
+    (acc: Record<string, { count: number; total: number }>, e: any) => {
+      const s = e.status ?? 'pending';
       const v = Number(e.amount) || 0;
       if (!acc[s]) acc[s] = { count: 0, total: 0 };
       acc[s].count += 1;
       acc[s].total += v;
       return acc;
-    }, {});
-
-  function getStatusIcon(status: string) {
-    switch (status) {
-      case "received":  return <CheckCircle className="p-1.5 rounded-lg bg-emerald-600 text-emerald-50" />;
-      case "pending":   return <Clock className="p-1.5 rounded-lg bg-amber-500 text-amber-50" />;
-      case "open":      return <Circle className="p-1.5 rounded-lg bg-sky-500 text-sky-50" />;
-      case "overdue":   return <AlertCircle className="p-1.5 rounded-lg bg-rose-600 text-rose-50" />;
-      case "scheduled": return <Calendar className="p-1.5 rounded-lg bg-violet-500 text-violet-50" />;
-      case "canceled":  return <XCircle className="p-1.5 rounded-lg bg-gray-500 text-gray-50" />;
-      default:          return null;
-    }
-  }
+    },
+    {}
+  );
 
   return (
     <>
       <div className="space-y-4 sm:space-y-6 w-full min-w-0">
         <div className="flex items-center justify-between px-1 sm:px-0">
-          <BreadcrumbBar
-            segments={['Gerenciadores', 'Receitas']}
-            onBack={() => navigate('/dashboard')}
-          />
+          <BreadcrumbBar segments={['Gerenciadores', 'Receitas']} onBack={() => navigate('/dashboard')} />
           <div className="relative">
             <VisualizationToolbar
-              onFilter={() => setShowFilters(prev => !prev)}
-              onSort={() => setShowSort(prev => !prev)}
+              onFilter={() => setShowFilters((prev) => !prev)}
+              onSort={() => setShowSort((prev) => !prev)}
               onShare={() => {}}
               onSettings={() => {}}
               activeFilter={hasActiveFilters}
@@ -372,14 +475,22 @@ export function Receitas() {
             </CardHeader>
             <CardContent className="py-0 px-1 sm:px-6">
               <div className="overflow-x-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
-                <div className="flex space-x-4 p-4 sm:p-6" style={{ width: 'max-content', scrollSnapType: 'x mandatory', paddingLeft: '0', paddingRight: '0' }}>
+                <div
+                  className="flex space-x-4 p-4 sm:p-6"
+                  style={{ width: 'max-content', scrollSnapType: 'x mandatory', paddingLeft: '0', paddingRight: '0' }}
+                >
                   {fixedIncomesThisMonth?.map((income: any) => (
-                    <div key={income.id} className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all" style={{ scrollSnapAlign: 'start' }}>
+                    <div
+                      key={income.id}
+                      className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all"
+                      style={{ scrollSnapAlign: 'start' }}
+                    >
                       <div className="space-y-3">
                         <div>
                           <h3 className="font-semibold text-gray-900 truncate">{income.title}</h3>
                           <p className="text-xs text-gray-500">Receita Fixa</p>
                         </div>
+
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Vencimento:</span>
@@ -396,6 +507,7 @@ export function Receitas() {
                             </div>
                           )}
                         </div>
+
                         <div className="pt-2 border-t border-gray-100">
                           <div className="flex justify-between items-center mb-2">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(income.status)}`}>
@@ -431,6 +543,7 @@ export function Receitas() {
                       </div>
                     </div>
                   ))}
+
                   {(!fixedIncomesThisMonth || fixedIncomesThisMonth.length === 0) && (
                     <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
                       <RefreshCcw className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -440,16 +553,19 @@ export function Receitas() {
                 </div>
               </div>
             </CardContent>
+
             <CardContent className="p-4 pt-0 sm:px-6 sm:pt-0">
-              <div className="overflow-x-auto -mx-4 px-4 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: "smooth" }}>
+              <div className="overflow-x-auto -mx-4 px-4 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
                 <div className="flex gap-3 w-max snap-x snap-mandatory sm:grid sm:w-auto sm:snap-none sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
                   <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="p-1.5 rounded-lg bg-gray-500 text-white"><RefreshCcw className="w-3 h-3" /></span>
+                      <span className="p-1.5 rounded-lg bg-gray-500 text-white">
+                        <RefreshCcw className="w-3 h-3" />
+                      </span>
                       <p className="text-xs text-gray-500">Total</p>
                     </div>
                     <p className="text-sm font-medium text-gray-600">
-                      {fixedIncomesThisMonth?.length || 0} {(fixedIncomesThisMonth?.length || 0) === 1 ? "receita" : "receitas"}
+                      {fixedIncomesThisMonth?.length || 0} {(fixedIncomesThisMonth?.length || 0) === 1 ? 'receita' : 'receitas'}
                     </p>
                     <p className="text-lg font-semibold text-gray-900">
                       {formatCurrency(fixedIncomesThisMonth?.reduce((acc: number, e: any) => acc + Number(e.amount), 0) || 0)}
@@ -466,7 +582,9 @@ export function Receitas() {
                           <p className={`text-xs ${cfg.titleColor}`}>{cfg.label}</p>
                         </div>
                         <p className="text-lg font-semibold text-gray-900">{formatCurrency(stats.total || 0)}</p>
-                        <p className={`text-sm font-medium ${cfg.valueColor}`}>{stats.count} {stats.count === 1 ? "receita" : "receitas"}</p>
+                        <p className={`text-sm font-medium ${cfg.valueColor}`}>
+                          {stats.count} {stats.count === 1 ? 'receita' : 'receitas'}
+                        </p>
                       </div>
                     );
                   })}
@@ -476,6 +594,7 @@ export function Receitas() {
           </Card>
         </div>
 
+        {/* Parcelas (mantido igual) */}
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
@@ -486,14 +605,24 @@ export function Receitas() {
             </CardHeader>
             <CardContent className="py-0 px-1 sm:px-6">
               <div className="overflow-x-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
-                <div className="flex space-x-4 p-4 sm:p-6" style={{ width: 'max-content', scrollSnapType: 'x mandatory', paddingLeft: '0', paddingRight: '0' }}>
+                <div
+                  className="flex space-x-4 p-4 sm:p-6"
+                  style={{ width: 'max-content', scrollSnapType: 'x mandatory', paddingLeft: '0', paddingRight: '0' }}
+                >
                   {installmentsThisMonth?.map((inst: any) => (
-                    <div key={inst.id} className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all" style={{ scrollSnapAlign: 'start' }}>
+                    <div
+                      key={inst.id}
+                      className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all"
+                      style={{ scrollSnapAlign: 'start' }}
+                    >
                       <div className="space-y-3">
                         <div>
                           <h3 className="font-semibold text-gray-900 truncate">{inst.title}</h3>
-                          <p className="text-xs text-gray-500">Parcela {inst.installment_number}/{inst.installment_total}</p>
+                          <p className="text-xs text-gray-500">
+                            Parcela {inst.installment_number}/{inst.installment_total}
+                          </p>
                         </div>
+
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Vencimento:</span>
@@ -505,9 +634,12 @@ export function Receitas() {
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Total:</span>
-                            <span className="font-medium text-gray-900">{formatCurrency(Number(inst.amount) * inst.installment_total)}</span>
+                            <span className="font-medium text-gray-900">
+                              {formatCurrency(Number(inst.amount) * inst.installment_total)}
+                            </span>
                           </div>
                         </div>
+
                         <div className="pt-2 border-t border-gray-100">
                           <div className="flex justify-between items-center mb-2">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(inst.status)}`}>
@@ -543,6 +675,7 @@ export function Receitas() {
                       </div>
                     </div>
                   ))}
+
                   {(!installmentsThisMonth || installmentsThisMonth.length === 0) && (
                     <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
                       <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -552,57 +685,16 @@ export function Receitas() {
                 </div>
               </div>
             </CardContent>
-            <CardContent className="p-4 pt-0 sm:px-6 sm:pt-0">
-              {(() => {
-                const totalCount = installmentsThisMonth?.length || 0;
-                const totalValue = installmentsThisMonth?.reduce((acc: number, i: any) => acc + Number(i.amount || 0), 0) || 0;
-                const byStatus = (installmentsThisMonth ?? []).reduce((acc: any, i: any) => {
-                  const s = i.status ?? 'pending';
-                  const v = Number(i.amount) || 0;
-                  if (!acc[s]) acc[s] = { count: 0, total: 0 };
-                  acc[s].count += 1; acc[s].total += v;
-                  return acc;
-                }, {} as Record<string, {count:number; total:number}>);
-
-                return (
-                  <div className="overflow-x-auto -mx-4 px-4 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: "smooth" }}>
-                    <div className="flex gap-3 w-max snap-x snap-mandatory sm:grid sm:w-auto sm:snap-none sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
-                      <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="p-1.5 rounded-lg bg-gray-500 text-white"><CreditCard className="w-3 h-3" /></span>
-                          <p className="text-xs text-gray-500">Total</p>
-                        </div>
-                        <p className="text-sm font-medium text-gray-600">{totalCount} {totalCount === 1 ? "receita" : "receitas"}</p>
-                        <p className="text-lg font-semibold text-gray-900">{formatCurrency(totalValue)}</p>
-                      </div>
-
-                      {Object.entries(statusConfig).map(([key, cfg]) => {
-                        const stats = byStatus[key] ?? { count: 0, total: 0 };
-                        const Icon = cfg.Icon;
-                        return (
-                          <div key={key} className={`min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border ${cfg.border} ${cfg.cardBg} text-left`}>
-                            <div className="flex items-center gap-2 mb-2">
-                              <Icon className="w-3 h-3" />
-                              <p className={`text-xs ${cfg.titleColor}`}>{cfg.label}</p>
-                            </div>
-                            <p className="text-lg font-semibold text-gray-900">{formatCurrency(stats.total || 0)}</p>
-                            <p className={`text-sm font-medium ${cfg.valueColor}`}>{stats.count} {stats.count === 1 ? "receita" : "receitas"}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-            </CardContent>
           </Card>
         </div>
 
+        {/* Lançamentos (AGORA com as MESMAS COLUNAS do Dashboard) */}
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl">Lancamentos</CardTitle>
             </CardHeader>
+
             <CardContent className="py-0 px-1 sm:px-6">
               {isLoading ? (
                 <div className="flex justify-center py-8">
@@ -611,110 +703,206 @@ export function Receitas() {
               ) : (
                 <div className="w-full overflow-x-auto">
                   <div className="max-h-[560px] overflow-y-auto">
-                    <table className="w-full min-w-[800px]">
+                    <table className="w-full min-w-[980px]">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">Data</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[140px]">Descrição</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Valor</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">Cartão de crédito</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">Categoria</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">Centro de custo</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Ações</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[60px]">
+                            Tipo
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[70px]">
+                            Status
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                            Título
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                            Data
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">
+                            Valor
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                            Conta Bancária
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                            C. Crédito
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                            Categoria
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                            C. Custo
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">
+                            Ações
+                          </th>
                         </tr>
                       </thead>
+
                       <tbody>
-                        {sortedReceitas.map((r: any) => (
-                          <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                              {formatDate(r.transaction_date)}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              <div>
-                                <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{r.title}</p>
-                                {r.subtitle && <p className="text-xs text-gray-500 truncate">{r.subtitle}</p>}
-                              </div>
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
-                              {formatCurrency(Number(r.amount))}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              {r.card_name ? (
-                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: r.card_color || '#E5E7EB' }}>
-                                  {(() => {
-                                    const iconKey = (r.card_icon || '') as keyof typeof Lucide;
-                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
-                                    return DynamicIcon ? (
-                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
-                                    ) : null;
-                                  })()}
-                                  <span className="text-xs font-medium text-white truncate">{r.card_name}</span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-500">-</span>
-                              )}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              {r.category_name ? (
-                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: r.category_color || '#E5E7EB' }}>
-                                  {(() => {
-                                    const iconKey = (r.category_icon || '') as keyof typeof Lucide;
-                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
-                                    return DynamicIcon ? (
-                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
-                                    ) : null;
-                                  })()}
-                                  <span className="text-xs font-medium text-white truncate">{r.category_name}</span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-500">-</span>
-                              )}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              {r.cost_center_name ? (
-                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: r.cost_center_color || '#E5E7EB' }}>
-                                  {(() => {
-                                    const iconKey = (r.cost_center_icon || '') as keyof typeof Lucide;
-                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
-                                    return DynamicIcon ? (
-                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
-                                    ) : null;
-                                  })()}
-                                  <span className="text-xs font-medium text-white truncate">{r.cost_center_name}</span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-500">-</span>
-                              )}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              <div className="flex justify-center space-x-1 sm:space-x-2">
-                                {r.status === 'pending' && (
-                                  <button
-                                    onClick={() => handleMarkAsReceived(r.id)}
-                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-emerald-500 transition-colors"
-                                    title="Marcar como recebida"
-                                  >
-                                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  </button>
+                        {sortedReceitas.map((r: any) => {
+                          const id = pick<string>(r, ['transaction_id', 'id'], '');
+                          const status = pick<string>(r, ['transaction_status', 'status'], 'pending');
+                          const date = pick<string>(r, ['transaction_date', 'date'], '');
+                          const amount = pick<number>(r, ['transaction_amount', 'amount'], 0);
+
+                          const title = pick<string>(r, ['transaction_description', 'title'], '-');
+                          const subtitle = pick<string>(r, ['subtitle', 'transaction_subtitle'], '');
+
+                          const accountName = pick<string>(r, ['transaction_account', 'account_name', 'account', 'bank_account_name'], '');
+                          const accountColor = pick<string>(r, ['transaction_account_color', 'account_color'], '');
+                          const accountIcon = pick<string>(r, ['transaction_account_icon', 'account_icon'], '');
+
+                          const cardName = pick<string>(r, ['transaction_card_name', 'card_name'], '');
+                          const cardColor = pick<string>(r, ['transaction_card_color', 'card_color'], '');
+                          const cardIcon = pick<string>(r, ['transaction_card_icon', 'card_icon'], '');
+
+                          const categoryName = pick<string>(r, ['transaction_category_name', 'category_name'], '');
+                          const categoryColor = pick<string>(r, ['transaction_category_color', 'category_color'], '');
+                          const categoryIcon = pick<string>(r, ['transaction_category_icon', 'category_icon'], '');
+
+                          const costName = pick<string>(r, ['transaction_cost_center_name', 'cost_center_name'], '');
+                          const costColor = pick<string>(r, ['transaction_cost_center_color', 'cost_center_color'], '');
+                          const costIcon = pick<string>(r, ['transaction_cost_center_icon', 'cost_center_icon'], '');
+
+                          return (
+                            <tr
+                              key={id}
+                              className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                              onClick={() => handleEditReceita(r)}
+                            >
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50" title="Receita">
+                                  {getTypeIcon('income')}
+                                </span>
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span
+                                  className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
+                                  title={getStatusLabel(status)}
+                                >
+                                  {getStatusIcon(status)}
+                                </span>
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
+                                <span className="truncate block max-w-[140px] sm:max-w-none font-medium">{title}</span>
+                                {subtitle ? <span className="truncate block max-w-[140px] sm:max-w-none text-[11px] text-gray-500">{subtitle}</span> : null}
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                                {date ? formatDate(date) : '-'}
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium">
+                                {formatCurrency(Number(amount))}
+                              </td>
+
+                              {/* Conta Bancária (mesmo renderer do Dashboard, com fallback) */}
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
+                                {accountName ? (
+                                  <div className="flex items-center gap-2">
+                                    <div
+                                      className="flex items-center justify-center text-white p-1.5 rounded-lg"
+                                      style={{ backgroundColor: accountColor || 'unset' }}
+                                    >
+                                      <DynamicLucideIcon iconKey={accountIcon} className="w-3 h-3" />
+                                    </div>
+                                    <span className="truncate block max-w-[140px] sm:max-w-none">{accountName}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">-</span>
                                 )}
-                                <button
-                                  onClick={() => handleEditReceita(r)}
-                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                  title="Editar"
-                                >
-                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteReceita(r.id)}
-                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-rose-500 transition-colors"
-                                  title="Excluir"
-                                >
-                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                              </td>
+
+                              {/* Cartão de crédito */}
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                {cardName ? (
+                                  <div
+                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5"
+                                    style={{ backgroundColor: cardColor || '#E5E7EB' }}
+                                  >
+                                    <DynamicLucideIcon iconKey={cardIcon} className="w-3 h-3" />
+                                    <span className="text-xs font-medium text-white truncate">{cardName}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">-</span>
+                                )}
+                              </td>
+
+                              {/* Categoria */}
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                {categoryName ? (
+                                  <div
+                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5"
+                                    style={{ backgroundColor: categoryColor || '#E5E7EB' }}
+                                  >
+                                    <DynamicLucideIcon iconKey={categoryIcon} className="w-3 h-3" />
+                                    <span className="text-xs font-medium text-white truncate">{categoryName}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">-</span>
+                                )}
+                              </td>
+
+                              {/* Centro de custo */}
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                {costName ? (
+                                  <div
+                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5"
+                                    style={{ backgroundColor: costColor || '#E5E7EB' }}
+                                  >
+                                    <DynamicLucideIcon iconKey={costIcon} className="w-3 h-3" />
+                                    <span className="text-xs font-medium text-white truncate">{costName}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">-</span>
+                                )}
+                              </td>
+
+                              {/* Ações (mesma lógica do Dashboard) */}
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex justify-center space-x-1 sm:space-x-2">
+                                  {(status === 'pending' || status === 'scheduled' || status === 'overdue' || status === 'open') && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMarkAsReceived(id);
+                                      }}
+                                      className="p-0.5 sm:p-1 text-gray-400 hover:text-emerald-500 transition-colors"
+                                      title="Marcar como recebida"
+                                    >
+                                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    </button>
+                                  )}
+
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditReceita(r);
+                                    }}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteReceita(id);
+                                    }}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-rose-500 transition-colors"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -730,6 +918,7 @@ export function Receitas() {
               )}
             </CardContent>
 
+            {/* Chips de resumo (mantido) */}
             <CardContent className="py-0 px-1 sm:px-6">
               {(() => {
                 const totalCount = receitas?.length || 0;
@@ -738,30 +927,38 @@ export function Receitas() {
                   const s = d.status ?? 'pending';
                   const v = Number(d.amount) || 0;
                   if (!acc[s]) acc[s] = { count: 0, total: 0 };
-                  acc[s].count += 1; acc[s].total += v;
+                  acc[s].count += 1;
+                  acc[s].total += v;
                   return acc;
-                }, {} as Record<string, {count:number; total:number}>);
+                }, {} as Record<string, { count: number; total: number }>);
 
                 const chipConfig: Record<string, { label: string; border: string; text: string; bg: string }> = {
-                  __total:  { label: "Total",     border: "border-gray-300",   text: "text-gray-900",   bg: "bg-gray-50" },
-                  received: { label: "Recebidas", border: "border-emerald-300",text: "text-emerald-500",bg: "bg-emerald-50" },
-                  pending:  { label: "Pendentes", border: "border-amber-300",  text: "text-amber-500",  bg: "bg-amber-50" },
-                  open:     { label: "Abertas",   border: "border-sky-300",    text: "text-sky-500",    bg: "bg-sky-50" },
-                  overdue:  { label: "Atrasadas", border: "border-rose-300",   text: "text-rose-500",   bg: "bg-rose-50" },
-                  scheduled:{ label: "Agendadas", border: "border-violet-300", text: "text-violet-500", bg: "bg-violet-50" },
-                  canceled: { label: "Canceladas",border: "border-gray-300",   text: "text-gray-500",   bg: "bg-gray-50" },
+                  __total: { label: 'Total', border: 'border-gray-300', text: 'text-gray-900', bg: 'bg-gray-50' },
+                  received: { label: 'Recebidas', border: 'border-emerald-300', text: 'text-emerald-500', bg: 'bg-emerald-50' },
+                  pending: { label: 'Pendentes', border: 'border-amber-300', text: 'text-amber-500', bg: 'bg-amber-50' },
+                  open: { label: 'Abertas', border: 'border-sky-300', text: 'text-sky-500', bg: 'bg-sky-50' },
+                  overdue: { label: 'Atrasadas', border: 'border-rose-300', text: 'text-rose-500', bg: 'bg-rose-50' },
+                  scheduled: { label: 'Agendadas', border: 'border-violet-300', text: 'text-violet-500', bg: 'bg-violet-50' },
+                  canceled: { label: 'Canceladas', border: 'border-gray-300', text: 'text-gray-500', bg: 'bg-gray-50' },
                 };
 
-                const order = ["__total", "received", "pending", "open", "overdue", "scheduled", "canceled"];
+                const order = ['__total', 'received', 'pending', 'open', 'overdue', 'scheduled', 'canceled'];
 
                 return (
-                  <div className="pt-3 mb-3 sm:mb-4 overflow-x-auto -mx-1 px-1 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: "smooth" }}>
+                  <div
+                    className="pt-3 mb-3 sm:mb-4 overflow-x-auto -mx-1 px-1 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide"
+                    style={{ scrollBehavior: 'smooth' }}
+                  >
                     <div className="flex gap-2 w-max snap-x snap-mandatory sm:grid sm:w-auto sm:snap-none sm:gap-3 sm:auto-cols-fr sm:grid-flow-col">
-                      <div className={`min-w-[180px] sm:min-w-0 snap-start rounded-lg border ${chipConfig.__total.border} ${chipConfig.__total.bg} px-3 py-2 flex items-center justify-between`}>
+                      <div
+                        className={`min-w-[180px] sm:min-w-0 snap-start rounded-lg border ${chipConfig.__total.border} ${chipConfig.__total.bg} px-3 py-2 flex items-center justify-between`}
+                      >
                         <span className="text-xs font-medium text-gray-600">Total</span>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-gray-900">{formatCurrency(totalValue)}</p>
-                          <p className="text-[10px] text-gray-500">{totalCount} {totalCount === 1 ? "lancamento" : "lancamentos"}</p>
+                          <p className="text-[10px] text-gray-500">
+                            {totalCount} {totalCount === 1 ? 'lancamento' : 'lancamentos'}
+                          </p>
                         </div>
                       </div>
 
@@ -769,11 +966,16 @@ export function Receitas() {
                         const cfg = chipConfig[key];
                         const stats = byStatus[key] ?? { count: 0, total: 0 };
                         return (
-                          <div key={key} className={`min-w-[180px] sm:min-w-0 snap-start rounded-lg border ${cfg.border} ${cfg.bg} px-3 py-2 flex items-center justify-between`}>
+                          <div
+                            key={key}
+                            className={`min-w-[180px] sm:min-w-0 snap-start rounded-lg border ${cfg.border} ${cfg.bg} px-3 py-2 flex items-center justify-between`}
+                          >
                             <span className="text-xs font-medium text-gray-600">{cfg.label}</span>
                             <div className="text-right">
                               <p className={`text-sm font-semibold ${cfg.text}`}>{formatCurrency(stats.total || 0)}</p>
-                              <p className="text-[10px] text-gray-500">{stats.count} {stats.count === 1 ? "lancamento" : "lancamentos"}</p>
+                              <p className="text-[10px] text-gray-500">
+                                {stats.count} {stats.count === 1 ? 'lancamento' : 'lancamentos'}
+                              </p>
                             </div>
                           </div>
                         );
@@ -886,7 +1088,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
   };
 
   const handleInputChange = (field: keyof ReceitaFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -894,14 +1096,38 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <Input label="Titulo" value={formData.title} onChange={(e) => handleInputChange('title', e.target.value)} placeholder="Ex: Salario, Freelance, Venda..." required />
+            <Input
+              label="Titulo"
+              value={formData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+              placeholder="Ex: Salario, Freelance, Venda..."
+              required
+            />
           </div>
 
-          <Input label="Microtitulo (opcional)" value={formData.subtitle} onChange={(e) => handleInputChange('subtitle', e.target.value)} placeholder="Ex: Entrada 1/3, Janeiro 2024..." />
+          <Input
+            label="Microtitulo (opcional)"
+            value={formData.subtitle}
+            onChange={(e) => handleInputChange('subtitle', e.target.value)}
+            placeholder="Ex: Entrada 1/3, Janeiro 2024..."
+          />
 
-          <Input label="Valor" type="number" step="0.01" value={formData.amount} onChange={(e) => handleInputChange('amount', Number(e.target.value))} required />
+          <Input
+            label="Valor"
+            type="number"
+            step="0.01"
+            value={formData.amount}
+            onChange={(e) => handleInputChange('amount', Number(e.target.value))}
+            required
+          />
 
-          <Input label="Data de vencimento" type="date" value={formData.transaction_date} onChange={(e) => handleInputChange('transaction_date', e.target.value)} required />
+          <Input
+            label="Data de vencimento"
+            type="date"
+            value={formData.transaction_date}
+            onChange={(e) => handleInputChange('transaction_date', e.target.value)}
+            required
+          />
 
           <div>
             <label className="block text-sm font-medium text-gray-500 mb-2">Tipo de receita</label>
@@ -911,37 +1137,68 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
           {formData.repeat_type === 'recorrente' && (
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-2">Intervalo de recorrencia</label>
-              <Dropdown options={repeatIntervalOptions} value={formData.repeat_interval} onChange={(value) => handleInputChange('repeat_interval', value)} />
+              <Dropdown
+                options={repeatIntervalOptions}
+                value={formData.repeat_interval}
+                onChange={(value) => handleInputChange('repeat_interval', value)}
+              />
             </div>
           )}
         </div>
 
         <div className="flex items-center space-x-4">
           <label className="flex items-center">
-            <input type="checkbox" checked={formData.status === 'received'} onChange={(e) => handleInputChange('status', e.target.checked ? 'received' : 'pending')} className="mr-2" />
+            <input
+              type="checkbox"
+              checked={formData.status === 'received'}
+              onChange={(e) => handleInputChange('status', e.target.checked ? 'received' : 'pending')}
+              className="mr-2"
+            />
             <span className="text-sm text-gray-500">Ja foi recebida?</span>
           </label>
 
           <label className="flex items-center">
-            <input type="checkbox" checked={formData.is_installment} onChange={(e) => handleInputChange('is_installment', e.target.checked)} className="mr-2" />
+            <input
+              type="checkbox"
+              checked={formData.is_installment}
+              onChange={(e) => handleInputChange('is_installment', e.target.checked)}
+              className="mr-2"
+            />
             <span className="text-sm text-gray-500">Parcelada?</span>
           </label>
         </div>
 
         {formData.is_installment && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Numero de parcelas" type="number" min="1" value={formData.installment_total} onChange={(e) => handleInputChange('installment_total', Number(e.target.value))} required />
+            <Input
+              label="Numero de parcelas"
+              type="number"
+              min="1"
+              value={formData.installment_total}
+              onChange={(e) => handleInputChange('installment_total', Number(e.target.value))}
+              required
+            />
           </div>
         )}
 
         <div>
           <label className="block text-sm font-medium text-gray-500 mb-2">Observacoes</label>
-          <textarea value={formData.notes} onChange={(e) => handleInputChange('notes', e.target.value)} placeholder="Observacoes adicionais..." className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-transparent" rows={3} />
+          <textarea
+            value={formData.notes}
+            onChange={(e) => handleInputChange('notes', e.target.value)}
+            placeholder="Observacoes adicionais..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-transparent"
+            rows={3}
+          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" loading={isLoading}>{receita ? 'Atualizar' : 'Criar'} Receita</Button>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={isLoading}>
+            {receita ? 'Atualizar' : 'Criar'} Receita
+          </Button>
         </div>
       </form>
     </Modal>
