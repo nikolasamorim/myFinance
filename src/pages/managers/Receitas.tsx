@@ -685,6 +685,49 @@ export function Receitas() {
                 </div>
               </div>
             </CardContent>
+            <CardContent className="p-4 pt-0 sm:px-6 sm:pt-0">
+              {(() => {
+                const totalCount = installmentsThisMonth?.length || 0;
+                const totalValue = installmentsThisMonth?.reduce((acc: number, i: any) => acc + Number(i.amount || 0), 0) || 0;
+                const byStatus = (installmentsThisMonth ?? []).reduce((acc: any, i: any) => {
+                  const s = i.status ?? 'pending';
+                  const v = Number(i.amount) || 0;
+                  if (!acc[s]) acc[s] = { count: 0, total: 0 };
+                  acc[s].count += 1; acc[s].total += v;
+                  return acc;
+                }, {} as Record<string, {count:number; total:number}>);
+
+                return (
+                  <div className="overflow-x-auto -mx-4 px-4 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: "smooth" }}>
+                    <div className="flex gap-3 w-max snap-x snap-mandatory sm:grid sm:w-auto sm:snap-none sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
+                      <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="p-1.5 rounded-lg bg-gray-500 text-white"><CreditCard className="w-3 h-3" /></span>
+                          <p className="text-xs text-gray-500">Total</p>
+                        </div>
+                        <p className="text-sm font-medium text-gray-600">{totalCount} {totalCount === 1 ? "receita" : "receitas"}</p>
+                        <p className="text-lg font-semibold text-gray-900">{formatCurrency(totalValue)}</p>
+                      </div>
+
+                      {Object.entries(statusConfig).map(([key, cfg]) => {
+                        const stats = byStatus[key] ?? { count: 0, total: 0 };
+                        const Icon = cfg.Icon;
+                        return (
+                          <div key={key} className={`min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border ${cfg.border} ${cfg.cardBg} text-left`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Icon className="w-3 h-3" />
+                              <p className={`text-xs ${cfg.titleColor}`}>{cfg.label}</p>
+                            </div>
+                            <p className="text-lg font-semibold text-gray-900">{formatCurrency(stats.total || 0)}</p>
+                            <p className={`text-sm font-medium ${cfg.valueColor}`}>{stats.count} {stats.count === 1 ? "receita" : "receitas"}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
           </Card>
         </div>
 
