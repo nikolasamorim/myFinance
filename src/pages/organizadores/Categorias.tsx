@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { Tag, Plus, Filter, Edit, Trash2, Table, TreePine } from 'lucide-react';
+import React, { useState } from 'react';
+import { Tag, Plus, Edit, Trash2, Table, TreePine } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -9,6 +10,12 @@ import { TabSelector } from '../../components/ui/TabSelector';
 import { KanbanBoard } from '../../components/kanban/KanbanBoard';
 import { ColorPicker } from '../../components/ui/ColorPicker';
 import { IconPicker } from '../../components/ui/IconPicker';
+import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
+import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
+import { FiltersPanel } from '../../components/ui/FiltersPanel';
+import { SortPanel } from '../../components/ui/SortPanel';
+import type { FilterField } from '../../components/ui/FiltersPanel';
+import type { SortOption } from '../../components/ui/SortPanel';
 import { useCategories } from '../../hooks/useCategories';
 import { cn } from '../../lib/utils';
 import type { CategoryData } from '../../services/category.service';
@@ -25,35 +32,72 @@ interface CategoryFormData {
   description: string;
 }
 
+const DEFAULT_FILTERS: CategoryFilters = {
+  type: 'all',
+  search: '',
+};
+
 const typeOptions = [
   { value: 'all', label: 'Todas' },
   { value: 'income', label: 'Receita' },
   { value: 'expense', label: 'Despesa' },
 ];
 
-export function Categorias() {
-  const [activeTab, setActiveTab] = useState('hierarchy');
-  const [filters, setFilters] = useState<CategoryFilters>({
-    type: 'all',
-    search: '',
-  });
+const filterFields: FilterField[] = [
+  { key: 'type', label: 'Tipo', type: 'dropdown', options: typeOptions },
+  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar categorias...' },
+];
 
+const sortOptions: SortOption[] = [
+  { value: 'name_asc', label: 'Nome (A-Z)' },
+  { value: 'name_desc', label: 'Nome (Z-A)' },
+  { value: 'type_income', label: 'Tipo (Receita primeiro)' },
+  { value: 'type_expense', label: 'Tipo (Despesa primeiro)' },
+];
+
+export function Categorias() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('hierarchy');
+  const [filters, setFilters] = useState<CategoryFilters>({ ...DEFAULT_FILTERS });
+  const [sortBy, setSortBy] = useState<string>('name_asc');
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [parentCategoryId, setParentCategoryId] = useState<string | undefined>();
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
 
-  const { 
-    data: categories = [], 
-    isLoading, 
-    createCategory, 
-    updateCategory, 
+  const {
+    data: categories = [],
+    isLoading,
+    createCategory,
+    updateCategory,
     deleteCategory,
     updateCategoryOrder,
   } = useCategories(filters);
 
-  const handleFilterChange = (key: keyof CategoryFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+
+  const sortedCategories = [...categories].sort((a, b) => {
+    switch (sortBy) {
+      case 'name_asc':
+        return a.category_name.localeCompare(b.category_name);
+      case 'name_desc':
+        return b.category_name.localeCompare(a.category_name);
+      case 'type_income':
+        return a.category_type === 'income' ? -1 : b.category_type === 'income' ? 1 : 0;
+      case 'type_expense':
+        return a.category_type === 'expense' ? -1 : b.category_type === 'expense' ? 1 : 0;
+      default:
+        return 0;
+    }
+  });
+
+  const handleApplyFilters = (newFilters: Record<string, string>) => {
+    setFilters(newFilters as unknown as CategoryFilters);
+  };
+
+  const handleApplySort = (newSort: string) => {
+    setSortBy(newSort);
   };
 
   const handleCreateCategory = (parentId?: string, type?: string) => {
@@ -127,8 +171,35 @@ export function Categorias() {
 
   return (
     <>
-      <div className="space-y-4 sm:space-y-6 w-full min-w-0 ">
-        {/* Header */}
+      <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+        <div className="flex items-center justify-between px-1 sm:px-0">
+          <BreadcrumbBar segments={['Organizadores', 'Categorias']} onBack={() => navigate(-1)} />
+          <div className="relative">
+            <VisualizationToolbar
+              onFilter={() => setShowFilters(prev => !prev)}
+              onSort={() => setShowSort(prev => !prev)}
+              onShare={() => {}}
+              onSettings={() => {}}
+              activeFilter={hasActiveFilters}
+            />
+            <FiltersPanel
+              isOpen={showFilters}
+              onClose={() => setShowFilters(false)}
+              fields={filterFields}
+              currentFilters={filters as unknown as Record<string, string>}
+              defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
+              onApply={handleApplyFilters}
+            />
+            <SortPanel
+              isOpen={showSort}
+              onClose={() => setShowSort(false)}
+              options={sortOptions}
+              currentSort={sortBy}
+              onApply={handleApplySort}
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="p-1.5 sm:p-2 bg-yellow-100 rounded-lg flex-shrink-0">
@@ -136,57 +207,21 @@ export function Categorias() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Categorias</h1>
-              <p className="text-sm sm:text-base text-gray-600">Organize suas transações por categorias</p>
+              <p className="text-sm sm:text-base text-gray-600">Organize suas transacoes por categorias</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
             <TabSelector
               tabs={tabs}
               activeTab={activeTab}
               onChange={setActiveTab}
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Filtros
-            </Button>
             <Button onClick={() => handleCreateCategory()} size="sm">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Nova Categoria
             </Button>
           </div>
         </div>
-
-        {/* Filters */}
-        {showFilters && (
-          <div className="px-1 sm:px-0">
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                    <Dropdown
-                      options={typeOptions}
-                      value={filters.type}
-                      onChange={(value) => handleFilterChange('type', value)}
-                    />
-                  </div>
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
-                    <Input
-                      placeholder="Buscar categorias..."
-                      value={filters.search}
-                      onChange={(e) => handleFilterChange('search', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Content based on active tab */}
         <div className="px-1 sm:px-0">
@@ -237,7 +272,7 @@ export function Categorias() {
                           </tr>
                         </thead>
                         <tbody>
-                          {categories.map((category) => (
+                          {sortedCategories.map((category) => (
                             <tr key={category.category_id} className="border-b border-gray-100 hover:bg-gray-50">
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div>
@@ -278,7 +313,7 @@ export function Categorias() {
                         </tbody>
                       </table>
                       
-                      {categories.length === 0 && (
+                      {sortedCategories.length === 0 && (
                         <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
                           <Tag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
                           <p className="text-base sm:text-lg font-medium">Nenhuma categoria encontrada</p>

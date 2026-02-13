@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { Target, Plus, Filter, Edit, Trash2, Table, TreePine } from 'lucide-react';
+import React, { useState } from 'react';
+import { Target, Plus, Edit, Trash2, Table, TreePine } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -7,6 +8,12 @@ import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
 import { TabSelector } from '../../components/ui/TabSelector';
 import { KanbanBoard } from '../../components/kanban/KanbanBoard';
+import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
+import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
+import { FiltersPanel } from '../../components/ui/FiltersPanel';
+import { SortPanel } from '../../components/ui/SortPanel';
+import type { FilterField } from '../../components/ui/FiltersPanel';
+import type { SortOption } from '../../components/ui/SortPanel';
 import { useCostCenters } from '../../hooks/useCostCenters';
 import { cn } from '../../lib/utils';
 import { ColorPicker } from '../../components/ui/ColorPicker';
@@ -29,6 +36,12 @@ interface CostCenterFormData {
   description: string;
 }
 
+const DEFAULT_FILTERS: CostCenterFilters = {
+  status: 'all',
+  type: 'all',
+  search: '',
+};
+
 const statusOptions = [
   { value: 'all', label: 'Todos' },
   { value: 'active', label: 'Ativo' },
@@ -41,30 +54,68 @@ const typeOptions = [
   { value: 'expense', label: 'Despesa' },
 ];
 
-export function CentrosDeCusto() {
-  const [activeTab, setActiveTab] = useState('hierarchy');
-  const [filters, setFilters] = useState<CostCenterFilters>({
-    status: 'all',
-    type: 'all',
-    search: '',
-  });
+const filterFields: FilterField[] = [
+  { key: 'status', label: 'Status', type: 'dropdown', options: statusOptions },
+  { key: 'type', label: 'Tipo', type: 'dropdown', options: typeOptions },
+  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar centros de custo...' },
+];
 
+const sortOptions: SortOption[] = [
+  { value: 'name_asc', label: 'Nome (A-Z)' },
+  { value: 'name_desc', label: 'Nome (Z-A)' },
+  { value: 'type_revenue', label: 'Tipo (Receita primeiro)' },
+  { value: 'type_expense', label: 'Tipo (Despesa primeiro)' },
+  { value: 'code_asc', label: 'Codigo (A-Z)' },
+  { value: 'code_desc', label: 'Codigo (Z-A)' },
+];
+
+export function CentrosDeCusto() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('hierarchy');
+  const [filters, setFilters] = useState<CostCenterFilters>({ ...DEFAULT_FILTERS });
+  const [sortBy, setSortBy] = useState<string>('name_asc');
   const [showModal, setShowModal] = useState(false);
   const [editingCostCenter, setEditingCostCenter] = useState<any>(null);
   const [parentCostCenterId, setParentCostCenterId] = useState<string | undefined>();
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
 
-  const { 
-    data: costCenters = [], 
-    isLoading, 
-    createCostCenter, 
-    updateCostCenter, 
+  const {
+    data: costCenters = [],
+    isLoading,
+    createCostCenter,
+    updateCostCenter,
     deleteCostCenter,
     updateCostCenterOrder,
   } = useCostCenters(filters);
 
-  const handleFilterChange = (key: keyof CostCenterFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+
+  const sortedCostCenters = [...costCenters].sort((a, b) => {
+    switch (sortBy) {
+      case 'name_asc':
+        return a.title.localeCompare(b.title);
+      case 'name_desc':
+        return b.title.localeCompare(a.title);
+      case 'type_revenue':
+        return a.type === 'revenue' ? -1 : b.type === 'revenue' ? 1 : 0;
+      case 'type_expense':
+        return a.type === 'expense' ? -1 : b.type === 'expense' ? 1 : 0;
+      case 'code_asc':
+        return (a.code || '').localeCompare(b.code || '');
+      case 'code_desc':
+        return (b.code || '').localeCompare(a.code || '');
+      default:
+        return 0;
+    }
+  });
+
+  const handleApplyFilters = (newFilters: Record<string, string>) => {
+    setFilters(newFilters as unknown as CostCenterFilters);
+  };
+
+  const handleApplySort = (newSort: string) => {
+    setSortBy(newSort);
   };
 
   const handleCreateCostCenter = (parentId?: string, type?: string) => {
@@ -177,32 +228,51 @@ export function CentrosDeCusto() {
 
   return (
     <>
-      <div className="space-y-4 sm:space-y-6 w-full min-w-0 ">
-        {/* Header */}
+      <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+        <div className="flex items-center justify-between px-1 sm:px-0">
+          <BreadcrumbBar segments={['Organizadores', 'Centros de Custo']} onBack={() => navigate(-1)} />
+          <div className="relative">
+            <VisualizationToolbar
+              onFilter={() => setShowFilters(prev => !prev)}
+              onSort={() => setShowSort(prev => !prev)}
+              onShare={() => {}}
+              onSettings={() => {}}
+              activeFilter={hasActiveFilters}
+            />
+            <FiltersPanel
+              isOpen={showFilters}
+              onClose={() => setShowFilters(false)}
+              fields={filterFields}
+              currentFilters={filters as unknown as Record<string, string>}
+              defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
+              onApply={handleApplyFilters}
+            />
+            <SortPanel
+              isOpen={showSort}
+              onClose={() => setShowSort(false)}
+              options={sortOptions}
+              currentSort={sortBy}
+              onApply={handleApplySort}
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-indigo-100 rounded-lg flex-shrink-0">
-              <Target className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
+            <div className="p-1.5 sm:p-2 bg-sky-100 rounded-lg flex-shrink-0">
+              <Target className="w-5 h-5 sm:w-6 sm:h-6 text-sky-600" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Centro de Custo</h1>
               <p className="text-sm sm:text-base text-gray-600">Organize custos por centros de responsabilidade</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
             <TabSelector
               tabs={tabs}
               activeTab={activeTab}
               onChange={setActiveTab}
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Filtros
-            </Button>
             <Button onClick={() => handleCreateCostCenter()} size="sm">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Novo Centro de Custo
@@ -210,47 +280,11 @@ export function CentrosDeCusto() {
           </div>
         </div>
 
-        {/* Filters */}
-        {showFilters && (
-          <div className="px-1 sm:px-0">
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <Dropdown
-                      options={statusOptions}
-                      value={filters.status}
-                      onChange={(value) => handleFilterChange('status', value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                    <Dropdown
-                      options={typeOptions}
-                      value={filters.type}
-                      onChange={(value) => handleFilterChange('type', value)}
-                    />
-                  </div>
-                  <div className="sm:col-span-2 lg:col-span-2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
-                    <Input
-                      placeholder="Buscar centros de custo..."
-                      value={filters.search}
-                      onChange={(e) => handleFilterChange('search', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
         {/* Content based on active tab */}
         <div className="px-1 sm:px-0">
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600" />
             </div>
           ) : (
             <>
@@ -300,7 +334,7 @@ export function CentrosDeCusto() {
                           </tr>
                         </thead>
                         <tbody>
-                          {costCenters.map((costCenter) => (
+                          {sortedCostCenters.map((costCenter) => (
                             <tr key={costCenter.id} className="border-b border-gray-100 hover:bg-gray-50">
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div>
@@ -352,7 +386,7 @@ export function CentrosDeCusto() {
                         </tbody>
                       </table>
                       
-                      {costCenters.length === 0 && (
+                      {sortedCostCenters.length === 0 && (
                         <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
                           <Target className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
                           <p className="text-base sm:text-lg font-medium">Nenhum centro de custo encontrado</p>

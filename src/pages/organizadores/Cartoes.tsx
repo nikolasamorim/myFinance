@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { CreditCard, Plus, Filter, Edit, Trash2, Calendar, DollarSign, Table, Wallet } from 'lucide-react';
+import React, { useState } from 'react';
+import { CreditCard, Plus, Edit, Trash2, Table, Wallet } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -9,6 +10,12 @@ import { Modal } from '../../components/ui/Modal';
 import { TabSelector } from '../../components/ui/TabSelector';
 import { ColorPicker } from '../../components/ui/ColorPicker';
 import { IconPicker } from '../../components/ui/IconPicker';
+import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
+import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
+import { FiltersPanel } from '../../components/ui/FiltersPanel';
+import { SortPanel } from '../../components/ui/SortPanel';
+import type { FilterField } from '../../components/ui/FiltersPanel';
+import type { SortOption } from '../../components/ui/SortPanel';
 import { CreditCardWallet } from '../../components/creditCards/CreditCardWallet';
 import { useCreditCards } from '../../hooks/useCreditCards';
 import { useAccounts } from '../../hooks/useAccounts';
@@ -34,6 +41,21 @@ interface CreditCardFormData {
   description: string;
 }
 
+const DEFAULT_FILTERS: CreditCardFilters = {
+  search: '',
+};
+
+const filterFields: FilterField[] = [
+  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar cartoes...' },
+];
+
+const sortOptions: SortOption[] = [
+  { value: 'name_asc', label: 'Nome (A-Z)' },
+  { value: 'name_desc', label: 'Nome (Z-A)' },
+  { value: 'limit_desc', label: 'Limite (maior primeiro)' },
+  { value: 'limit_asc', label: 'Limite (menor primeiro)' },
+];
+
 const flagOptions = [
   { value: 'visa', label: 'Visa' },
   { value: 'mastercard', label: 'Mastercard' },
@@ -45,25 +67,46 @@ const flagOptions = [
 ];
 
 export function Cartoes() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('wallet');
-  const [filters, setFilters] = useState<CreditCardFilters>({
-    search: '',
-  });
-
+  const [filters, setFilters] = useState<CreditCardFilters>({ ...DEFAULT_FILTERS });
+  const [sortBy, setSortBy] = useState<string>('name_asc');
   const [showModal, setShowModal] = useState(false);
   const [editingCard, setEditingCard] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
 
-  const { 
-    data: creditCards = [], 
-    isLoading, 
-    createCreditCard, 
-    updateCreditCard, 
-    deleteCreditCard 
+  const {
+    data: creditCards = [],
+    isLoading,
+    createCreditCard,
+    updateCreditCard,
+    deleteCreditCard
   } = useCreditCards(filters);
 
-  const handleFilterChange = (key: keyof CreditCardFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+
+  const sortedCards = [...creditCards].sort((a, b) => {
+    switch (sortBy) {
+      case 'name_asc':
+        return a.title.localeCompare(b.title);
+      case 'name_desc':
+        return b.title.localeCompare(a.title);
+      case 'limit_desc':
+        return Number(b.limit) - Number(a.limit);
+      case 'limit_asc':
+        return Number(a.limit) - Number(b.limit);
+      default:
+        return 0;
+    }
+  });
+
+  const handleApplyFilters = (newFilters: Record<string, string>) => {
+    setFilters(newFilters as unknown as CreditCardFilters);
+  };
+
+  const handleApplySort = (newSort: string) => {
+    setSortBy(newSort);
   };
 
   const handleCreateCard = () => {
@@ -77,7 +120,7 @@ export function Cartoes() {
   };
 
   const handleDeleteCard = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este cartão?')) {
+    if (window.confirm('Tem certeza que deseja excluir este cartao?')) {
       await deleteCreditCard.mutateAsync(id);
     }
   };
@@ -98,7 +141,7 @@ export function Cartoes() {
       case 'elo':
         return 'text-yellow-600 bg-yellow-50';
       default:
-        return 'text-purple-600 bg-purple-50';
+        return 'text-teal-600 bg-teal-50';
     }
   };
 
@@ -109,58 +152,57 @@ export function Cartoes() {
 
   return (
     <>
-      <div className="space-y-4 sm:space-y-6 w-full min-w-0 ">
-        {/* Header */}
+      <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+        <div className="flex items-center justify-between px-1 sm:px-0">
+          <BreadcrumbBar segments={['Organizadores', 'Cartoes']} onBack={() => navigate(-1)} />
+          <div className="relative">
+            <VisualizationToolbar
+              onFilter={() => setShowFilters(prev => !prev)}
+              onSort={() => setShowSort(prev => !prev)}
+              onShare={() => {}}
+              onSettings={() => {}}
+              activeFilter={hasActiveFilters}
+            />
+            <FiltersPanel
+              isOpen={showFilters}
+              onClose={() => setShowFilters(false)}
+              fields={filterFields}
+              currentFilters={filters as unknown as Record<string, string>}
+              defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
+              onApply={handleApplyFilters}
+            />
+            <SortPanel
+              isOpen={showSort}
+              onClose={() => setShowSort(false)}
+              options={sortOptions}
+              currentSort={sortBy}
+              onApply={handleApplySort}
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
-              <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+            <div className="p-1.5 sm:p-2 bg-teal-100 rounded-lg flex-shrink-0">
+              <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Cartões de Crédito</h1>
-              <p className="text-sm sm:text-base text-gray-600">Gerencie seus cartões de crédito</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Cartoes de Credito</h1>
+              <p className="text-sm sm:text-base text-gray-600">Gerencie seus cartoes de credito</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
             <TabSelector
               tabs={tabs}
               activeTab={activeTab}
               onChange={setActiveTab}
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Filtros
-            </Button>
             <Button onClick={handleCreateCard} size="sm">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Novo Cartão
+              Novo Cartao
             </Button>
           </div>
         </div>
-
-        {/* Filters */}
-        {showFilters && (
-          <div className="px-1 sm:px-0">
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
-                    <Input
-                      placeholder="Buscar cartões..."
-                      value={filters.search}
-                      onChange={(e) => handleFilterChange('search', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Content based on active tab */}
         <div className="px-1 sm:px-0">
@@ -173,11 +215,11 @@ export function Cartoes() {
               {activeTab === 'wallet' && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg sm:text-xl">Meus Cartões</CardTitle>
+                    <CardTitle className="text-lg sm:text-xl">Meus Cartoes</CardTitle>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6">
                     <CreditCardWallet
-                      cards={creditCards}
+                      cards={sortedCards}
                       onEdit={handleEditCard}
                       onDelete={handleDeleteCard}
                     />
@@ -188,7 +230,7 @@ export function Cartoes() {
               {activeTab === 'table' && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg sm:text-xl">Cartões Cadastrados</CardTitle>
+                    <CardTitle className="text-lg sm:text-xl">Cartoes Cadastrados</CardTitle>
                   </CardHeader>
                   <CardContent className="py-0 px-1 sm:px-6">
                     <div className="w-full overflow-x-auto">
@@ -206,7 +248,7 @@ export function Cartoes() {
                           </tr>
                         </thead>
                         <tbody>
-                          {creditCards.map((card) => (
+                          {sortedCards.map((card) => (
                             <tr key={card.id} className="border-b border-gray-100 hover:bg-gray-50">
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div className="flex items-center space-x-2">
@@ -267,11 +309,11 @@ export function Cartoes() {
                         </tbody>
                       </table>
                       
-                      {creditCards.length === 0 && (
+                      {sortedCards.length === 0 && (
                         <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
                           <CreditCard className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
-                          <p className="text-base sm:text-lg font-medium">Nenhum cartão encontrado</p>
-                          <p className="text-xs sm:text-sm">Comece criando seu primeiro cartão</p>
+                          <p className="text-base sm:text-lg font-medium">Nenhum cartao encontrado</p>
+                          <p className="text-xs sm:text-sm">Comece criando seu primeiro cartao</p>
                         </div>
                       )}
                     </div>

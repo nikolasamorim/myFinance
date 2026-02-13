@@ -1,29 +1,58 @@
 import React, { useState, useMemo } from 'react';
-import { Filter, Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle,
-   Landmark, CreditCard, LayoutDashboard, CheckCircle, Clock, Circle, AlertCircle,
+import { Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle,
+   Landmark, LayoutDashboard, CheckCircle, Clock, Circle, AlertCircle,
    XCircle, PiggyBank
 } from 'lucide-react';
 import * as Lucide from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Dropdown } from '../components/ui/Dropdown';
+import { BreadcrumbBar } from '../components/ui/BreadcrumbBar';
+import { VisualizationToolbar } from '../components/ui/VisualizationToolbar';
+import { FiltersPanel } from '../components/ui/FiltersPanel';
+import { SortPanel } from '../components/ui/SortPanel';
+import type { FilterField } from '../components/ui/FiltersPanel';
+import type { SortOption } from '../components/ui/SortPanel';
 import { TransactionTypeSelector } from '../components/ui/TransactionTypeSelector';
 import { TransactionModal } from '../components/transactions/TransactionModal';
 import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
 import { useAdvancedTransactions } from '../hooks/useAdvancedTransactions';
-// import { MonthlyChart } from '../components/dashboard/MonthlyChart';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { cn } from '../lib/utils';
 import type { Transaction, AdvancedTransactionData } from '../types';
 
+const DEFAULT_DASHBOARD_FILTERS = {
+  period: 'current_month',
+  category: 'all',
+  search: '',
+};
+
+const dashboardPeriodOptions = [
+  { value: 'current_month', label: 'Mes atual' },
+  { value: 'last_month', label: 'Ultimo mes' },
+  { value: 'current_year', label: 'Ano atual' },
+  { value: 'custom', label: 'Personalizado' },
+  { value: 'all', label: 'Tudo' },
+];
+
+const dashboardFilterFields: FilterField[] = [
+  { key: 'period', label: 'Periodo', type: 'dropdown', options: dashboardPeriodOptions },
+  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar transacoes...' },
+];
+
+const dashboardSortOptions: SortOption[] = [
+  { value: 'date_desc', label: 'Data (mais recente)' },
+  { value: 'date_asc', label: 'Data (mais antiga)' },
+  { value: 'amount_desc', label: 'Valor (maior primeiro)' },
+  { value: 'amount_asc', label: 'Valor (menor primeiro)' },
+];
+
 interface DashboardFilters {
   period: 'current_month' | 'last_month' | 'current_year' | 'custom' | 'all';
   category: string;
   search: string;
-  // opcionais para período personalizado (YYYY-MM-DD)
   startDate?: string;
   endDate?: string;
 }
@@ -41,6 +70,7 @@ interface MonthlyData {
 }
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
   const { createAdvancedTransaction } = useAdvancedTransactions();
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -48,6 +78,8 @@ export function Dashboard() {
   const [selectedTransactionType, setSelectedTransactionType] = useState<'income' | 'expense' | 'debt' | 'investment'>('expense');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
   const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
+  const [sortBy, setSortBy] = useState<string>('date_desc');
   const [filters, setFilters] = useState<DashboardFilters>({
     period: 'current_month',
     category: 'all',
@@ -171,8 +203,41 @@ export function Dashboard() {
     }
   }, [dashboardAllData, monthlyData]);
 
-  const handleFilterChange = (key: keyof DashboardFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value as any }));
+  const hasActiveFilters = filters.period !== 'current_month' || filters.category !== 'all' || filters.search !== '';
+
+  const sortedTransactions = useMemo(() => {
+    if (!recentTransactions) return [];
+    return [...recentTransactions].sort((a, b) => {
+      switch (sortBy) {
+        case 'date_desc':
+          return new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime();
+        case 'date_asc':
+          return new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+        case 'amount_desc':
+          return Number(b.transaction_amount) - Number(a.transaction_amount);
+        case 'amount_asc':
+          return Number(a.transaction_amount) - Number(b.transaction_amount);
+        default:
+          return 0;
+      }
+    });
+  }, [recentTransactions, sortBy]);
+
+  const handleApplyFilters = (newFilters: Record<string, string>) => {
+    const updated: DashboardFilters = {
+      period: (newFilters.period || 'current_month') as DashboardFilters['period'],
+      category: newFilters.category || 'all',
+      search: newFilters.search || '',
+    };
+    if (newFilters.period === 'custom') {
+      updated.startDate = newFilters.date_start || '';
+      updated.endDate = newFilters.date_end || '';
+    }
+    setFilters(updated);
+  };
+
+  const handleApplySort = (newSort: string) => {
+    setSortBy(newSort);
   };
 
   const handleMonthClick = (monthKey: string) => {
@@ -276,13 +341,12 @@ export function Dashboard() {
     }
   };
 
-  const periodOptions = [
-    { value: 'current_month', label: 'Mês atual' },
-    { value: 'last_month', label: 'Último mês' },
-    { value: 'current_year', label: 'Ano atual' },
-    { value: 'custom', label: 'Personalizado' },
-    { value: 'all', label: 'Tudo' },
-  ];
+  const filtersForPanel: Record<string, string> = {
+    period: filters.period,
+    search: filters.search,
+    ...(filters.startDate ? { date_start: filters.startDate } : {}),
+    ...(filters.endDate ? { date_end: filters.endDate } : {}),
+  };
 
   if (workspaceLoading || isLoading) {
     return (
@@ -330,8 +394,35 @@ export function Dashboard() {
 
   return (
     <>
-      <div className="space-y-4 sm:space-y-6 w-full min-w-0 ">
-        {/* Header */}
+      <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+        <div className="flex items-center justify-between px-1 sm:px-0">
+          <BreadcrumbBar segments={['Dashboard']} onBack={() => navigate(-1)} />
+          <div className="relative">
+            <VisualizationToolbar
+              onFilter={() => setShowFilters(prev => !prev)}
+              onSort={() => setShowSort(prev => !prev)}
+              onShare={() => {}}
+              onSettings={() => {}}
+              activeFilter={hasActiveFilters}
+            />
+            <FiltersPanel
+              isOpen={showFilters}
+              onClose={() => setShowFilters(false)}
+              fields={dashboardFilterFields}
+              currentFilters={filtersForPanel}
+              defaultFilters={DEFAULT_DASHBOARD_FILTERS as unknown as Record<string, string>}
+              onApply={handleApplyFilters}
+            />
+            <SortPanel
+              isOpen={showSort}
+              onClose={() => setShowSort(false)}
+              options={dashboardSortOptions}
+              currentSort={sortBy}
+              onApply={handleApplySort}
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
@@ -339,74 +430,16 @@ export function Dashboard() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-sm sm:text-base text-gray-600">Visão geral das suas finanças</p>
+              <p className="text-sm sm:text-base text-gray-600">Visao geral das suas financas</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Filtros
-            </Button>
+          <div className="flex items-center gap-2">
             <TransactionTypeSelector
               onSelect={handleCreateTransaction}
               className="h-7 px-2.5 text-xs"
             />
           </div>
         </div>
-
-        {/* Filters */}
-        {showFilters && (
-          <div className="px-1 sm:px-0">
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Período</label>
-                    <Dropdown
-                      options={periodOptions}
-                      value={filters.period}
-                      onChange={(value) => handleFilterChange('period', value)}
-                    />
-                  </div>
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
-                    <Input
-                      placeholder="Buscar transações..."
-                      value={filters.search}
-                      onChange={(e) => handleFilterChange('search', e.target.value)}
-                    />
-                  </div>
-
-                  {/* Campos opcionais para período personalizado */}
-                  {filters.period === 'custom' && (
-                    <>
-                      <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Início</label>
-                        <Input
-                          type="date"
-                          value={filters.startDate || ''}
-                          onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Fim</label>
-                        <Input
-                          type="date"
-                          value={filters.endDate || ''}
-                          onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Summary Cards – usam "summary" (pagos e não pagos) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 px-1 sm:px-0">
@@ -671,7 +704,7 @@ export function Dashboard() {
                       </thead>
 
                       <tbody>
-                        {recentTransactions?.map((transaction) => (
+                        {sortedTransactions.map((transaction) => (
                           <tr
                             key={transaction.transaction_id}
                             className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
@@ -737,7 +770,7 @@ export function Dashboard() {
                     </table>
                   </div>
 
-                  {(!recentTransactions || recentTransactions.length === 0) && (
+                  {sortedTransactions.length === 0 && (
                     <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
                       <p className="text-base sm:text-lg font-medium">Nenhuma transação encontrada</p>
                       <p className="text-xs sm:text-sm">Comece criando sua primeira transação</p>
