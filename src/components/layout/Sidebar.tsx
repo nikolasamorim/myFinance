@@ -197,26 +197,6 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
       {/* Mobile Header */}
       {showMobileHeader && (
         <div className={cn('min-w-0 flex items-center lg:hidden', isCollapsed ? 'justify-center p-2' : 'justify-between p-4')}>
-          {!isCollapsed && 
-            // /* Workspace selector */
-            <div className={cn('mt-3 min-w-0', isCollapsed ? 'hidden' : 'block')}>
-            {loading ? (
-              <div className="w-full h-9 bg-gray-200 rounded-lg animate-pulse" />
-            ) : (
-              <div className="min-w-0">
-                {/* Dropdown já deve cuidar do truncate internamente, mas se precisar, envolvemos */}
-                <Dropdown
-                  options={workspaceOptions}
-                  value={currentWorkspace?.workspace_id}
-                  onChange={handleWorkspaceChange}
-                  placeholder="Workspace"
-                  className="text-sm"
-                  isMobile={isMobile}
-                />
-              </div>
-            )}
-          </div>
-          }
           <button
             onClick={() => {
               closeAllBottomMenus();
@@ -497,9 +477,9 @@ export function Sidebar(props: SidebarExternalControlProps) {
 
       {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className=" fixed inset-0 z-50 lg:hidden">
           <div className="fixed inset-0 bg-black bg-opacity-50 ignoreOverride" onClick={onMobileClose} />
-          <div className="fixed inset-y-0 left-0">
+          <div className="bg-gray-100 fixed inset-y-0 left-0">
             <SidebarContent showMobileHeader onMobileClose={onMobileClose} onAnyNavigate={onMobileClose} />
           </div>
         </div>
