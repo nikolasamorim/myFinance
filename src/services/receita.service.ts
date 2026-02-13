@@ -59,12 +59,17 @@ export const receitaService = {
           transaction_amount,
           transaction_date,
           transaction_category_id,
+          transaction_card_id,
+          transaction_cost_center_id,
           transaction_status,
           parent_recurrence_rule_id,
           recurrence_instance_date,
           recurrence_sequence,
           transaction_created_at,
-          transaction_updated_at
+          transaction_updated_at,
+          categories:transaction_category_id ( category_id, category_name, color, icon ),
+          credit_cards:transaction_card_id ( credit_card_id, credit_card_name, color, icon ),
+          cost_centers:transaction_cost_center_id ( cost_center_id, cost_center_name, color, icon )
         `)
         .eq('transaction_workspace_id', workspaceId)
         .eq('transaction_type', 'income')
@@ -113,6 +118,17 @@ export const receitaService = {
           installment_number: parsed?.number,
           installment_total: parsed?.total,
           category_id: item.transaction_category_id,
+          category_name: item.categories?.category_name || null,
+          category_color: item.categories?.color || null,
+          category_icon: item.categories?.icon || null,
+          card_id: item.transaction_card_id,
+          card_name: item.credit_cards?.credit_card_name || null,
+          card_color: item.credit_cards?.color || null,
+          card_icon: item.credit_cards?.icon || null,
+          cost_center_id: item.transaction_cost_center_id,
+          cost_center_name: item.cost_centers?.cost_center_name || null,
+          cost_center_color: item.cost_centers?.color || null,
+          cost_center_icon: item.cost_centers?.icon || null,
           parent_recurrence_rule_id: item.parent_recurrence_rule_id,
           recurrence_instance_date: item.recurrence_instance_date,
           recurrence_sequence: item.recurrence_sequence,

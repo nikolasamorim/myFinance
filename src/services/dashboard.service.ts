@@ -136,10 +136,16 @@ export const dashboardService = {
     console.log('Fetching dashboard data for workspace:', workspaceId);
 
     try {
-      // Base query
+      // Base query with joins for related data
       let query = supabase
         .from('transactions')
-        .select('*, accounts:transaction_bank_id ( id, title, color, icon )')
+        .select(`
+          *,
+          accounts:transaction_bank_id ( id, title, color, icon ),
+          categories:transaction_category_id ( category_id, category_name, color, icon ),
+          credit_cards:transaction_card_id ( credit_card_id, credit_card_name, color, icon ),
+          cost_centers:transaction_cost_center_id ( cost_center_id, cost_center_name, color, icon )
+        `)
         .eq('transaction_workspace_id', workspaceId)
         .order('transaction_description', { ascending: false });
 
@@ -175,6 +181,15 @@ export const dashboardService = {
         transaction_account: t.accounts?.title ?? null,
         transaction_account_color: t.accounts?.color ?? null,
         transaction_account_icon: t.accounts?.icon ?? null,
+        transaction_category_name: t.categories?.category_name ?? null,
+        transaction_category_color: t.categories?.color ?? null,
+        transaction_category_icon: t.categories?.icon ?? null,
+        transaction_card_name: t.credit_cards?.credit_card_name ?? null,
+        transaction_card_color: t.credit_cards?.color ?? null,
+        transaction_card_icon: t.credit_cards?.icon ?? null,
+        transaction_cost_center_name: t.cost_centers?.cost_center_name ?? null,
+        transaction_cost_center_color: t.cost_centers?.color ?? null,
+        transaction_cost_center_icon: t.cost_centers?.icon ?? null,
       }));
 
       // Expansão de recorrência (para visão mensal/visuais)

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle,
    Landmark, LayoutDashboard, CheckCircle, Clock, Circle, AlertCircle,
-   XCircle, PiggyBank
+   XCircle, PiggyBank, Edit, Trash2
 } from 'lucide-react';
 import * as Lucide from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,7 @@ import { TransactionTypeSelector } from '../components/ui/TransactionTypeSelecto
 import { TransactionModal } from '../components/transactions/TransactionModal';
 import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
 import { useAdvancedTransactions } from '../hooks/useAdvancedTransactions';
+import { useTransactions } from '../hooks/useTransactions';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { formatCurrency, formatDate } from '../lib/utils';
@@ -72,7 +73,8 @@ interface MonthlyData {
 export function Dashboard() {
   const navigate = useNavigate();
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
-  const { createAdvancedTransaction } = useAdvancedTransactions();
+  const { createAdvancedTransaction, markInstallmentAsPaid } = useAdvancedTransactions();
+  const { deleteTransaction } = useTransactions();
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
   const [selectedTransactionType, setSelectedTransactionType] = useState<'income' | 'expense' | 'debt' | 'investment'>('expense');
@@ -694,11 +696,23 @@ export function Dashboard() {
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
                             Data
                           </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                            Data
+                          </th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">
                             Valor
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
-                            Conta Bancária
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                            Cartão de crédito
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                            Categoria
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                            Centro de custo
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">
+                            Ações
                           </th>
                         </tr>
                       </thead>
@@ -742,26 +756,82 @@ export function Dashboard() {
                               {formatCurrency(Number(transaction.transaction_amount))}
                             </td>
 
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
-                              <div className="flex items-center gap-2">
-                                {/* Quadrado com cor e ícone Lucide centralizado */}
-                                <div
-                                  className="flex items-center justify-center text-white p-1.5 rounded-lg" /* tamanho consistente por linha */
-                                  style={{ backgroundColor: transaction.transaction_account_color || 'unset' }}
-                                >
+                            <td className="py-2 sm:py-3 px-2 sm:px-4">
+                              {transaction.transaction_card_name ? (
+                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: transaction.transaction_card_color || '#E5E7EB' }}>
                                   {(() => {
-                                    const iconKey = (transaction.transaction_account_icon || '') as keyof typeof Lucide;
+                                    const iconKey = (transaction.transaction_card_icon || '') as keyof typeof Lucide;
                                     const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
                                     return DynamicIcon ? (
-                                      <DynamicIcon className="w-3 h-3" />
+                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
                                     ) : null;
                                   })()}
+                                  <span className="text-xs font-medium text-white truncate">{transaction.transaction_card_name}</span>
                                 </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">-</span>
+                              )}
+                            </td>
 
-                                {/* Nome da conta */}
-                                <span className="truncate block max-w-[140px] sm:max-w-none">
-                                  {transaction.transaction_account}
-                                </span>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4">
+                              {transaction.transaction_category_name ? (
+                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: transaction.transaction_category_color || '#E5E7EB' }}>
+                                  {(() => {
+                                    const iconKey = (transaction.transaction_category_icon || '') as keyof typeof Lucide;
+                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                    return DynamicIcon ? (
+                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
+                                    ) : null;
+                                  })()}
+                                  <span className="text-xs font-medium text-white truncate">{transaction.transaction_category_name}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">-</span>
+                              )}
+                            </td>
+
+                            <td className="py-2 sm:py-3 px-2 sm:px-4">
+                              {transaction.transaction_cost_center_name ? (
+                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: transaction.transaction_cost_center_color || '#E5E7EB' }}>
+                                  {(() => {
+                                    const iconKey = (transaction.transaction_cost_center_icon || '') as keyof typeof Lucide;
+                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                    return DynamicIcon ? (
+                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
+                                    ) : null;
+                                  })()}
+                                  <span className="text-xs font-medium text-white truncate">{transaction.transaction_cost_center_name}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">-</span>
+                              )}
+                            </td>
+
+                            <td className="py-2 sm:py-3 px-2 sm:px-4">
+                              <div className="flex justify-center space-x-1 sm:space-x-2">
+                                {(transaction.transaction_status === 'pending' || transaction.transaction_status === 'scheduled' || transaction.transaction_status === 'overdue') && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); markInstallmentAsPaid.mutate(transaction.transaction_id); }}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-green-600 transition-colors"
+                                    title="Marcar como pago"
+                                  >
+                                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleEditTransaction(transaction); }}
+                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); if (window.confirm('Tem certeza que deseja excluir esta transação?')) { deleteTransaction.mutate(transaction.transaction_id); } }}
+                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-rose-600 transition-colors"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </button>
                               </div>
                             </td>
                           </tr>

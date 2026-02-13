@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as Lucide from 'lucide-react';
 import {
   TrendingUp, Plus, Calendar, DollarSign, Clock, CheckCircle, Edit,
   AlertCircle, Circle, XCircle, Trash2, CreditCard, RefreshCcw
@@ -613,23 +614,20 @@ export function Receitas() {
                     <table className="w-full min-w-[800px]">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[50px]">Status</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Titulo</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Valor</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Vencimento</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Recebimento</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Tipo</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Parcela</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Acoes</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">Data</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[140px]">Descrição</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Valor</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">Cartão de crédito</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">Categoria</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">Centro de custo</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
                         {sortedReceitas.map((r: any) => (
                           <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
-                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50" title={getStatusLabel(r.status || 'pending')}>
-                                {getStatusIcon(r.status || 'pending')}
-                              </span>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                              {formatDate(r.transaction_date)}
                             </td>
                             <td className="py-2 sm:py-3 px-2 sm:px-4">
                               <div>
@@ -640,17 +638,53 @@ export function Receitas() {
                             <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
                               {formatCurrency(Number(r.amount))}
                             </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                              {formatDate(r.transaction_date)}
+                            <td className="py-2 sm:py-3 px-2 sm:px-4">
+                              {r.card_name ? (
+                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: r.card_color || '#E5E7EB' }}>
+                                  {(() => {
+                                    const iconKey = (r.card_icon || '') as keyof typeof Lucide;
+                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                    return DynamicIcon ? (
+                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
+                                    ) : null;
+                                  })()}
+                                  <span className="text-xs font-medium text-white truncate">{r.card_name}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">-</span>
+                              )}
                             </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                              {r.status === 'received' ? formatDate(r.transaction_date) : '-'}
+                            <td className="py-2 sm:py-3 px-2 sm:px-4">
+                              {r.category_name ? (
+                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: r.category_color || '#E5E7EB' }}>
+                                  {(() => {
+                                    const iconKey = (r.category_icon || '') as keyof typeof Lucide;
+                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                    return DynamicIcon ? (
+                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
+                                    ) : null;
+                                  })()}
+                                  <span className="text-xs font-medium text-white truncate">{r.category_name}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">-</span>
+                              )}
                             </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                              {getTypeLabel(r.repeat_type)}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                              {r.is_installment ? `${r.installment_number}/${r.installment_total}` : '-'}
+                            <td className="py-2 sm:py-3 px-2 sm:px-4">
+                              {r.cost_center_name ? (
+                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: r.cost_center_color || '#E5E7EB' }}>
+                                  {(() => {
+                                    const iconKey = (r.cost_center_icon || '') as keyof typeof Lucide;
+                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                    return DynamicIcon ? (
+                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
+                                    ) : null;
+                                  })()}
+                                  <span className="text-xs font-medium text-white truncate">{r.cost_center_name}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">-</span>
+                              )}
                             </td>
                             <td className="py-2 sm:py-3 px-2 sm:px-4">
                               <div className="flex justify-center space-x-1 sm:space-x-2">
