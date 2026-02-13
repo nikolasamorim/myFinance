@@ -141,10 +141,36 @@ export function Contas() {
   return (
     <>
       <div className="space-y-4 sm:space-y-6 w-full min-w-0">
-        <BreadcrumbBar
-          segments={['Organizadores', 'Contas']}
-          onBack={() => navigate('/dashboard')}
-        />
+        <div className="flex items-center justify-between px-1 sm:px-0">
+          <BreadcrumbBar
+            segments={['Organizadores', 'Contas']}
+            onBack={() => navigate('/dashboard')}
+          />
+          <div className="relative">
+            <VisualizationToolbar
+              onFilter={() => setShowFilters(prev => !prev)}
+              onSort={() => setShowSort(prev => !prev)}
+              onShare={() => {}}
+              onSettings={() => {}}
+              activeFilter={hasActiveFilters}
+            />
+            <FiltersPanel
+              isOpen={showFilters}
+              onClose={() => setShowFilters(false)}
+              fields={filterFields}
+              currentFilters={filters as unknown as Record<string, string>}
+              defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
+              onApply={handleApplyFilters}
+            />
+            <SortPanel
+              isOpen={showSort}
+              onClose={() => setShowSort(false)}
+              options={sortOptions}
+              currentSort={sortBy}
+              onApply={handleApplySort}
+            />
+          </div>
+        </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
@@ -156,36 +182,10 @@ export function Contas() {
               <p className="text-sm sm:text-base text-gray-600">Gerencie contas bancarias e caixa</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <VisualizationToolbar
-                onFilter={() => setShowFilters(prev => !prev)}
-                onSort={() => setShowSort(prev => !prev)}
-                onShare={() => {}}
-                onSettings={() => {}}
-                activeFilter={hasActiveFilters}
-              />
-              <FiltersPanel
-                isOpen={showFilters}
-                onClose={() => setShowFilters(false)}
-                fields={filterFields}
-                currentFilters={filters as unknown as Record<string, string>}
-                defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
-                onApply={handleApplyFilters}
-              />
-              <SortPanel
-                isOpen={showSort}
-                onClose={() => setShowSort(false)}
-                options={sortOptions}
-                currentSort={sortBy}
-                onApply={handleApplySort}
-              />
-            </div>
-            <Button onClick={handleCreateAccount} size="sm">
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Nova Conta
-            </Button>
-          </div>
+          <Button onClick={handleCreateAccount} size="sm">
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            Nova Conta
+          </Button>
         </div>
 
         {/* Accounts Table */}
