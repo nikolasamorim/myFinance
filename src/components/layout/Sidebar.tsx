@@ -194,21 +194,6 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
         isCollapsed ? 'w-16' : 'w-64'
       )}
     >
-      {/* Mobile Header */}
-      {showMobileHeader && (
-        <div className={cn('min-w-0 flex items-center lg:hidden', isCollapsed ? 'justify-center p-2' : 'justify-between p-4')}>
-          <button
-            onClick={() => {
-              closeAllBottomMenus();
-              onMobileClose?.();
-            }}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-            title="Fechar"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-      )}
 
       {/* Top: Logo + Workspace */}
       <div className={cn('border-b border-gray-200 min-w-0', isCollapsed ? 'p-2' : 'p-4')}>
@@ -225,6 +210,22 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
         <div className="hidden lg:block">
           <SidebarToggleButton />
         </div>
+        
+        {/* Mobile Header */}
+        {showMobileHeader && (
+          <div className={cn('min-w-0 flex items-center lg:hidden', isCollapsed ? 'justify-center p-2' : 'justify-between')}>
+            <button
+              onClick={() => {
+                closeAllBottomMenus();
+                onMobileClose?.();
+              }}
+              className="p-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              title="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
         </div>
 
         {/* Workspace selector */}
