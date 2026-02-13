@@ -163,17 +163,17 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
   };
 
   const managerItems = [
-    { to: '/gerenciadores/receitas', icon: <TrendingUp className="w-5 h-5 text-green-600" />, label: 'Receitas' },
-    { to: '/gerenciadores/despesas', icon: <TrendingDown className="w-5 h-5 text-red-600" />, label: 'Despesas' },
-    { to: '/gerenciadores/dividas', icon: <AlertTriangle className="w-5 h-5 text-orange-600" />, label: 'Dívidas' },
-    { to: '/gerenciadores/investimentos', icon: <PiggyBank className="w-5 h-5 text-blue-600" />, label: 'Investimentos' },
+    { to: '/gerenciadores/receitas', icon: <TrendingUp className="w-5 h-5 text-gray-600" />, label: 'Receitas' },
+    { to: '/gerenciadores/despesas', icon: <TrendingDown className="w-5 h-5 text-gray-600" />, label: 'Despesas' },
+    { to: '/gerenciadores/dividas', icon: <AlertTriangle className="w-5 h-5 text-gray-600" />, label: 'Dívidas' },
+    { to: '/gerenciadores/investimentos', icon: <PiggyBank className="w-5 h-5 text-gray-600" />, label: 'Investimentos' },
   ];
 
   const organizadorItems = [
-    { to: '/organizadores/contas', icon: <Wallet className="w-5 h-5 text-green-600" />, label: 'Caixa / Conta' },
-    { to: '/organizadores/cartoes', icon: <CreditCard className="w-5 h-5 text-purple-600" />, label: 'Cartões de Crédito' },
-    { to: '/organizadores/categorias', icon: <Tag className="w-5 h-5 text-yellow-600" />, label: 'Categoria' },
-    { to: '/organizadores/centros-de-custo', icon: <Target className="w-5 h-5 text-indigo-600" />, label: 'Centro de Custo' },
+    { to: '/organizadores/contas', icon: <Wallet className="w-5 h-5 text-gray-600" />, label: 'Caixa / Conta' },
+    { to: '/organizadores/cartoes', icon: <CreditCard className="w-5 h-5 text-gray-600" />, label: 'Cartões de Crédito' },
+    { to: '/organizadores/categorias', icon: <Tag className="w-5 h-5 text-gray-600" />, label: 'Categoria' },
+    { to: '/organizadores/centros-de-custo', icon: <Target className="w-5 h-5 text-gray-600" />, label: 'Centro de Custo' },
   ];
 
   const closeAllBottomMenus = () => {
@@ -278,7 +278,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
         <div className="space-y-2 min-w-0">
           <SidebarItem
             to="/dashboard"
-            icon={<LayoutDashboard className="w-5 h-5 text-blue-600" />}
+            icon={<LayoutDashboard className="w-5 h-5 text-gray-600" />}
             label="Dashboard"
             isActive={location.pathname === '/dashboard'}
             isCollapsed={isCollapsed}
@@ -287,7 +287,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
 
           <SidebarItem
             to="/invoice"
-            icon={<SquareKanban className="w-5 h-5 text-purple-600" />}
+            icon={<SquareKanban className="w-5 h-5 text-gray-600" />}
             label="Fatura"
             isActive={location.pathname === '/invoice'}
             isCollapsed={isCollapsed}
