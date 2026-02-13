@@ -1,13 +1,18 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
-  TrendingUp, Plus, Filter, Calendar, DollarSign, Clock, CheckCircle, Edit,
+  TrendingUp, Plus, Calendar, DollarSign, Clock, CheckCircle, Edit,
   AlertCircle, Circle, XCircle, Trash2, CreditCard, RefreshCcw
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
+import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
+import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
+import { FiltersPanel } from '../../components/ui/FiltersPanel';
+import type { FilterField } from '../../components/ui/FiltersPanel';
 import { useReceitas } from '../../hooks/useReceitas';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import type { ReceitaData } from '../../services/receita.service';
@@ -35,6 +40,15 @@ interface ReceitaFormData {
   notes: string;
 }
 
+const DEFAULT_FILTERS: ReceitaFilters = {
+  status: 'all',
+  type: 'all',
+  installments: 'all',
+  period: 'current_month',
+  category: 'all',
+  search: '',
+};
+
 const statusOptions = [
   { value: 'all', label: 'Todos' },
   { value: 'pending', label: 'A receber' },
@@ -54,8 +68,8 @@ const installmentOptions = [
 ];
 
 const periodOptions = [
-  { value: 'current_month', label: 'Mês atual' },
-  { value: 'last_month', label: 'Último mês' },
+  { value: 'current_month', label: 'Mes atual' },
+  { value: 'last_month', label: 'Ultimo mes' },
   { value: 'custom', label: 'Personalizado' },
 ];
 
@@ -71,16 +85,17 @@ const repeatTypeOptions = [
   { value: 'recorrente', label: 'Recorrente' },
 ];
 
-export function Receitas() {
-  const [filters, setFilters] = useState<ReceitaFilters>({
-    status: 'all',
-    type: 'all',
-    installments: 'all',
-    period: 'current_month',
-    category: 'all',
-    search: '',
-  });
+const filterFields: FilterField[] = [
+  { key: 'status', label: 'Status', type: 'dropdown', options: statusOptions },
+  { key: 'type', label: 'Tipo', type: 'dropdown', options: typeOptions },
+  { key: 'installments', label: 'Parceladas', type: 'dropdown', options: installmentOptions },
+  { key: 'period', label: 'Periodo', type: 'dropdown', options: periodOptions },
+  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar por titulo...' },
+];
 
+export function Receitas() {
+  const navigate = useNavigate();
+  const [filters, setFilters] = useState<ReceitaFilters>({ ...DEFAULT_FILTERS });
   const [showModal, setShowModal] = useState(false);
   const [editingReceita, setEditingReceita] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -92,13 +107,15 @@ export function Receitas() {
     updateReceita,
     deleteReceita,
     markAsReceived,
-    summary,                    // <- ex: { totalPaid, totalPending, totalInstallments, monthlyAverage } mas para receitas
-    installmentsThisMonth,      // <- array de parcelas (receitas parceladas no mês)
-    fixedIncomesThisMonth       // <- array de receitas fixas no mês
+    summary,
+    installmentsThisMonth,
+    fixedIncomesThisMonth
   } = useReceitas(filters);
 
-  const handleFilterChange = (key: keyof ReceitaFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+
+  const handleApplyFilters = (newFilters: Record<string, string>) => {
+    setFilters(newFilters as unknown as ReceitaFilters);
   };
 
   const handleCreateReceita = () => {
@@ -199,7 +216,11 @@ export function Receitas() {
   return (
     <>
       <div className="space-y-4 sm:space-y-6 w-full min-w-0">
-        {/* Header */}
+        <BreadcrumbBar
+          segments={['Gerenciadores', 'Receitas']}
+          onBack={() => navigate('/dashboard')}
+        />
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="p-1.5 sm:p-2 bg-emerald-100 rounded-lg flex-shrink-0">
@@ -210,11 +231,21 @@ export function Receitas() {
               <p className="text-sm sm:text-base text-gray-600">Controle suas entradas</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-              <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Filtros
-            </Button>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <VisualizationToolbar
+                onFilter={() => setShowFilters(prev => !prev)}
+                activeFilter={hasActiveFilters}
+              />
+              <FiltersPanel
+                isOpen={showFilters}
+                onClose={() => setShowFilters(false)}
+                fields={filterFields}
+                currentFilters={filters as unknown as Record<string, string>}
+                defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
+                onApply={handleApplyFilters}
+              />
+            </div>
             <Button onClick={handleCreateReceita} size="sm">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Nova Receita
@@ -222,39 +253,6 @@ export function Receitas() {
           </div>
         </div>
 
-        {/* Filters */}
-        {showFilters && (
-          <div className="px-1 sm:px-0">
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Status</label>
-                    <Dropdown options={statusOptions} value={filters.status} onChange={(v) => handleFilterChange('status', v)} />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Tipo</label>
-                    <Dropdown options={typeOptions} value={filters.type} onChange={(v) => handleFilterChange('type', v)} />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Parceladas</label>
-                    <Dropdown options={installmentOptions} value={filters.installments} onChange={(v) => handleFilterChange('installments', v)} />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Período</label>
-                    <Dropdown options={periodOptions} value={filters.period} onChange={(v) => handleFilterChange('period', v)} />
-                  </div>
-                  <div className="sm:col-span-2 lg:col-span-1 xl:col-span-2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Buscar</label>
-                    <Input placeholder="Buscar por título..." value={filters.search} onChange={(e) => handleFilterChange('search', e.target.value)} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Summary Cards (espelha Despesas) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 px-1 sm:px-0">
           <Card>
             <CardContent className="p-3 sm:p-4 lg:p-6">
@@ -293,12 +291,12 @@ export function Receitas() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Total Parcelado</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-500 mt-1">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-teal-600 mt-1">
                     {formatCurrency(summary?.totalInstallments || 0)}
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-purple-100 rounded-lg">
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-500" />
+                <div className="p-2 sm:p-3 bg-teal-100 rounded-lg">
+                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-teal-600" />
                 </div>
               </div>
             </CardContent>
@@ -308,7 +306,7 @@ export function Receitas() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Média Mensal</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Media Mensal</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-sky-500 mt-1">
                     {formatCurrency(summary?.monthlyAverage || 0)}
                   </p>
@@ -321,7 +319,6 @@ export function Receitas() {
           </Card>
         </div>
 
-        {/* Receitas Fixas */}
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
@@ -394,7 +391,7 @@ export function Receitas() {
                   {(!fixedIncomesThisMonth || fixedIncomesThisMonth.length === 0) && (
                     <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
                       <RefreshCcw className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm">Nenhuma receita fixa neste período</p>
+                      <p className="text-sm">Nenhuma receita fixa neste periodo</p>
                     </div>
                   )}
                 </div>
@@ -436,7 +433,6 @@ export function Receitas() {
           </Card>
         </div>
 
-        {/* Parcelas */}
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
@@ -507,7 +503,7 @@ export function Receitas() {
                   {(!installmentsThisMonth || installmentsThisMonth.length === 0) && (
                     <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
                       <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm">Nenhuma parcela neste período</p>
+                      <p className="text-sm">Nenhuma parcela neste periodo</p>
                     </div>
                   )}
                 </div>
@@ -559,11 +555,10 @@ export function Receitas() {
           </Card>
         </div>
 
-        {/* Tabela */}
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Lançamentos</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Lancamentos</CardTitle>
             </CardHeader>
             <CardContent className="py-0 px-1 sm:px-6">
               {isLoading ? (
@@ -577,13 +572,13 @@ export function Receitas() {
                       <thead>
                         <tr className="border-b border-gray-200">
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[50px]">Status</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Título</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Titulo</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Valor</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Vencimento</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Recebimento</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Tipo</th>
                           <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Parcela</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Acoes</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -659,7 +654,6 @@ export function Receitas() {
               )}
             </CardContent>
 
-            {/* Sumário compacto da Tabela (mobile-first) */}
             <CardContent className="py-0 px-1 sm:px-6">
               {(() => {
                 const totalCount = receitas?.length || 0;
@@ -691,7 +685,7 @@ export function Receitas() {
                         <span className="text-xs font-medium text-gray-600">Total</span>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-gray-900">{formatCurrency(totalValue)}</p>
-                          <p className="text-[10px] text-gray-500">{totalCount} {totalCount === 1 ? "lançamento" : "lançamentos"}</p>
+                          <p className="text-[10px] text-gray-500">{totalCount} {totalCount === 1 ? "lancamento" : "lancamentos"}</p>
                         </div>
                       </div>
 
@@ -703,7 +697,7 @@ export function Receitas() {
                             <span className="text-xs font-medium text-gray-600">{cfg.label}</span>
                             <div className="text-right">
                               <p className={`text-sm font-semibold ${cfg.text}`}>{formatCurrency(stats.total || 0)}</p>
-                              <p className="text-[10px] text-gray-500">{stats.count} {stats.count === 1 ? "lançamento" : "lançamentos"}</p>
+                              <p className="text-[10px] text-gray-500">{stats.count} {stats.count === 1 ? "lancamento" : "lancamentos"}</p>
                             </div>
                           </div>
                         );
@@ -717,7 +711,6 @@ export function Receitas() {
         </div>
       </div>
 
-      {/* Modal */}
       <ReceitaModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -825,10 +818,10 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <Input label="Título" value={formData.title} onChange={(e) => handleInputChange('title', e.target.value)} placeholder="Ex: Salário, Freelance, Venda..." required />
+            <Input label="Titulo" value={formData.title} onChange={(e) => handleInputChange('title', e.target.value)} placeholder="Ex: Salario, Freelance, Venda..." required />
           </div>
 
-          <Input label="Microtítulo (opcional)" value={formData.subtitle} onChange={(e) => handleInputChange('subtitle', e.target.value)} placeholder="Ex: Entrada 1/3, Janeiro 2024..." />
+          <Input label="Microtitulo (opcional)" value={formData.subtitle} onChange={(e) => handleInputChange('subtitle', e.target.value)} placeholder="Ex: Entrada 1/3, Janeiro 2024..." />
 
           <Input label="Valor" type="number" step="0.01" value={formData.amount} onChange={(e) => handleInputChange('amount', Number(e.target.value))} required />
 
@@ -841,7 +834,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
 
           {formData.repeat_type === 'recorrente' && (
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-2">Intervalo de recorrência</label>
+              <label className="block text-sm font-medium text-gray-500 mb-2">Intervalo de recorrencia</label>
               <Dropdown options={repeatIntervalOptions} value={formData.repeat_interval} onChange={(value) => handleInputChange('repeat_interval', value)} />
             </div>
           )}
@@ -850,7 +843,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
         <div className="flex items-center space-x-4">
           <label className="flex items-center">
             <input type="checkbox" checked={formData.status === 'received'} onChange={(e) => handleInputChange('status', e.target.checked ? 'received' : 'pending')} className="mr-2" />
-            <span className="text-sm text-gray-500">Já foi recebida?</span>
+            <span className="text-sm text-gray-500">Ja foi recebida?</span>
           </label>
 
           <label className="flex items-center">
@@ -861,13 +854,13 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
 
         {formData.is_installment && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Número de parcelas" type="number" min="1" value={formData.installment_total} onChange={(e) => handleInputChange('installment_total', Number(e.target.value))} required />
+            <Input label="Numero de parcelas" type="number" min="1" value={formData.installment_total} onChange={(e) => handleInputChange('installment_total', Number(e.target.value))} required />
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-2">Observações</label>
-          <textarea value={formData.notes} onChange={(e) => handleInputChange('notes', e.target.value)} placeholder="Observações adicionais..." className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-transparent" rows={3} />
+          <label className="block text-sm font-medium text-gray-500 mb-2">Observacoes</label>
+          <textarea value={formData.notes} onChange={(e) => handleInputChange('notes', e.target.value)} placeholder="Observacoes adicionais..." className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-transparent" rows={3} />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

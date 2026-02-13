@@ -1,13 +1,17 @@
-import React, { useState, useMemo } from 'react';
-import { TrendingDown, Plus, Filter, Calendar, DollarSign, Clock, CheckCircle, Edit, AlertCircle, Circle, XCircle, Trash2, CreditCard, RefreshCcw, Target } from 'lucide-react';
+import React, { useState } from 'react';
+import { TrendingDown, Plus, Calendar, DollarSign, Clock, CheckCircle, Edit, AlertCircle, Circle, XCircle, Trash2, CreditCard, RefreshCcw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
+import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
+import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
+import { FiltersPanel } from '../../components/ui/FiltersPanel';
+import type { FilterField } from '../../components/ui/FiltersPanel';
 import { useDespesas } from '../../hooks/useDespesas';
 import { formatCurrency, formatDate } from '../../lib/utils';
-import { cn } from '../../lib/utils';
 import type { DespesaData } from '../../services/despesa.service';
 
 interface DespesaFilters {
@@ -71,34 +75,46 @@ const repeatTypeOptions = [
   { value: 'recorrente', label: 'Recorrente' },
 ];
 
-export function Despesas() {
-  const [filters, setFilters] = useState<DespesaFilters>({
-    status: 'all',
-    type: 'all',
-    installments: 'all',
-    period: 'current_month',
-    category: 'all',
-    search: '',
-  });
+const DEFAULT_FILTERS: DespesaFilters = {
+  status: 'all',
+  type: 'all',
+  installments: 'all',
+  period: 'current_month',
+  category: 'all',
+  search: '',
+};
 
+const filterFields: FilterField[] = [
+  { key: 'status', label: 'Status', type: 'dropdown', options: statusOptions },
+  { key: 'type', label: 'Tipo', type: 'dropdown', options: typeOptions },
+  { key: 'installments', label: 'Parceladas', type: 'dropdown', options: installmentOptions },
+  { key: 'period', label: 'Periodo', type: 'dropdown', options: periodOptions },
+  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar por titulo...' },
+];
+
+export function Despesas() {
+  const navigate = useNavigate();
+  const [filters, setFilters] = useState<DespesaFilters>({ ...DEFAULT_FILTERS });
   const [showModal, setShowModal] = useState(false);
   const [editingDespesa, setEditingDespesa] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const { 
-    data: despesas = [], 
-    isLoading, 
-    createDespesa, 
-    updateDespesa, 
-    deleteDespesa, 
+  const {
+    data: despesas = [],
+    isLoading,
+    createDespesa,
+    updateDespesa,
+    deleteDespesa,
     markAsPaid,
     summary,
     installmentsThisMonth,
     fixedExpensesThisMonth
   } = useDespesas(filters);
 
-  const handleFilterChange = (key: keyof DespesaFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+
+  const handleApplyFilters = (newFilters: Record<string, string>) => {
+    setFilters(newFilters as unknown as DespesaFilters);
   };
 
   const handleCreateDespesa = () => {
@@ -225,7 +241,11 @@ export function Despesas() {
   return (
     <>
       <div className="space-y-4 sm:space-y-6 w-full min-w-0">
-        {/* Header */}
+        <BreadcrumbBar
+          segments={['Gerenciadores', 'Despesas']}
+          onBack={() => navigate('/dashboard')}
+        />
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg flex-shrink-0">
@@ -236,73 +256,27 @@ export function Despesas() {
               <p className="text-sm sm:text-base text-gray-600">Controle seus gastos e despesas</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Filtros
-            </Button>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <VisualizationToolbar
+                onFilter={() => setShowFilters(prev => !prev)}
+                activeFilter={hasActiveFilters}
+              />
+              <FiltersPanel
+                isOpen={showFilters}
+                onClose={() => setShowFilters(false)}
+                fields={filterFields}
+                currentFilters={filters as unknown as Record<string, string>}
+                defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
+                onApply={handleApplyFilters}
+              />
+            </div>
             <Button onClick={handleCreateDespesa} size="sm">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Nova Despesa
             </Button>
           </div>
         </div>
-
-        {/* Filters */}
-        {showFilters && (
-          <div className="px-1 sm:px-0">
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <Dropdown
-                      options={statusOptions}
-                      value={filters.status}
-                      onChange={(value) => handleFilterChange('status', value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                    <Dropdown
-                      options={typeOptions}
-                      value={filters.type}
-                      onChange={(value) => handleFilterChange('type', value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Parceladas</label>
-                    <Dropdown
-                      options={installmentOptions}
-                      value={filters.installments}
-                      onChange={(value) => handleFilterChange('installments', value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Período</label>
-                    <Dropdown
-                      options={periodOptions}
-                      value={filters.period}
-                      onChange={(value) => handleFilterChange('period', value)}
-                    />
-                  </div>
-                  <div className="sm:col-span-2 lg:col-span-1 xl:col-span-2">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
-                    <Input
-                      placeholder="Buscar por título..."
-                      value={filters.search}
-                      onChange={(e) => handleFilterChange('search', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 px-1 sm:px-0">
