@@ -1,6 +1,21 @@
 import React, { useState } from 'react';
 import * as Lucide from 'lucide-react';
-import { TrendingDown, Plus, Calendar, DollarSign, Clock, CheckCircle, Edit, AlertCircle, Circle, XCircle, Trash2, CreditCard, RefreshCcw } from 'lucide-react';
+import {
+  TrendingDown,
+  TrendingUp,
+  Plus,
+  Calendar,
+  DollarSign,
+  Clock,
+  CheckCircle,
+  Edit,
+  AlertCircle,
+  Circle,
+  XCircle,
+  Trash2,
+  CreditCard,
+  RefreshCcw,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -14,7 +29,7 @@ import { SortPanel } from '../../components/ui/SortPanel';
 import type { FilterField } from '../../components/ui/FiltersPanel';
 import type { SortOption } from '../../components/ui/SortPanel';
 import { useDespesas } from '../../hooks/useDespesas';
-import { formatCurrency, formatDate } from '../../lib/utils';
+import { formatCurrency, formatDate, cn } from '../../lib/utils';
 import type { DespesaData } from '../../services/despesa.service';
 
 interface DespesaFilters {
@@ -122,7 +137,7 @@ export function Despesas() {
     markAsPaid,
     summary,
     installmentsThisMonth,
-    fixedExpensesThisMonth
+    fixedExpensesThisMonth,
   } = useDespesas(filters);
 
   const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
@@ -174,18 +189,45 @@ export function Despesas() {
     }
   };
 
-  const getTypeLabel = (type: string) => {
+  function getTypeIcon(type: string) {
     switch (type) {
-      case 'avulsa':
-        return 'Avulsa';
-      case 'fixa':
-        return 'Fixa';
-      case 'recorrente':
-        return 'Recorrente';
+      case 'income':
+        return <TrendingUp className="p-1.5 rounded-lg bg-green-100 text-green-600" />;
+      case 'expense':
+      default:
+        return <TrendingDown className="p-1.5 rounded-lg bg-red-100 text-red-600" />;
+    }
+  }
+
+  function getTypeLabel(type: string) {
+    switch (type) {
+      case 'income':
+        return 'Receita';
+      case 'expense':
+        return 'Despesa';
       default:
         return type;
     }
-  };
+  }
+
+  function getStatusLabelDashboardLike(status: string) {
+    switch (status) {
+      case 'paid':
+        return 'Pago';
+      case 'pending':
+        return 'Pendente';
+      case 'open':
+        return 'Aberta';
+      case 'overdue':
+        return 'Vencida';
+      case 'scheduled':
+        return 'Agendada';
+      case 'canceled':
+        return 'Cancelada';
+      default:
+        return status;
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -194,13 +236,13 @@ export function Despesas() {
       case 'pending':
         return 'text-yellow-600 bg-yellow-50 border border-yellow-200';
       case 'open':
-        return 'text-blue-600 bg-blue-50 border border-green-200';
+        return 'text-blue-600 bg-blue-50 border border-blue-200';
       case 'overdue':
-        return 'text-red-600 bg-red-50 border border-green-200';
+        return 'text-red-600 bg-red-50 border border-red-200';
       case 'scheduled':
-        return 'text-purple-600 bg-purple-50 border border-green-200';
+        return 'text-purple-600 bg-purple-50 border border-purple-200';
       case 'canceled':
-        return 'text-gray-600 bg-gray-50 border border-green-200';
+        return 'text-gray-600 bg-gray-50 border border-gray-200';
       default:
         return 'text-gray-600 bg-gray-50';
     }
@@ -219,52 +261,56 @@ export function Despesas() {
       case 'scheduled':
         return 'Agendada';
       case 'canceled':
-        return 'Canceladas';
+        return 'Cancelada';
       default:
         return status;
     }
   };
 
-  const statusConfig: Record<string, {
-    label: string;
-    Icon: any;
-    cardBg: string;
-    titleColor: string;
-    valueColor: string;
-    border: string;
-  }> = {
-    paid:      { label: "Pagas",     Icon: CheckCircle, cardBg: "bg-green-50",  titleColor: "text-gray-500", valueColor: "text-green-600",  border: "border-green-200" },
-    pending:   { label: "Pendentes", Icon: Clock,       cardBg: "bg-yellow-50", titleColor: "text-gray-500", valueColor: "text-yellow-600", border: "border-yellow-200" },
-    open:      { label: "Abertas",   Icon: Circle,      cardBg: "bg-blue-50",   titleColor: "text-gray-500", valueColor: "text-blue-600",   border: "border-blue-200" },
-    overdue:   { label: "Vencidas",  Icon: AlertCircle, cardBg: "bg-red-50",    titleColor: "text-gray-500", valueColor: "text-red-600",    border: "border-red-200" },
-    scheduled: { label: "Agendadas", Icon: Calendar,    cardBg: "bg-purple-50", titleColor: "text-gray-500", valueColor: "text-purple-600", border: "border-purple-200" },
-    canceled:  { label: "Canceladas",Icon: XCircle,     cardBg: "bg-gray-50",   titleColor: "text-gray-500", valueColor: "text-gray-600",   border: "border-gray-200" },
+  const statusConfig: Record<
+    string,
+    {
+      label: string;
+      Icon: any;
+      cardBg: string;
+      titleColor: string;
+      valueColor: string;
+      border: string;
+    }
+  > = {
+    paid: { label: 'Pagas', Icon: CheckCircle, cardBg: 'bg-green-50', titleColor: 'text-gray-500', valueColor: 'text-green-600', border: 'border-green-200' },
+    pending: { label: 'Pendentes', Icon: Clock, cardBg: 'bg-yellow-50', titleColor: 'text-gray-500', valueColor: 'text-yellow-600', border: 'border-yellow-200' },
+    open: { label: 'Abertas', Icon: Circle, cardBg: 'bg-blue-50', titleColor: 'text-gray-500', valueColor: 'text-blue-600', border: 'border-blue-200' },
+    overdue: { label: 'Vencidas', Icon: AlertCircle, cardBg: 'bg-red-50', titleColor: 'text-gray-500', valueColor: 'text-red-600', border: 'border-red-200' },
+    scheduled: { label: 'Agendadas', Icon: Calendar, cardBg: 'bg-purple-50', titleColor: 'text-gray-500', valueColor: 'text-purple-600', border: 'border-purple-200' },
+    canceled: { label: 'Canceladas', Icon: XCircle, cardBg: 'bg-gray-50', titleColor: 'text-gray-500', valueColor: 'text-gray-600', border: 'border-gray-200' },
   };
-  
-  // Agrega quantidade e total por status
-  const byStatus: Record<string, { count: number; total: number }> = 
-    (fixedExpensesThisMonth ?? []).reduce((acc: Record<string, { count: number; total: number }>, e: any) => {
-      const s = e.status ?? "pending";
+
+  const byStatus: Record<string, { count: number; total: number }> = (fixedExpensesThisMonth ?? []).reduce(
+    (acc: Record<string, { count: number; total: number }>, e: any) => {
+      const s = e.status ?? 'pending';
       const v = Number(e.amount) || 0;
       if (!acc[s]) acc[s] = { count: 0, total: 0 };
       acc[s].count += 1;
       acc[s].total += v;
       return acc;
-  }, {});
+    },
+    {}
+  );
 
   function getStatusIcon(status: string) {
     switch (status) {
-      case "paid":
+      case 'paid':
         return <CheckCircle className="p-1.5 rounded-lg bg-green-600 text-green-50" />;
-      case "pending":
+      case 'pending':
         return <Clock className="p-1.5 rounded-lg bg-yellow-500 text-yellow-50" />;
-      case "open":
+      case 'open':
         return <Circle className="p-1.5 rounded-lg bg-blue-500 text-blue-50" />;
-      case "overdue":
+      case 'overdue':
         return <AlertCircle className="p-1.5 rounded-lg bg-red-600 text-red-50" />;
-      case "scheduled":
+      case 'scheduled':
         return <Calendar className="p-1.5 rounded-lg bg-purple-500 text-purple-50" />;
-      case "canceled":
+      case 'canceled':
         return <XCircle className="p-1.5 rounded-lg bg-gray-500 text-gray-50" />;
       default:
         return null;
@@ -275,14 +321,11 @@ export function Despesas() {
     <>
       <div className="space-y-4 sm:space-y-6 w-full min-w-0">
         <div className="flex items-center justify-between px-1 sm:px-0">
-          <BreadcrumbBar
-            segments={['Gerenciadores', 'Despesas']}
-            onBack={() => navigate('/dashboard')}
-          />
+          <BreadcrumbBar segments={['Gerenciadores', 'Despesas']} onBack={() => navigate('/dashboard')} />
           <div className="relative">
             <VisualizationToolbar
-              onFilter={() => setShowFilters(prev => !prev)}
-              onSort={() => setShowSort(prev => !prev)}
+              onFilter={() => setShowFilters((prev) => !prev)}
+              onSort={() => setShowSort((prev) => !prev)}
               onShare={() => {}}
               onSettings={() => {}}
               activeFilter={hasActiveFilters}
@@ -328,9 +371,7 @@ export function Despesas() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Total Pago</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mt-1">
-                    {formatCurrency(summary?.totalPaid || 0)}
-                  </p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mt-1">{formatCurrency(summary?.totalPaid || 0)}</p>
                 </div>
                 <div className="p-2 sm:p-3 bg-red-100 rounded-lg flex-shrink-0">
                   <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-red-600" />
@@ -344,9 +385,7 @@ export function Despesas() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Total Pendente</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-600 mt-1">
-                    {formatCurrency(summary?.totalPending || 0)}
-                  </p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-600 mt-1">{formatCurrency(summary?.totalPending || 0)}</p>
                 </div>
                 <div className="p-2 sm:p-3 bg-yellow-100 rounded-lg flex-shrink-0">
                   <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-yellow-600" />
@@ -360,9 +399,7 @@ export function Despesas() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Total Parcelado</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600 mt-1">
-                    {formatCurrency(summary?.totalInstallments || 0)}
-                  </p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600 mt-1">{formatCurrency(summary?.totalInstallments || 0)}</p>
                 </div>
                 <div className="p-2 sm:p-3 bg-purple-100 rounded-lg flex-shrink-0">
                   <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
@@ -376,9 +413,7 @@ export function Despesas() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Média Mensal</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 mt-1">
-                    {formatCurrency(summary?.monthlyAverage || 0)}
-                  </p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 mt-1">{formatCurrency(summary?.monthlyAverage || 0)}</p>
                 </div>
                 <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
                   <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
@@ -397,64 +432,40 @@ export function Despesas() {
                 Despesas Fixas
               </CardTitle>
             </CardHeader>
+
             <CardContent className="py-0 px-1 sm:px-6">
-              <div 
-                className="overflow-x-auto scrollbar-hide" 
-                style={{ scrollBehavior: 'smooth' }}
-              >
-                <div 
-                  className="flex space-x-4 p-4 sm:p-6"
-                  style={{ 
-                    width: 'max-content',
-                    scrollSnapType: 'x mandatory',
-                    paddingLeft: '0',
-                    paddingRight: '0'
-                  }}
-                >
-                  {fixedExpensesThisMonth?.map((expense, index) => (
-                    <div
-                      key={expense.id}
-                      className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all"
-                      style={{ scrollSnapAlign: 'start' }}
-                    >
+              <div className="overflow-x-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                <div className="flex space-x-4 p-4 sm:p-6" style={{ width: 'max-content', scrollSnapType: 'x mandatory', paddingLeft: '0', paddingRight: '0' }}>
+                  {fixedExpensesThisMonth?.map((expense: any) => (
+                    <div key={expense.id} className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all" style={{ scrollSnapAlign: 'start' }}>
                       <div className="space-y-3">
                         <div>
-                          <h3 className="font-semibold text-gray-900 truncate">
-                            {expense.title}
-                          </h3>
+                          <h3 className="font-semibold text-gray-900 truncate">{expense.title}</h3>
                           <p className="text-xs text-gray-500">Despesa Fixa</p>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Vencimento:</span>
-                            <span className="font-medium text-gray-900">
-                              {formatDate(expense.transaction_date)}
-                            </span>
+                            <span className="font-medium text-gray-900">{formatDate(expense.transaction_date)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Valor:</span>
-                            <span className="font-medium text-red-600">
-                              {formatCurrency(Number(expense.amount))}
-                            </span>
+                            <span className="font-medium text-red-600">{formatCurrency(Number(expense.amount))}</span>
                           </div>
                           {expense.category && (
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-600">Categoria:</span>
-                              <span className="font-medium text-gray-900 truncate">
-                                {expense.category}
-                              </span>
+                              <span className="font-medium text-gray-900 truncate">{expense.category}</span>
                             </div>
                           )}
                         </div>
 
                         <div className="pt-2 border-t border-gray-100">
                           <div className="flex justify-between items-center mb-2">
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(expense.status)}`}>
-                              {getStatusLabel(expense.status)}
-                            </span>
+                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(expense.status)}`}>{getStatusLabel(expense.status)}</span>
                           </div>
-                          
+
                           <div className="flex space-x-1">
                             {expense.status === 'pending' && (
                               <button
@@ -484,7 +495,7 @@ export function Despesas() {
                       </div>
                     </div>
                   ))}
-                  
+
                   {(!fixedExpensesThisMonth || fixedExpensesThisMonth.length === 0) && (
                     <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
                       <RefreshCcw className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -494,24 +505,10 @@ export function Despesas() {
                 </div>
               </div>
             </CardContent>
+
             <CardContent className="p-4 pt-0 sm:px-6 sm:pt-0">
-              {/* MOBILE: scroll horizontal | DESKTOP: grid sem scroll */}
-              <div
-                className="
-                  overflow-x-auto -mx-4 px-4
-                  sm:overflow-visible sm:mx-0 sm:px-0
-                  scrollbar-hide
-                "
-                style={{ scrollBehavior: "smooth" }}
-              >
-                <div
-                  className="
-                    flex gap-3 w-max snap-x snap-mandatory
-                    sm:grid sm:w-auto sm:snap-none sm:gap-4
-                    sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7
-                  "
-                >
-                  {/* TOTAL */}
+              <div className="overflow-x-auto -mx-4 px-4 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                <div className="flex gap-3 w-max snap-x snap-mandatory sm:grid sm:w-auto sm:snap-none sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
                   <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="p-1.5 rounded-lg bg-gray-700 text-white">
@@ -520,35 +517,25 @@ export function Despesas() {
                       <p className="text-xs text-gray-500">Total</p>
                     </div>
                     <p className="text-sm font-medium text-gray-600">
-                      {fixedExpensesThisMonth?.length || 0}{" "}
-                      {(fixedExpensesThisMonth?.length || 0) === 1 ? "despesa" : "despesas"}
+                      {fixedExpensesThisMonth?.length || 0} {(fixedExpensesThisMonth?.length || 0) === 1 ? 'despesa' : 'despesas'}
                     </p>
                     <p className="text-lg font-semibold text-gray-900">
-                      {formatCurrency(
-                        fixedExpensesThisMonth?.reduce((acc, e) => acc + Number(e.amount), 0) || 0
-                      )}
+                      {formatCurrency(fixedExpensesThisMonth?.reduce((acc: number, e: any) => acc + Number(e.amount), 0) || 0)}
                     </p>
                   </div>
 
-                  {/* STATUS CARDS */}
                   {Object.entries(statusConfig).map(([key, cfg]) => {
                     const stats = byStatus[key] ?? { count: 0, total: 0 };
                     const Icon = cfg.Icon;
                     return (
-                      <div
-                        key={key}
-                        className={`min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border ${cfg.border} ${cfg.cardBg} text-left`}
-                      >
+                      <div key={key} className={`min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border ${cfg.border} ${cfg.cardBg} text-left`}>
                         <div className="flex items-center gap-2 mb-2">
                           <Icon className="w-3 h-3" />
                           <p className={`text-xs ${cfg.titleColor}`}>{cfg.label}</p>
                         </div>
-
-                        <p className="text-lg font-semibold text-gray-900">
-                          {formatCurrency(stats.total || 0)}
-                        </p>
+                        <p className="text-lg font-semibold text-gray-900">{formatCurrency(stats.total || 0)}</p>
                         <p className={`text-sm font-medium ${cfg.valueColor}`}>
-                          {stats.count} {stats.count === 1 ? "despesa" : "despesas"}
+                          {stats.count} {stats.count === 1 ? 'despesa' : 'despesas'}
                         </p>
                       </div>
                     );
@@ -568,64 +555,40 @@ export function Despesas() {
                 Parcelas
               </CardTitle>
             </CardHeader>
+
             <CardContent className="py-0 px-1 sm:px-6">
-              <div 
-                className="overflow-x-auto scrollbar-hide" 
-                style={{ scrollBehavior: 'smooth' }}
-              >
-                <div 
-                  className="flex space-x-4 p-4 sm:p-6"
-                  style={{ 
-                    width: 'max-content',
-                    scrollSnapType: 'x mandatory',
-                    paddingLeft: '0',
-                    paddingRight: '0'
-                  }}
-                >
-                  {installmentsThisMonth?.map((installment, index) => (
-                    <div
-                      key={installment.id}
-                      className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all"
-                      style={{ scrollSnapAlign: 'start' }}
-                    >
+              <div className="overflow-x-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                <div className="flex space-x-4 p-4 sm:p-6" style={{ width: 'max-content', scrollSnapType: 'x mandatory', paddingLeft: '0', paddingRight: '0' }}>
+                  {installmentsThisMonth?.map((installment: any) => (
+                    <div key={installment.id} className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all" style={{ scrollSnapAlign: 'start' }}>
                       <div className="space-y-3">
                         <div>
-                          <h3 className="font-semibold text-gray-900 truncate">
-                            {installment.title}
-                          </h3>
+                          <h3 className="font-semibold text-gray-900 truncate">{installment.title}</h3>
                           <p className="text-xs text-gray-500">
                             Parcela {installment.installment_number}/{installment.installment_total}
                           </p>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Vencimento:</span>
-                            <span className="font-medium text-gray-900">
-                              {formatDate(installment.transaction_date)}
-                            </span>
+                            <span className="font-medium text-gray-900">{formatDate(installment.transaction_date)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Valor parcela:</span>
-                            <span className="font-medium text-red-600">
-                              {formatCurrency(Number(installment.amount))}
-                            </span>
+                            <span className="font-medium text-red-600">{formatCurrency(Number(installment.amount))}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Total compra:</span>
-                            <span className="font-medium text-gray-900">
-                              {formatCurrency(Number(installment.amount) * installment.installment_total)}
-                            </span>
+                            <span className="font-medium text-gray-900">{formatCurrency(Number(installment.amount) * installment.installment_total)}</span>
                           </div>
                         </div>
 
                         <div className="pt-2 border-t border-gray-100">
                           <div className="flex justify-between items-center mb-2">
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(installment.status)}`}>
-                              {getStatusLabel(installment.status)}
-                            </span>
+                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(installment.status)}`}>{getStatusLabel(installment.status)}</span>
                           </div>
-                          
+
                           <div className="flex space-x-1">
                             {installment.status === 'pending' && (
                               <button
@@ -655,7 +618,7 @@ export function Despesas() {
                       </div>
                     </div>
                   ))}
-                  
+
                   {(!installmentsThisMonth || installmentsThisMonth.length === 0) && (
                     <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
                       <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -770,12 +733,13 @@ export function Despesas() {
           </Card>
         </div>
 
-        {/* Despesas Table */}
+        {/* Lançamentos - Dashboard-like columns */}
         <div className="px-1 sm:px-0">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl">Lançamentos</CardTitle>
             </CardHeader>
+
             <CardContent className="py-0 px-1 sm:px-6">
               {isLoading ? (
                 <div className="flex justify-center py-8">
@@ -784,117 +748,192 @@ export function Despesas() {
               ) : (
                 <div className="w-full overflow-x-auto">
                   <div className="max-h-[560px] overflow-y-auto">
-                    <table className="w-full min-w-[800px]">
+                    <table className="w-full min-w-[980px]">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">Data</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[140px]">Descrição</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Valor</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">Cartão de crédito</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">Categoria</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">Centro de custo</th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Ações</th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[60px]">
+                            Tipo
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[70px]">
+                            Status
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                            Título
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                            Data
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">
+                            Valor
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                            Conta Bancária
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                            C. Crédito
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                            Categoria
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                            C. Custo
+                          </th>
+                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">
+                            Ações
+                          </th>
                         </tr>
                       </thead>
+
                       <tbody>
-                        {sortedDespesas.map((despesa) => (
-                          <tr key={despesa.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                              {formatDate(despesa.transaction_date)}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              <div>
-                                <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{despesa.title}</p>
-                                {despesa.subtitle && (
-                                  <p className="text-xs text-gray-500 truncate">{despesa.subtitle}</p>
+                        {sortedDespesas.map((despesa: any) => {
+                          const type = 'expense';
+                          const status = despesa.status || 'pending';
+
+                          const bankName = despesa.bank_name ?? despesa.transaction_account ?? despesa.bank ?? null;
+                          const bankColor = despesa.bank_color ?? despesa.transaction_account_color ?? null;
+                          const bankIcon = despesa.bank_icon ?? despesa.transaction_account_icon ?? null;
+
+                          return (
+                            <tr
+                              key={despesa.id}
+                              className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                              onClick={() => handleEditDespesa(despesa)}
+                            >
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50" title={getTypeLabel(type)}>
+                                  {getTypeIcon(type)}
+                                </span>
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50" title={getStatusLabelDashboardLike(status)}>
+                                  {getStatusIcon(status)}
+                                </span>
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
+                                <span className="truncate block max-w-[140px] sm:max-w-none">{despesa.title}</span>
+                                {despesa.subtitle ? (
+                                  <span className="text-[11px] text-gray-500 truncate block max-w-[140px] sm:max-w-none">{despesa.subtitle}</span>
+                                ) : null}
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                                {formatDate(despesa.transaction_date)}
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium">
+                                {formatCurrency(Number(despesa.amount))}
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
+                                {bankName ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex items-center justify-center text-white p-1.5 rounded-lg" style={{ backgroundColor: bankColor || 'unset' }}>
+                                      {(() => {
+                                        const iconKey = (bankIcon || '') as keyof typeof Lucide;
+                                        const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                        return DynamicIcon ? <DynamicIcon className="w-3 h-3" /> : null;
+                                      })()}
+                                    </div>
+                                    <span className="truncate block max-w-[140px] sm:max-w-none">{bankName}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">-</span>
                                 )}
-                              </div>
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
-                              {formatCurrency(Number(despesa.amount))}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              {despesa.card_name ? (
-                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.card_color || '#E5E7EB' }}>
-                                  {(() => {
-                                    const iconKey = (despesa.card_icon || '') as keyof typeof Lucide;
-                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
-                                    return DynamicIcon ? (
-                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
-                                    ) : null;
-                                  })()}
-                                  <span className="text-xs font-medium text-white truncate">{despesa.card_name}</span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-500">-</span>
-                              )}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              {despesa.category_name ? (
-                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.category_color || '#E5E7EB' }}>
-                                  {(() => {
-                                    const iconKey = (despesa.category_icon || '') as keyof typeof Lucide;
-                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
-                                    return DynamicIcon ? (
-                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
-                                    ) : null;
-                                  })()}
-                                  <span className="text-xs font-medium text-white truncate">{despesa.category_name}</span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-500">-</span>
-                              )}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              {despesa.cost_center_name ? (
-                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.cost_center_color || '#E5E7EB' }}>
-                                  {(() => {
-                                    const iconKey = (despesa.cost_center_icon || '') as keyof typeof Lucide;
-                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
-                                    return DynamicIcon ? (
-                                      <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} />
-                                    ) : null;
-                                  })()}
-                                  <span className="text-xs font-medium text-white truncate">{despesa.cost_center_name}</span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-gray-500">-</span>
-                              )}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4">
-                              <div className="flex justify-center space-x-1 sm:space-x-2">
-                                {despesa.status === 'pending' && (
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                {despesa.card_name ? (
+                                  <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.card_color || '#E5E7EB' }}>
+                                    {(() => {
+                                      const iconKey = (despesa.card_icon || '') as keyof typeof Lucide;
+                                      const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                      return DynamicIcon ? <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} /> : null;
+                                    })()}
+                                    <span className="text-xs font-medium text-white truncate">{despesa.card_name}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">-</span>
+                                )}
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                {despesa.category_name ? (
+                                  <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.category_color || '#E5E7EB' }}>
+                                    {(() => {
+                                      const iconKey = (despesa.category_icon || '') as keyof typeof Lucide;
+                                      const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                      return DynamicIcon ? <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} /> : null;
+                                    })()}
+                                    <span className="text-xs font-medium text-white truncate">{despesa.category_name}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">-</span>
+                                )}
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                {despesa.cost_center_name ? (
+                                  <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.cost_center_color || '#E5E7EB' }}>
+                                    {(() => {
+                                      const iconKey = (despesa.cost_center_icon || '') as keyof typeof Lucide;
+                                      const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                      return DynamicIcon ? <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} /> : null;
+                                    })()}
+                                    <span className="text-xs font-medium text-white truncate">{despesa.cost_center_name}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">-</span>
+                                )}
+                              </td>
+
+                              <td className="py-2 sm:py-3 px-2 sm:px-4">
+                                <div className="flex justify-center space-x-1 sm:space-x-2">
+                                  {status === 'pending' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMarkAsPaid(despesa.id);
+                                      }}
+                                      className="p-0.5 sm:p-1 text-gray-400 hover:text-green-600 transition-colors"
+                                      title="Marcar como paga"
+                                    >
+                                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    </button>
+                                  )}
+
                                   <button
-                                    onClick={() => handleMarkAsPaid(despesa.id)}
-                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-green-600 transition-colors"
-                                    title="Marcar como paga"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditDespesa(despesa);
+                                    }}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Editar"
                                   >
-                                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                                   </button>
-                                )}
-                                <button
-                                  onClick={() => handleEditDespesa(despesa)}
-                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                  title="Editar"
-                                >
-                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteDespesa(despesa.id)}
-                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
-                                  title="Excluir"
-                                >
-                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteDespesa(despesa.id);
+                                    }}
+                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
-                  
-                  {despesas.length === 0 && (
+
+                  {sortedDespesas.length === 0 && (
                     <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
                       <TrendingDown className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
                       <p className="text-base sm:text-lg font-medium">Nenhuma despesa encontrada</p>
@@ -1007,7 +1046,6 @@ export function Despesas() {
         </div>
       </div>
 
-      {/* Create/Edit Modal */}
       <DespesaModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -1091,7 +1129,7 @@ function DespesaModal({ isOpen, onClose, despesa, onSave }: DespesaModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const despesaData: DespesaData = {
         title: formData.title,
@@ -1117,16 +1155,11 @@ function DespesaModal({ isOpen, onClose, despesa, onSave }: DespesaModalProps) {
   };
 
   const handleInputChange = (field: keyof DespesaFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={despesa ? 'Editar Despesa' : 'Nova Despesa'}
-      size="lg"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title={despesa ? 'Editar Despesa' : 'Nova Despesa'} size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
@@ -1164,26 +1197,14 @@ function DespesaModal({ isOpen, onClose, despesa, onSave }: DespesaModalProps) {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de despesa
-            </label>
-            <Dropdown
-              options={repeatTypeOptions}
-              value={formData.repeat_type}
-              onChange={(value) => handleInputChange('repeat_type', value)}
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de despesa</label>
+            <Dropdown options={repeatTypeOptions} value={formData.repeat_type} onChange={(value) => handleInputChange('repeat_type', value)} />
           </div>
 
           {formData.repeat_type === 'recorrente' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Intervalo de recorrência
-              </label>
-              <Dropdown
-                options={repeatIntervalOptions}
-                value={formData.repeat_interval}
-                onChange={(value) => handleInputChange('repeat_interval', value)}
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Intervalo de recorrência</label>
+              <Dropdown options={repeatIntervalOptions} value={formData.repeat_interval} onChange={(value) => handleInputChange('repeat_interval', value)} />
             </div>
           )}
         </div>
@@ -1200,12 +1221,7 @@ function DespesaModal({ isOpen, onClose, despesa, onSave }: DespesaModalProps) {
           </label>
 
           <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={formData.is_installment}
-              onChange={(e) => handleInputChange('is_installment', e.target.checked)}
-              className="mr-2"
-            />
+            <input type="checkbox" checked={formData.is_installment} onChange={(e) => handleInputChange('is_installment', e.target.checked)} className="mr-2" />
             <span className="text-sm text-gray-700">Parcelada?</span>
           </label>
         </div>
@@ -1224,9 +1240,7 @@ function DespesaModal({ isOpen, onClose, despesa, onSave }: DespesaModalProps) {
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Observações
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Observações</label>
           <textarea
             value={formData.notes}
             onChange={(e) => handleInputChange('notes', e.target.value)}
