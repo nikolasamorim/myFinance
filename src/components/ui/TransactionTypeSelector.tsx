@@ -32,20 +32,20 @@ const transactionTypes: TransactionType[] = [
     icon: <TrendingDown className="w-5 h-5" />,
     color: 'from-red-500 to-pink-600',
   },
-  {
-    value: 'debt',
-    label: 'Dívida',
-    description: 'Valores devidos',
-    icon: <AlertTriangle className="w-5 h-5" />,
-    color: 'from-orange-500 to-red-600',
-  },
-  {
-    value: 'investment',
-    label: 'Investimento',
-    description: 'Aplicações financeiras',
-    icon: <PiggyBank className="w-5 h-5" />,
-    color: 'from-blue-500 to-indigo-600',
-  },
+  // {
+  //   value: 'debt',
+  //   label: 'Dívida',
+  //   description: 'Valores devidos',
+  //   icon: <AlertTriangle className="w-5 h-5" />,
+  //   color: 'from-orange-500 to-red-600',
+  // },
+  // {
+  //   value: 'investment',
+  //   label: 'Investimento',
+  //   description: 'Aplicações financeiras',
+  //   icon: <PiggyBank className="w-5 h-5" />,
+  //   color: 'from-blue-500 to-indigo-600',
+  // },
 ];
 
 export function TransactionTypeSelector({ onSelect, trigger, className }: TransactionTypeSelectorProps) {
