@@ -165,8 +165,8 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
   const managerItems = [
     { to: '/gerenciadores/receitas', icon: <TrendingUp className="w-5 h-5 text-gray-600" />, label: 'Receitas' },
     { to: '/gerenciadores/despesas', icon: <TrendingDown className="w-5 h-5 text-gray-600" />, label: 'Despesas' },
-    { to: '/gerenciadores/dividas', icon: <AlertTriangle className="w-5 h-5 text-gray-600" />, label: 'Dívidas' },
-    { to: '/gerenciadores/investimentos', icon: <PiggyBank className="w-5 h-5 text-gray-600" />, label: 'Investimentos' },
+    // { to: '/gerenciadores/dividas', icon: <AlertTriangle className="w-5 h-5 text-gray-600" />, label: 'Dívidas' },
+    // { to: '/gerenciadores/investimentos', icon: <PiggyBank className="w-5 h-5 text-gray-600" />, label: 'Investimentos' },
   ];
 
   const organizadorItems = [
