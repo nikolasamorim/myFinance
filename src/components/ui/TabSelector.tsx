@@ -20,6 +20,7 @@ export function TabSelector({ tabs, activeTab, onChange, className }: TabSelecto
     <div className={cn('flex space-x-1 bg-gray-100 p-1 rounded-lg', className)}>
       {tabs.map((tab) => (
         <button
+          type="button"
           key={tab.id}
           onClick={() => onChange(tab.id)}
           disabled={tab.disabled}
