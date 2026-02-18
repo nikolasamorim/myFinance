@@ -13,9 +13,8 @@ import { useAccounts } from '../../hooks/useAccounts';
 import { useCreditCards } from '../../hooks/useCreditCards';
 import { useCategories } from '../../hooks/useCategories';
 import { useCostCenters } from '../../hooks/useCostCenters';
-import { formatCurrency, formatDate } from '../../lib/utils';
-import { cn } from '../../lib/utils';
-import type { AdvancedTransactionData, InstallmentData, RecurrenceData } from '../../types';
+import { formatCurrency, formatDate, cn } from '../../lib/utils';
+import type { AdvancedTransactionData, InstallmentData, RecurrenceData, Transaction } from '../../types';
 
 const transactionSchema = z.object({
   description: z.string().min(1, 'Descrição é obrigatória'),
@@ -85,15 +84,18 @@ interface AdvancedTransactionModalProps {
   onClose: () => void;
   transactionType: 'income' | 'expense' | 'debt' | 'investment';
   onSave: (data: AdvancedTransactionData) => Promise<void>;
+  transaction?: Transaction;
 }
 
 export function AdvancedTransactionModal({ 
   isOpen, 
   onClose, 
   transactionType, 
-  onSave 
+  onSave,
+  transaction,
 }: AdvancedTransactionModalProps) {
   const { currentWorkspace } = useWorkspace();
+  const isEditing = !!transaction;
   const [activeTab, setActiveTab] = useState('data');
   const [installments, setInstallments] = useState<InstallmentData[]>([]);
   const [installmentsGenerated, setInstallmentsGenerated] = useState(false);
@@ -130,7 +132,21 @@ export function AdvancedTransactionModal({
     formState: { errors },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
+    defaultValues: isEditing && transaction ? {
+      // Preenche os campos usando a transação existente
+      description: transaction.transaction_description,
+      emission_date: transaction.transaction_issue_date || transaction.transaction_date,
+      due_date: transaction.transaction_date,
+      competence_date: transaction.transaction_competence_date,
+      amount: Number(transaction.transaction_amount),
+      account_id: transaction.transaction_bank_id || '',
+      credit_card_id: transaction.transaction_card_id || undefined,
+      cost_center_id: transaction.transaction_cost_center_id || undefined,
+      category_id: transaction.transaction_category_id || undefined,
+      payment_method: transaction.transaction_payment_method,
+      is_installment: false,
+      is_recurring: false,
+    } : {
       emission_date: new Date().toISOString().split('T')[0],
       due_date: new Date().toISOString().split('T')[0],
       competence_date: new Date().toISOString().slice(0, 7),
@@ -140,6 +156,94 @@ export function AdvancedTransactionModal({
       amount: 0,
     },
   });
+
+  // Normaliza o método de pagamento para os valores aceitos pelo Dropdown
+  const normalizePaymentMethod = (raw?: string, cardId?: string) => {
+    if (cardId) return 'cartao_de_credito';
+    if (!raw) return 'pix'; // fallback
+  
+    const key = raw.trim().toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '_');
+  
+    const map: Record<string, string> = {
+      dinheiro: 'dinheiro',
+      boleto: 'boleto',
+      credito_em_conta: 'credito_em_conta',
+      debito_em_conta: 'debito_em_conta',
+      cheque_a_vista: 'cheque_a_vista',
+      cheque_a_prazo: 'cheque_a_prazo',
+      credito: 'cartao_de_credito',
+      cartao_de_credito: 'cartao_de_credito',
+      cartao_credito: 'cartao_de_credito',
+      debito: 'cartao_de_debito',
+      cartao_de_debito: 'cartao_de_debito',
+      cartao_debito: 'cartao_de_debito',
+      guia: 'guia',
+      permuta: 'permuta',
+      pix: 'pix',
+      debito_automatico: 'debito_automatico',
+    };
+    return map[key] || 'pix';
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveTab('data');
+  
+    if (transaction) {
+      const emission = transaction.transaction_issue_date || transaction.transaction_date || new Date().toISOString().split('T')[0];
+      const cardId = transaction.transaction_card_id || '';
+      const payment = normalizePaymentMethod(transaction.transaction_payment_method, cardId);
+  
+      reset({
+        description: transaction.transaction_description || '',
+        emission_date: emission,
+        due_date: transaction.transaction_date || emission,
+        competence_date: transaction.transaction_competence_date || emission.slice(0, 7),
+        amount: Number(transaction.transaction_amount) || 0,
+        account_id: transaction.transaction_bank_id || '',
+        credit_card_id: cardId || '',
+        cost_center_id: transaction.transaction_cost_center_id || '',
+        category_id: transaction.transaction_category_id || '',
+        payment_method: payment,
+        is_installment: false,
+        is_recurring: false,
+      });
+  
+      setCurrencyDisplayValue(
+        formatCurrencyInput(String(Math.round((Number(transaction.transaction_amount) || 0) * 100)))
+      );
+  
+      setInstallments([]);
+      setInstallmentsGenerated(false);
+      setRecurrenceData({
+        enabled: false,
+        start_date: emission,
+        recurrence_type: 'monthly',
+        due_adjustment: 'none',
+      });
+    } else {
+      // valores padrão para criação de nova transação
+      const today = new Date().toISOString().split('T')[0];
+      reset({
+        description: '',
+        emission_date: today,
+        due_date: today,
+        competence_date: today.slice(0, 7),
+        amount: 0,
+        account_id: '',
+        credit_card_id: '',
+        cost_center_id: '',
+        category_id: '',
+        payment_method: 'pix',
+        is_installment: false,
+        is_recurring: false,
+      });
+      setCurrencyDisplayValue('');
+    }
+  }, [isOpen, transaction]);  
 
   const watchedValues = watch();
   const isInstallment = watch('is_installment');
@@ -182,8 +286,18 @@ export function AdvancedTransactionModal({
     }
   }, [mainAmount]);
 
+  // Inicializa o campo de moeda no modo de edição
+  useEffect(() => {
+    if (isEditing && transaction) {
+      setCurrencyDisplayValue(
+        formatCurrencyInput((transaction.transaction_amount * 100).toString())
+      );
+    }
+  }, [isEditing, transaction]);
+
   // Handle tab change - NO VALIDATION, NO API CALLS
   const handleTabChange = (newTab: string) => {
+    if (isEditing) return;
     setActiveTab(newTab);
   };
 
@@ -477,7 +591,7 @@ export function AdvancedTransactionModal({
       onClose={handleClose}
       title={
         <div className="flex items-center space-x-2">
-          <span>Nova {getTransactionTypeLabel()}</span>
+          <span>{isEditing ? 'Editar' : 'Nova'} {getTransactionTypeLabel()}</span>
           <span className={`text-sm font-normal ${getTransactionTypeColor()}`}>
             ({transactionType})
           </span>
@@ -486,12 +600,15 @@ export function AdvancedTransactionModal({
       size="xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
         {/* Tab Navigation */}
-        <TabSelector
-          tabs={tabs}
-          activeTab={activeTab}
-          onChange={handleTabChange}
-        />
+        {!isEditing && (
+          <TabSelector
+            tabs={tabs}
+            activeTab={activeTab}
+            onChange={handleTabChange}
+          />
+        )}
 
         {/* Tab Content */}
         <div className="min-h-[400px]">
@@ -681,61 +798,63 @@ export function AdvancedTransactionModal({
               </div>
 
               {/* Options */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                  Opções Avançadas
-                </h3>
+              {!isEditing && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                    Opções Avançadas
+                  </h3>
 
-                <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      {...register('is_installment')}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm font-medium text-gray-700">É parcelado?</span>
-                  </label>
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        {...register('is_installment')}
+                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm font-medium text-gray-700">É parcelado?</span>
+                    </label>
 
-                  {/* Installment Field - Only show when installment is enabled */}
-                  {isInstallment && (
-                    <div className="flex items-center space-x-2">
-                      <label className="text-sm font-medium text-gray-700">Parcela:</label>
-                      <div className="flex items-center space-x-1">
-                        <input
-                          type="number"
-                          min="1"
-                          max={totalInstallments}
-                          value={currentInstallmentNumber}
-                          onChange={(e) => setCurrentInstallmentNumber(Number(e.target.value))}
-                          className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-600">/</span>
-                        <input
-                          type="number"
-                          min="2"
-                          max="99"
-                          value={totalInstallments}
-                          onChange={(e) => setTotalInstallments(Number(e.target.value))}
-                          className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
+                    {/* Installment Field - Only show when installment is enabled */}
+                    {isInstallment && (
+                      <div className="flex items-center space-x-2">
+                        <label className="text-sm font-medium text-gray-700">Parcela:</label>
+                        <div className="flex items-center space-x-1">
+                          <input
+                            type="number"
+                            min="1"
+                            max={totalInstallments}
+                            value={currentInstallmentNumber}
+                            onChange={(e) => setCurrentInstallmentNumber(Number(e.target.value))}
+                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-600">/</span>
+                          <input
+                            type="number"
+                            min="2"
+                            max="99"
+                            value={totalInstallments}
+                            onChange={(e) => setTotalInstallments(Number(e.target.value))}
+                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      {...register('is_recurring')}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm font-medium text-gray-700">É recorrente?</span>
-                  </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        {...register('is_recurring')}
+                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm font-medium text-gray-700">É recorrente?</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
-          {activeTab === 'installments' && isInstallment && (
+          {activeTab === 'installments' && !isEditing && isInstallment && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -899,7 +1018,7 @@ export function AdvancedTransactionModal({
             </div>
           )}
 
-          {activeTab === 'recurrence' && isRecurring && (
+          {activeTab === 'recurrence' && !isEditing && isRecurring && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">
