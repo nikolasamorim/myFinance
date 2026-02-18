@@ -33,6 +33,9 @@ import type { SortOption } from '../../components/ui/SortPanel';
 import { useReceitas } from '../../hooks/useReceitas';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import type { ReceitaData } from '../../services/receita.service';
+import { AdvancedTransactionModal } from '../../components/transactions/AdvancedTransactionModal';
+import { useAdvancedTransactions } from '../../hooks/useAdvancedTransactions';
+import type { AdvancedTransactionData } from '../../types';
 
 interface ReceitaFilters {
   status: string;
@@ -151,6 +154,8 @@ export function Receitas() {
   const [editingReceita, setEditingReceita] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
+  const { createAdvancedTransaction } = useAdvancedTransactions();
+  const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
 
   const {
     data: receitas = [],
@@ -191,9 +196,9 @@ export function Receitas() {
 
   const handleCreateReceita = () => {
     setEditingReceita(null);
-    setShowModal(true);
+    setShowModal(false); // garante que não abre o modal antigo
+    setIsAdvancedModalOpen(true); // abre o modal avançado já em Receita
   };
-
   const handleEditReceita = (receita: any) => {
     setEditingReceita(receita);
     setShowModal(true);
@@ -1043,6 +1048,19 @@ export function Receitas() {
             await createReceita.mutateAsync(data);
           }
           setShowModal(false);
+        }}
+      />
+
+      <AdvancedTransactionModal
+        isOpen={isAdvancedModalOpen}
+        onClose={() => setIsAdvancedModalOpen(false)}
+        transactionType="income"
+        onSave={async (data: AdvancedTransactionData) => {
+          await createAdvancedTransaction.mutateAsync({
+            transactionType: 'income',
+            data,
+          });
+          setIsAdvancedModalOpen(false);
         }}
       />
     </>

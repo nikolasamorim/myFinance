@@ -31,6 +31,9 @@ import type { SortOption } from '../../components/ui/SortPanel';
 import { useDespesas } from '../../hooks/useDespesas';
 import { formatCurrency, formatDate, cn } from '../../lib/utils';
 import type { DespesaData } from '../../services/despesa.service';
+import { AdvancedTransactionModal } from '../../components/transactions/AdvancedTransactionModal';
+import { useAdvancedTransactions } from '../../hooks/useAdvancedTransactions';
+import type { AdvancedTransactionData } from '../../types';
 
 interface DespesaFilters {
   status: string;
@@ -127,6 +130,8 @@ export function Despesas() {
   const [editingDespesa, setEditingDespesa] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
+  const { createAdvancedTransaction } = useAdvancedTransactions();
+  const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
 
   const {
     data: despesas = [],
@@ -167,7 +172,8 @@ export function Despesas() {
 
   const handleCreateDespesa = () => {
     setEditingDespesa(null);
-    setShowModal(true);
+    setShowModal(false); // garante que não abre o modal antigo
+    setIsAdvancedModalOpen(true); // abre o modal avançado já em Despesa
   };
 
   const handleEditDespesa = (despesa: any) => {
@@ -1057,6 +1063,19 @@ export function Despesas() {
             await createDespesa.mutateAsync(data);
           }
           setShowModal(false);
+        }}
+      />
+      
+      <AdvancedTransactionModal
+        isOpen={isAdvancedModalOpen}
+        onClose={() => setIsAdvancedModalOpen(false)}
+        transactionType="expense"
+        onSave={async (data: AdvancedTransactionData) => {
+          await createAdvancedTransaction.mutateAsync({
+            transactionType: 'expense',
+            data,
+          });
+          setIsAdvancedModalOpen(false);
         }}
       />
     </>
