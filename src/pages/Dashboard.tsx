@@ -17,6 +17,7 @@ import { TransactionTypeSelector } from '../components/ui/TransactionTypeSelecto
 import { TransactionModal } from '../components/transactions/TransactionModal';
 import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
 import { useAdvancedTransactions } from '../hooks/useAdvancedTransactions';
+import { useUpdateTransaction } from '../hooks/useTransactions';
 import { useTransactions } from '../hooks/useTransactions';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useWorkspace } from '../context/WorkspaceContext';
@@ -74,6 +75,7 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
   const { createAdvancedTransaction, markInstallmentAsPaid } = useAdvancedTransactions();
+  const updateTransaction = useUpdateTransaction();
   const { deleteTransaction } = useTransactions();
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
@@ -283,8 +285,10 @@ export function Dashboard() {
 
   const handleEditTransaction = (transaction: Transaction) => {
     setEditingTransaction(transaction);
-    setIsTransactionModalOpen(true);
+    setSelectedTransactionType(transaction.transaction_type);
+    setIsAdvancedModalOpen(true);
   };
+  
 
   const handleCloseModal = () => {
     setIsTransactionModalOpen(false);
@@ -867,12 +871,36 @@ export function Dashboard() {
         isOpen={isAdvancedModalOpen}
         onClose={handleCloseModal}
         transactionType={selectedTransactionType}
+        transaction={editingTransaction}
         onSave={async (data: AdvancedTransactionData) => {
-          await createAdvancedTransaction.mutateAsync({ 
-            transactionType: selectedTransactionType, 
-            data 
-          });
-          handleCloseModal();
+          if (editingTransaction) {
+            const updates: Partial<Transaction> = {
+              transaction_description: data.description,
+              transaction_amount: data.amount,
+              transaction_type: selectedTransactionType,
+              // transaction_issue_date: data.emission_date,
+              transaction_date: data.due_date,
+              // transaction_competence_date: data.competence_date,
+              transaction_bank_id: data.account_id,
+              transaction_card_id: data.credit_card_id || undefined,
+              transaction_cost_center_id: data.cost_center_id || undefined,
+              transaction_category_id: data.category_id || undefined,
+              transaction_payment_method: data.payment_method,
+            };
+            await updateTransaction.mutateAsync({
+              id: editingTransaction.transaction_id,
+              updates,
+            });
+            handleCloseModal();
+          } else {
+            
+            await createAdvancedTransaction.mutateAsync({
+              transactionType: selectedTransactionType,
+              data,
+            });
+            
+            handleCloseModal();
+          }
         }}
       />
     </>
