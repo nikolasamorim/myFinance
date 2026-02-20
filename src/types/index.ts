@@ -1,3 +1,32 @@
+// ─── Tipos Utilitários (AI Kit — ver /docs/ai/02-CONVENTIONS.md) ──────────────
+
+/** Códigos de erro padronizados para toda a aplicação */
+export type AppErrorCode =
+  | 'NOT_FOUND'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'VALIDATION_ERROR'
+  | 'CONFLICT'
+  | 'SERVER_ERROR'
+  | 'NETWORK_ERROR';
+
+/** Formato de erro padronizado para exibição na UI */
+export interface AppError {
+  code: AppErrorCode | string;
+  message: string;      // mensagem em PT-BR para o usuário
+  details?: unknown;    // dados extras (campo inválido, etc.)
+}
+
+/** Resultado paginado de qualquer listagem */
+export interface Paginated<T> {
+  data: T[];
+  total: number;   // total de registros (sem paginação)
+  page: number;    // página atual (começa em 1)
+  limit: number;   // itens por página
+}
+
+// ─── Entidades de Domínio ────────────────────────────────────────────────────
+
 export interface User {
   id: string;
   name: string;

@@ -1,0 +1,639 @@
+openapi: "3.0.3"
+
+info:
+  title: myFinance API (Supabase PostgREST)
+  description: |
+    Este projeto não tem API REST própria.
+    Todo acesso a dados é feito via Supabase JS Client (PostgREST + Auth).
+    Este documento descreve os contratos de dados entre o front-end e o Supabase,
+    servindo como "fonte de verdade" para tipos, validações e testes.
+    
+    Base URL: https://<project>.supabase.co/rest/v1
+    Autenticação: Bearer JWT (Supabase Auth) + apikey header
+  version: "1.0.0"
+  contact:
+    name: myFinance Dev Team
+
+servers:
+  - url: https://{project}.supabase.co/rest/v1
+    variables:
+      project:
+        description: Supabase project ID
+        default: "xxxxx"
+
+security:
+  - bearerAuth: []
+  - apiKey: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKey:
+      type: apiKey
+      in: header
+      name: apikey
+
+  schemas:
+    # ─── Tipos Utilitários ───────────────────────────────────────────────────
+    AppError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "NOT_FOUND"
+          description: "Código de erro interno. Ex: NOT_FOUND, UNAUTHORIZED, VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Registro não encontrado."
+        details:
+          description: "Dados extras opcionais (campo inválido, etc.)"
+
+    PaginationMeta:
+      type: object
+      required: [total, page, limit]
+      properties:
+        total:
+          type: integer
+          example: 150
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+
+    # ─── Entidades Principais ────────────────────────────────────────────────
+    User:
+      type: object
+      required: [user_id, email]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "João Silva"
+        email:
+          type: string
+          format: email
+        avatar_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Workspace:
+      type: object
+      required: [workspace_id, workspace_name, workspace_type, workspace_owner_user_id]
+      properties:
+        workspace_id:
+          type: string
+          format: uuid
+        workspace_name:
+          type: string
+          example: "Finanças Pessoais"
+        workspace_type:
+          type: string
+          enum: [personal, family, business]
+        workspace_icon:
+          type: string
+          nullable: true
+        workspace_owner_user_id:
+          type: string
+          format: uuid
+        workspace_created_at:
+          type: string
+          format: date-time
+
+    Transaction:
+      type: object
+      required:
+        - transaction_id
+        - transaction_workspace_id
+        - transaction_type
+        - transaction_description
+        - transaction_amount
+        - transaction_date
+        - transaction_is_paid
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+        transaction_workspace_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum: [expense, income, debt, investment]
+        transaction_description:
+          type: string
+          example: "Aluguel"
+        transaction_amount:
+          type: number
+          format: float
+          example: 1500.00
+          description: "Valor em reais (float). Ex: 1500.50 = R$ 1.500,50"
+        transaction_date:
+          type: string
+          format: date
+          example: "2025-08-01"
+        transaction_issue_date:
+          type: string
+          format: date
+        transaction_competence_date:
+          type: string
+          format: date
+        transaction_payment_method:
+          type: string
+          example: "pix"
+        transaction_is_paid:
+          type: boolean
+        transaction_status:
+          type: string
+          enum: [pending, paid, received]
+          nullable: true
+        transaction_category_id:
+          type: string
+          format: uuid
+          nullable: true
+        transaction_cost_center_id:
+          type: string
+          format: uuid
+          nullable: true
+        transaction_bank_id:
+          type: string
+          format: uuid
+          nullable: true
+        transaction_card_id:
+          type: string
+          format: uuid
+          nullable: true
+        recurrence_id:
+          type: string
+          format: uuid
+          nullable: true
+        installment_group_id:
+          type: string
+          format: uuid
+          nullable: true
+        installment_number:
+          type: integer
+          nullable: true
+        installment_total:
+          type: integer
+          nullable: true
+        transaction_created_at:
+          type: string
+          format: date-time
+        transaction_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateTransactionInput:
+      type: object
+      required:
+        - transaction_workspace_id
+        - transaction_type
+        - transaction_description
+        - transaction_amount
+        - transaction_date
+        - transaction_payment_method
+        - transaction_is_paid
+      properties:
+        transaction_workspace_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum: [expense, income, debt, investment]
+        transaction_description:
+          type: string
+        transaction_amount:
+          type: number
+          format: float
+        transaction_date:
+          type: string
+          format: date
+        transaction_issue_date:
+          type: string
+          format: date
+        transaction_competence_date:
+          type: string
+          format: date
+        transaction_payment_method:
+          type: string
+        transaction_is_paid:
+          type: boolean
+        transaction_category_id:
+          type: string
+          format: uuid
+          nullable: true
+        transaction_cost_center_id:
+          type: string
+          format: uuid
+          nullable: true
+        transaction_bank_id:
+          type: string
+          format: uuid
+          nullable: true
+        transaction_card_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    Account:
+      type: object
+      required: [id, workspace_id, title, type, initial_balance]
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspace_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: "Conta Corrente BB"
+        type:
+          type: string
+          enum: [cash, bank]
+        initial_balance:
+          type: number
+          format: float
+          example: 5000.00
+        opened_at:
+          type: string
+          format: date
+        cost_center_id:
+          type: string
+          format: uuid
+          nullable: true
+        color:
+          type: string
+          example: "#4F46E5"
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      required: [category_id, category_name, category_type, category_workspace_id]
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        category_name:
+          type: string
+          example: "Alimentação"
+        category_type:
+          type: string
+          enum: [expense, income, debt, investment]
+        category_workspace_id:
+          type: string
+          format: uuid
+
+    CostCenter:
+      type: object
+      required: [id, workspace_id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspace_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    RecurrenceRule:
+      type: object
+      required: [id, workspace_id, transaction_type, description, start_date, recurrence_type, due_adjustment, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspace_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum: [income, expense, debt, investment]
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date
+        recurrence_type:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+        repeat_count:
+          type: integer
+          nullable: true
+          description: "null = infinito"
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        due_adjustment:
+          type: string
+          enum: [none, previous_business_day, next_business_day]
+        recurrence_day:
+          type: integer
+          minimum: 1
+          maximum: 31
+          nullable: true
+        status:
+          type: string
+          enum: [active, paused, canceled, completed, error]
+        amount:
+          type: number
+          format: float
+          nullable: true
+        timezone:
+          type: string
+          example: "America/Sao_Paulo"
+        generation_count:
+          type: integer
+        error_count:
+          type: integer
+
+# ─── Paths ─────────────────────────────────────────────────────────────────────
+# Nota: os paths abaixo descrevem operações Supabase PostgREST.
+# O Supabase JS encapsula esses endpoints automaticamente.
+
+paths:
+  /transactions:
+    get:
+      summary: Listar transações
+      description: "Via Supabase JS: supabase.from('transactions').select(...)"
+      tags: [Transactions]
+      parameters:
+        - name: transaction_workspace_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Filtro eq. Ex: ?transaction_workspace_id=eq.{uuid}"
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: "transaction_date.desc"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: transaction_description
+          in: query
+          schema:
+            type: string
+          description: "Busca textual. Ex: ?transaction_description=ilike.*aluguel*"
+      responses:
+        "200":
+          description: Lista de transações
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+              example:
+                - transaction_id: "d4e5f6a7-0000-0000-0000-000000000001"
+                  transaction_workspace_id: "a1b2c3d4-0000-0000-0000-000000000001"
+                  transaction_type: "expense"
+                  transaction_description: "Aluguel"
+                  transaction_amount: 1500.00
+                  transaction_date: "2025-08-01"
+                  transaction_is_paid: true
+                  transaction_status: "paid"
+                  transaction_created_at: "2025-08-01T10:00:00Z"
+        "401":
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+              example:
+                code: "UNAUTHORIZED"
+                message: "Sessão expirada. Faça login novamente."
+
+    post:
+      summary: Criar transação
+      tags: [Transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransactionInput"
+            example:
+              transaction_workspace_id: "a1b2c3d4-0000-0000-0000-000000000001"
+              transaction_type: "expense"
+              transaction_description: "Supermercado"
+              transaction_amount: 350.75
+              transaction_date: "2025-08-05"
+              transaction_issue_date: "2025-08-05"
+              transaction_competence_date: "2025-08-05"
+              transaction_payment_method: "debit_card"
+              transaction_is_paid: true
+      responses:
+        "201":
+          description: Transação criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "422":
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+              example:
+                code: "VALIDATION_ERROR"
+                message: "Campo obrigatório ausente."
+                details:
+                  field: "transaction_amount"
+                  issue: "must be > 0"
+
+  /accounts:
+    get:
+      summary: Listar contas
+      tags: [Accounts]
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de contas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Account"
+
+    post:
+      summary: Criar conta
+      tags: [Accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Account"
+      responses:
+        "201":
+          description: Conta criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+
+  /categories:
+    get:
+      summary: Listar categorias
+      tags: [Categories]
+      parameters:
+        - name: category_workspace_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de categorias
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+  /workspaces:
+    get:
+      summary: Listar workspaces do usuário
+      tags: [Workspaces]
+      responses:
+        "200":
+          description: Lista de workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workspace"
+
+    post:
+      summary: Criar workspace
+      tags: [Workspaces]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspace_name, workspace_type]
+              properties:
+                workspace_name:
+                  type: string
+                  example: "Finanças Pessoais"
+                workspace_type:
+                  type: string
+                  enum: [personal, family, business]
+      responses:
+        "201":
+          description: Workspace criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+
+  # ─── WIP: Domínios não completamente mapeados ───────────────────────────────
+  /cost_centers:
+    x-wip: true
+    get:
+      summary: "[WIP] Listar centros de custo"
+      tags: [WIP]
+      responses:
+        "200":
+          description: Lista de centros de custo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CostCenter"
+
+  /credit_cards:
+    x-wip: true
+    get:
+      summary: "[WIP] Listar cartões de crédito"
+      tags: [WIP]
+      responses:
+        "200":
+          description: Lista de cartões
+
+  /recurrence_rules:
+    x-wip: true
+    get:
+      summary: "[WIP] Listar regras de recorrência"
+      tags: [WIP]
+      responses:
+        "200":
+          description: Lista de regras
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurrenceRule"
+
+tags:
+  - name: Transactions
+    description: Operações de transações financeiras
+  - name: Accounts
+    description: Contas bancárias e caixa
+  - name: Categories
+    description: Categorias de transações
+  - name: Workspaces
+    description: Espaços de trabalho (tenant raiz)
+  - name: WIP
+    description: Endpoints ainda não completamente mapeados
