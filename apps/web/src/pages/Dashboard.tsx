@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle,
-   Landmark, LayoutDashboard, CheckCircle, Clock, Circle, AlertCircle,
-   XCircle, PiggyBank, Edit, Trash2
+import {
+  Calendar, DollarSign, TrendingUp, TrendingDown, AlertTriangle,
+  Landmark, LayoutDashboard, CheckCircle, Clock, Circle, AlertCircle,
+  XCircle, PiggyBank, Edit, Trash2
 } from 'lucide-react';
 import * as Lucide from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +19,7 @@ import { TransactionModal } from '../components/transactions/TransactionModal';
 import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
 import { useAdvancedTransactions } from '../hooks/useAdvancedTransactions';
 import { useUpdateTransaction } from '../hooks/useTransactions';
-import { useTransactions } from '../hooks/useTransactions';
+import { useDeleteTransaction } from '../hooks/useTransactions';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { formatCurrency, formatDate } from '../lib/utils';
@@ -76,7 +77,7 @@ export function Dashboard() {
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
   const { createAdvancedTransaction, markInstallmentAsPaid } = useAdvancedTransactions();
   const updateTransaction = useUpdateTransaction();
-  const { deleteTransaction } = useTransactions();
+  const deleteTransaction = useDeleteTransaction();
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
   const [selectedTransactionType, setSelectedTransactionType] = useState<'income' | 'expense' | 'debt' | 'investment'>('expense');
@@ -92,8 +93,8 @@ export function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   // Dados principais (respeitam os filtros para cards de resumo/tabela)
-  const { 
-    data: dashboardData, 
+  const {
+    data: dashboardData,
     isLoading
   } = useDashboardData(currentWorkspace?.workspace_id, filters);
 
@@ -288,7 +289,7 @@ export function Dashboard() {
     setSelectedTransactionType(transaction.transaction_type);
     setIsAdvancedModalOpen(true);
   };
-  
+
 
   const handleCloseModal = () => {
     setIsTransactionModalOpen(false);
@@ -407,8 +408,8 @@ export function Dashboard() {
             <VisualizationToolbar
               onFilter={() => setShowFilters(prev => !prev)}
               onSort={() => setShowSort(prev => !prev)}
-              onShare={() => {}}
-              onSettings={() => {}}
+              onShare={() => { }}
+              onSettings={() => { }}
               activeFilter={hasActiveFilters}
             />
             <FiltersPanel
@@ -596,8 +597,8 @@ export function Dashboard() {
                           isUserSelected
                             ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-400 shadow-lg transform scale-105'
                             : isHighlighted
-                            ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500'
-                            : 'border-gray-200 bg-white hover:border-gray-300 hover:scale-102'
+                              ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500'
+                              : 'border-gray-200 bg-white hover:border-gray-300 hover:scale-102'
                         )}
                         style={{ scrollSnapAlign: 'start' }}
                         title={isUserSelected ? 'Click Apply Filter to apply' : month.isSelected ? 'Selected by period filter' : 'Click to select month'}
@@ -760,7 +761,7 @@ export function Dashboard() {
                               {formatCurrency(Number(transaction.transaction_amount))}
                             </td>
 
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900"> <div className="flex items-center gap-2"> {/* Quadrado com cor e ícone Lucide centralizado */} <div className="flex items-center justify-center text-white p-1.5 rounded-lg" /* tamanho consistente por linha */ style={{ backgroundColor: transaction.transaction_account_color || 'unset' }} > {(() => { const iconKey = (transaction.transaction_account_icon || '') as keyof typeof Lucide; const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>; return DynamicIcon ? ( <DynamicIcon className="w-3 h-3" /> ) : null; })()} </div> {/* Nome da conta */} <span className="truncate block max-w-[140px] sm:max-w-none"> {transaction.transaction_account} </span> </div> </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900"> <div className="flex items-center gap-2"> {/* Quadrado com cor e ícone Lucide centralizado */} <div className="flex items-center justify-center text-white p-1.5 rounded-lg" /* tamanho consistente por linha */ style={{ backgroundColor: transaction.transaction_account_color || 'unset' }} > {(() => { const iconKey = (transaction.transaction_account_icon || '') as keyof typeof Lucide; const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>; return DynamicIcon ? (<DynamicIcon className="w-3 h-3" />) : null; })()} </div> {/* Nome da conta */} <span className="truncate block max-w-[140px] sm:max-w-none"> {transaction.transaction_account} </span> </div> </td>
 
                             <td className="py-2 sm:py-3 px-2 sm:px-4">
                               {transaction.transaction_card_name ? (
@@ -893,12 +894,12 @@ export function Dashboard() {
             });
             handleCloseModal();
           } else {
-            
+
             await createAdvancedTransaction.mutateAsync({
               transactionType: selectedTransactionType,
               data,
             });
-            
+
             handleCloseModal();
           }
         }}
