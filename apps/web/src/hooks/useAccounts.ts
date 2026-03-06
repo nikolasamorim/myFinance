@@ -39,14 +39,14 @@ export function useAccounts(filters: AccountFilters) {
 
   const updateAccount = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<AccountData> }) =>
-      accountService.updateAccount(id, updates),
+      accountService.updateAccount(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts', currentWorkspace?.workspace_id] });
     },
   });
 
   const deleteAccount = useMutation({
-    mutationFn: (id: string) => accountService.deleteAccount(id),
+    mutationFn: (id: string) => accountService.deleteAccount(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts', currentWorkspace?.workspace_id] });
     },

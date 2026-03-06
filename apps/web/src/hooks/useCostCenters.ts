@@ -39,14 +39,14 @@ export function useCostCenters(filters: CostCenterFilters) {
 
   const updateCostCenter = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<CostCenterData> }) =>
-      costCenterService.updateCostCenter(id, updates),
+      costCenterService.updateCostCenter(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cost-centers', currentWorkspace?.workspace_id] });
     },
   });
 
   const deleteCostCenter = useMutation({
-    mutationFn: (id: string) => costCenterService.deleteCostCenter(id),
+    mutationFn: (id: string) => costCenterService.deleteCostCenter(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cost-centers', currentWorkspace?.workspace_id] });
     },

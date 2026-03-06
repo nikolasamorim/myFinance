@@ -3,12 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "dev": "concurrently --names \"web,api\" --prefix-colors \"cyan,magenta\" \"npm run dev:web\" \"npm run dev:api\"",
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run dev --workspace=apps/api",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
     "build": "npm run build --workspace=apps/web && npm run build --workspace=apps/api",
     "build:web": "npm run build --workspace=apps/web",
     "build:api": "npm run build --workspace=apps/api",

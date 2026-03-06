@@ -34,35 +34,35 @@ export function useRecurrenceRules() {
 
   const updateRecurrenceRule = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<RecurrenceRuleData> }) =>
-      recurrenceService.updateRecurrenceRule(id, updates),
+      recurrenceService.updateRecurrenceRule(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
     },
   });
 
   const deleteRecurrenceRule = useMutation({
-    mutationFn: (id: string) => recurrenceService.deleteRecurrenceRule(id),
+    mutationFn: (id: string) => recurrenceService.deleteRecurrenceRule(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
     },
   });
 
   const pauseRecurrenceRule = useMutation({
-    mutationFn: (id: string) => recurrenceService.pauseRecurrenceRule(id),
+    mutationFn: (id: string) => recurrenceService.pauseRecurrenceRule(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
     },
   });
 
   const resumeRecurrenceRule = useMutation({
-    mutationFn: (id: string) => recurrenceService.resumeRecurrenceRule(id),
+    mutationFn: (id: string) => recurrenceService.resumeRecurrenceRule(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
     },
   });
 
   const cancelRecurrenceRule = useMutation({
-    mutationFn: (id: string) => recurrenceService.cancelRecurrenceRule(id),
+    mutationFn: (id: string) => recurrenceService.cancelRecurrenceRule(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
     },

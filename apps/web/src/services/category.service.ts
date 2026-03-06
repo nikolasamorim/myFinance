@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { apiClient } from '../lib/apiClient';
 
 interface CategoryFilters {
   type: string;
@@ -17,168 +17,26 @@ export interface CategoryData {
 
 export const categoryService = {
   async getCategories(workspaceId: string, filters: CategoryFilters) {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('Error getting user:', userError);
-        throw new Error('Authentication failed: ' + userError.message);
-      }
-      if (!user) throw new Error('User not authenticated');
-
-      let query = supabase
-        .from('categories')
-        .select(`
-          category_id,
-          category_workspace_id,
-          category_name,
-          category_type,
-          parent_id,
-          sort_order,
-          color,
-          icon,
-          description,
-          category_created_at,
-          category_updated_at,
-          parent:categories!parent_id(category_name)
-        `)
-        .eq('category_workspace_id', workspaceId)
-        .order('sort_order', { ascending: true });
-
-      if (filters.search) {
-        query = query.ilike('category_name', `%${filters.search}%`);
-      }
-
-      if (filters.type !== 'all') {
-        query = query.eq('category_type', filters.type);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching categories:', error);
-        throw new Error('Failed to fetch categories: ' + error.message);
-      }
-      
-      // Map database columns to frontend interface
-      return (data || []).map(item => ({
-        category_id: item.category_id,
-        category_workspace_id: item.category_workspace_id,
-        category_name: item.category_name,
-        category_type: item.category_type,
-        parent_id: item.parent_id,
-        sort_order: item.sort_order,
-        color: item.color,
-        icon: item.icon,
-        description: item.description,
-        parent_name: item.parent?.category_name || null,
-        category_created_at: item.category_created_at,
-        category_updated_at: item.category_updated_at,
-      }));
-    } catch (error) {
-      console.error('Error in getCategories:', error);
-      throw error;
-    }
+    const params = new URLSearchParams();
+    if (filters.search) params.set('search', filters.search);
+    if (filters.type && filters.type !== 'all') params.set('type', filters.type);
+    const qs = params.toString() ? `?${params}` : '';
+    return apiClient!.get<any[]>(`/workspaces/${workspaceId}/categories${qs}`);
   },
 
   async createCategory(workspaceId: string, categoryData: CategoryData) {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('categories')
-        .insert([{
-          category_workspace_id: workspaceId,
-          category_name: categoryData.title,
-          category_type: categoryData.type,
-          parent_id: categoryData.parent_id,
-          color: categoryData.color,
-          icon: categoryData.icon,
-          description: categoryData.description,
-          sort_order: categoryData.sort_order || 0,
-        }])
-        .select()
-        .single();
-
-      if (error) throw new Error('Failed to create category: ' + error.message);
-      return data;
-    } catch (error) {
-      console.error('Error in createCategory:', error);
-      throw error;
-    }
+    return apiClient!.post<any>(`/workspaces/${workspaceId}/categories`, categoryData);
   },
 
-  async updateCategory(id: string, updates: Partial<CategoryData>) {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .update({
-          category_name: updates.title,
-          category_type: updates.type,
-          parent_id: updates.parent_id,
-          color: updates.color,
-          icon: updates.icon,
-          description: updates.description,
-          sort_order: updates.sort_order,
-        })
-        .eq('category_id', id)
-        .select()
-        .single();
-
-      if (error) throw new Error('Failed to update category: ' + error.message);
-      return data;
-    } catch (error) {
-      console.error('Error in updateCategory:', error);
-      throw error;
-    }
+  async updateCategory(id: string, updates: Partial<CategoryData>, workspaceId: string) {
+    return apiClient!.put<any>(`/workspaces/${workspaceId}/categories/${id}`, updates);
   },
 
-  async deleteCategory(id: string) {
-    try {
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('category_id', id);
-
-      if (error) throw new Error('Failed to delete category: ' + error.message);
-    } catch (error) {
-      console.error('Error in deleteCategory:', error);
-      throw error;
-    }
+  async deleteCategory(id: string, workspaceId: string) {
+    return apiClient!.delete(`/workspaces/${workspaceId}/categories/${id}`);
   },
 
   async updateCategoryOrder(workspaceId: string, updates: Array<{ id: string; parent_id: string | null; sort_order: number }>) {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
-      // Update multiple categories in a single transaction-like operation
-      const promises = updates.map(update => 
-        supabase
-          .from('categories')
-          .update({
-            parent_id: update.parent_id,
-            sort_order: update.sort_order,
-            ...(update.type && { category_type: update.type }),
-          })
-          .eq('category_id', update.id)
-          .eq('category_workspace_id', workspaceId)
-      );
-
-      const results = await Promise.all(promises);
-      
-      // Check for errors
-      const errors = results.filter(result => result.error);
-      if (errors.length > 0) {
-        throw new Error('Failed to update category order: ' + errors[0].error.message);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error in updateCategoryOrder:', error);
-      throw error;
-    }
+    return apiClient!.put<{ success: boolean }>(`/workspaces/${workspaceId}/categories/order`, updates);
   },
 };

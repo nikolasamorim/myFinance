@@ -38,14 +38,14 @@ export function useCreditCards(filters: CreditCardFilters) {
 
   const updateCreditCard = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<CreditCardData> }) =>
-      creditCardService.updateCreditCard(id, updates),
+      creditCardService.updateCreditCard(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credit-cards', currentWorkspace?.workspace_id] });
     },
   });
 
   const deleteCreditCard = useMutation({
-    mutationFn: (id: string) => creditCardService.deleteCreditCard(id),
+    mutationFn: (id: string) => creditCardService.deleteCreditCard(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credit-cards', currentWorkspace?.workspace_id] });
     },

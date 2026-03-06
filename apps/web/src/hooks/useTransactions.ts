@@ -10,7 +10,7 @@ export function useTransactions(page = 1, limit = 10, search?: string) {
     queryKey: ['transactions', currentWorkspace?.workspace_id, page, limit, search],
     queryFn: () => transactionService.getTransactions(currentWorkspace!.workspace_id, page, limit, search),
     enabled: !!currentWorkspace?.workspace_id,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
     retry: 1,
     refetchOnWindowFocus: false,
   });
@@ -36,7 +36,7 @@ export function useUpdateTransaction() {
 
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Transaction> }) =>
-      transactionService.updateTransaction(id, updates),
+      transactionService.updateTransaction(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
@@ -49,7 +49,7 @@ export function useDeleteTransaction() {
   const { currentWorkspace } = useWorkspace();
 
   return useMutation({
-    mutationFn: (id: string) => transactionService.deleteTransaction(id),
+    mutationFn: (id: string) => transactionService.deleteTransaction(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });

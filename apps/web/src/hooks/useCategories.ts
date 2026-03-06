@@ -39,14 +39,14 @@ export function useCategories(filters: CategoryFilters) {
 
   const updateCategory = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<CategoryData> }) =>
-      categoryService.updateCategory(id, updates),
+      categoryService.updateCategory(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', currentWorkspace?.workspace_id] });
     },
   });
 
   const deleteCategory = useMutation({
-    mutationFn: (id: string) => categoryService.deleteCategory(id),
+    mutationFn: (id: string) => categoryService.deleteCategory(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', currentWorkspace?.workspace_id] });
     },
