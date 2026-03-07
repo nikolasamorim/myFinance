@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { getSupabaseForUser, supabaseAdmin } from '../lib/supabase';
+import { getSupabaseForUser, getSupabaseAdmin } from '../lib/supabase';
 
 export interface AuthenticatedRequest extends Request {
     user: {
@@ -37,7 +37,7 @@ export async function requireAuth(
 
     try {
         // Validate the JWT by fetching the user via Supabase Auth
-        const { data, error } = await supabaseAdmin.auth.getUser(jwt);
+        const { data, error } = await getSupabaseAdmin().auth.getUser(jwt);
 
         if (error || !data.user) {
             res.status(401).json({

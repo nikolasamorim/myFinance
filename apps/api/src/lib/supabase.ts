@@ -1,11 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+function getConfig() {
+    const url = process.env.SUPABASE_URL;
+    const anonKey = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables');
+    if (!url || !anonKey) {
+        throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables');
+    }
+
+    return {
+        url,
+        anonKey,
+        serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    };
 }
 
 /**
@@ -13,7 +20,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * This preserves RLS — perfect for all standard user CRUD operations.
  */
 export function getSupabaseForUser(jwt: string) {
-    return createClient(supabaseUrl, supabaseAnonKey, {
+    const { url, anonKey } = getConfig();
+    return createClient(url, anonKey, {
         global: {
             headers: { Authorization: `Bearer ${jwt}` },
         },
@@ -29,9 +37,12 @@ export function getSupabaseForUser(jwt: string) {
  * Use ONLY for internal jobs, maintenance, and admin operations.
  * NEVER use for user-originated requests.
  */
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey, {
-    auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-    },
-});
+export function getSupabaseAdmin() {
+    const { url, anonKey, serviceKey } = getConfig();
+    return createClient(url, serviceKey || anonKey, {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+        },
+    });
+}

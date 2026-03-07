@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { getSupabaseForUser, supabaseAdmin } from '../lib/supabase';
+import { getSupabaseForUser, getSupabaseAdmin } from '../lib/supabase';
 
 const router = Router();
 
@@ -107,7 +107,7 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
             return;
         }
 
-        const { data, error } = await supabaseAdmin.auth.refreshSession({ refresh_token });
+        const { data, error } = await getSupabaseAdmin().auth.refreshSession({ refresh_token });
 
         if (error || !data.session) {
             res.status(401).json({
