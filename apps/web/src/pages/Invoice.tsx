@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { KanbanSquare as SquareKanban, ChevronLeft, ChevronRight, CreditCard, Calendar, DollarSign, Clock, CheckCircle, AlertTriangle, Plus, X, Filter } from 'lucide-react';
+import { KanbanSquare as SquareKanban, ChevronLeft, ChevronRight, CreditCard, Calendar, DollarSign, CheckCircle, AlertTriangle, Filter, Wallet, ArrowRightLeft } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -10,7 +10,6 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { useCreditCards } from '../hooks/useCreditCards';
 import { useStatement, useStatementItems, useStatementMutations } from '../hooks/useStatements';
 import { formatCurrency, formatDate } from '../lib/utils';
-import { cn } from '../lib/utils';
 
 const typeOptions = [
   { value: 'all', label: 'Todos' },
@@ -46,8 +45,8 @@ function Invoice() {
   const period = searchParams.get('period') || new Date().toISOString().slice(0, 7);
 
   const { data: statement, isLoading } = useStatement(cardId, period);
-  const { data: items = [] } = useStatementItems(statement?.id, filters);
-  const { closeStatement, registerPayment, moveItemToNextCycle } = useStatementMutations();
+  const { data: items = [] } = useStatementItems(cardId, statement?.id, filters);
+  const { closeStatement, registerPayment, moveItemToNextCycle } = useStatementMutations(cardId);
 
   useEffect(() => {
     if (creditCards.length > 0 && !searchParams.get('cardId')) {
@@ -132,6 +131,7 @@ function Invoice() {
       case 'refund': return 'text-green-600 bg-green-50';
       case 'payment': return 'text-blue-600 bg-blue-50';
       case 'adjustment': return 'text-orange-600 bg-orange-50';
+      case 'carry_forward': return 'text-amber-600 bg-amber-50';
       default: return 'text-gray-600 bg-gray-50';
     }
   };
@@ -143,7 +143,18 @@ function Invoice() {
       case 'refund': return 'Estorno';
       case 'payment': return 'Pagamento';
       case 'adjustment': return 'Ajuste';
+      case 'carry_forward': return 'Saldo Ant.';
       default: return type;
+    }
+  };
+
+  const getMethodLabel = (method: string) => {
+    switch (method) {
+      case 'pix': return 'PIX';
+      case 'boleto': return 'Boleto';
+      case 'ted': return 'TED';
+      case 'dda': return 'Débito Automático';
+      default: return method;
     }
   };
 
@@ -285,7 +296,7 @@ function Invoice() {
 
         {/* Statement Summary */}
         {statement && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 px-1 sm:px-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 px-1 sm:px-0">
             <Card>
               <CardContent className="p-3 sm:p-4 lg:p-6">
                 <div className="flex items-center justify-between">
@@ -294,6 +305,11 @@ function Invoice() {
                     <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mt-1">
                       {formatCurrency(statement.statement_amount)}
                     </p>
+                    {statement.total_paid > 0 && (
+                      <p className="text-xs text-green-600 mt-0.5">
+                        Pago: {formatCurrency(statement.total_paid)}
+                      </p>
+                    )}
                   </div>
                   <div className="p-2 sm:p-3 bg-purple-100 rounded-lg flex-shrink-0">
                     <SquareKanban className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
@@ -349,6 +365,42 @@ function Invoice() {
                 </div>
               </CardContent>
             </Card>
+
+            {statement.carry_forward_amount > 0 && (
+              <Card>
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Saldo Anterior</p>
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-600 mt-1">
+                        {formatCurrency(statement.carry_forward_amount)}
+                      </p>
+                    </div>
+                    <div className="p-2 sm:p-3 bg-amber-100 rounded-lg flex-shrink-0">
+                      <ArrowRightLeft className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-amber-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {statement.credit_card && (
+              <Card>
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Limite Disponível</p>
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-600 mt-1">
+                        {formatCurrency((statement.credit_card.credit_card_limit ?? 0) - (statement.credit_card.current_balance ?? 0))}
+                      </p>
+                    </div>
+                    <div className="p-2 sm:p-3 bg-emerald-100 rounded-lg flex-shrink-0">
+                      <Wallet className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-emerald-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
@@ -422,6 +474,45 @@ function Invoice() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Payments History */}
+        {statement?.payments && statement.payments.length > 0 && (
+          <div className="px-1 sm:px-0">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg sm:text-xl">Pagamentos Registrados</CardTitle>
+              </CardHeader>
+              <CardContent className="py-0 px-1 sm:px-6 pb-4">
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600">Data</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600">Método</th>
+                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {statement.payments.map((payment: any) => (
+                        <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                            {formatDate(payment.paid_at)}
+                          </td>
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                            {getMethodLabel(payment.method)}
+                          </td>
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-green-600">
+                            {formatCurrency(payment.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Payment Modal */}

@@ -4,58 +4,52 @@ import { useWorkspace } from '../context/WorkspaceContext';
 
 export function useStatement(cardId?: string, period?: string) {
   const { currentWorkspace } = useWorkspace();
-  
+
   return useQuery({
     queryKey: ['statement', currentWorkspace?.workspace_id, cardId, period],
-    queryFn: async () => {
-      if (!cardId || !period) return null;
-      
-      const periodStart = `${period}-01`;
-      const window = await statementsService.computeStatementWindow(cardId, periodStart);
-      const statementId = await statementsService.ensureOpenStatement(cardId, window.period_start);
-      const statement = await statementsService.getStatement(currentWorkspace!.workspace_id, cardId, window.period_start);
-      
-      return { ...statement, window };
-    },
+    queryFn: () => statementsService.getStatement(currentWorkspace!.workspace_id, cardId!, period!),
     enabled: !!currentWorkspace?.workspace_id && !!cardId && !!period,
     staleTime: 30 * 1000,
   });
 }
 
-export function useStatementItems(statementId?: string, filters?: any) {
+export function useStatementItems(cardId?: string, statementId?: string, filters?: any) {
+  const { currentWorkspace } = useWorkspace();
+
   return useQuery({
-    queryKey: ['statement-items', statementId, filters],
-    queryFn: () => statementsService.getStatementItems(statementId!, filters),
-    enabled: !!statementId,
+    queryKey: ['statement-items', currentWorkspace?.workspace_id, cardId, statementId, filters],
+    queryFn: () => statementsService.getStatementItems(currentWorkspace!.workspace_id, cardId!, statementId!, filters),
+    enabled: !!currentWorkspace?.workspace_id && !!cardId && !!statementId,
     staleTime: 30 * 1000,
   });
 }
 
-export function useStatementMutations() {
+export function useStatementMutations(cardId?: string) {
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['statement'] });
+    queryClient.invalidateQueries({ queryKey: ['statement-items'] });
+    queryClient.invalidateQueries({ queryKey: ['credit-cards'] });
+  };
+
   const closeStatement = useMutation({
-    mutationFn: statementsService.closeStatement,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['statement', currentWorkspace?.workspace_id] });
-    },
+    mutationFn: (statementId: string) =>
+      statementsService.closeStatement(currentWorkspace!.workspace_id, cardId!, statementId),
+    onSuccess: invalidateAll,
   });
 
   const registerPayment = useMutation({
     mutationFn: ({ statementId, paymentData }: { statementId: string; paymentData: any }) =>
-      statementsService.registerStatementPayment(statementId, paymentData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['statement', currentWorkspace?.workspace_id] });
-      queryClient.invalidateQueries({ queryKey: ['statement-items'] });
-    },
+      statementsService.registerPayment(currentWorkspace!.workspace_id, cardId!, statementId, paymentData),
+    onSuccess: invalidateAll,
   });
 
   const moveItemToNextCycle = useMutation({
-    mutationFn: statementsService.moveItemToNextCycle,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['statement-items'] });
-    },
+    mutationFn: (itemId: string) =>
+      statementsService.moveItemToNextCycle(currentWorkspace!.workspace_id, cardId!, itemId),
+    onSuccess: invalidateAll,
   });
 
   return {

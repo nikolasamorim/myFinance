@@ -13,6 +13,7 @@ import costCentersRouter from './routes/costCenters';
 import creditCardsRouter from './routes/creditCards';
 import recurrenceRouter from './routes/recurrence';
 import dashboardRouter from './routes/dashboard';
+import statementsRouter from './routes/statements';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -55,6 +56,7 @@ app.use('/api/v1/workspaces/:wid/cost-centers', costCentersRouter);
 app.use('/api/v1/workspaces/:wid/credit-cards', creditCardsRouter);
 app.use('/api/v1/workspaces/:wid/recurrence-rules', recurrenceRouter);
 app.use('/api/v1/workspaces/:wid/dashboard', dashboardRouter);
+app.use('/api/v1/workspaces/:wid/credit-cards/:cardId/statements', statementsRouter);
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req, res) => {
