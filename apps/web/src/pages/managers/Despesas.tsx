@@ -145,6 +145,11 @@ export function Despesas() {
     fixedExpensesThisMonth,
   } = useDespesas(filters);
 
+  const handleGoToInvoice = (cardId: string, date: string) => {
+    const period = date.substring(0, 7); // YYYY-MM
+    navigate(`/invoice?cardId=${cardId}&period=${period}`);
+  };
+
   const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
 
   const sortedDespesas = [...despesas].sort((a, b) => {
@@ -818,7 +823,12 @@ export function Despesas() {
                               </td>
 
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
-                                <span className="truncate block max-w-[140px] sm:max-w-none">{despesa.title}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="truncate block max-w-[140px] sm:max-w-none">{despesa.title}</span>
+                                  {despesa.transaction_card_id && (
+                                    <Lucide.CreditCard className="w-3 h-3 text-purple-500 shrink-0" title="Despesa no Cartão" />
+                                  )}
+                                </div>
                                 {despesa.subtitle ? (
                                   <span className="text-[11px] text-gray-500 truncate block max-w-[140px] sm:max-w-none">{despesa.subtitle}</span>
                                 ) : null}
@@ -851,14 +861,23 @@ export function Despesas() {
 
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 {despesa.card_name ? (
-                                  <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.card_color || '#E5E7EB' }}>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleGoToInvoice(despesa.transaction_card_id, despesa.transaction_date);
+                                    }}
+                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5 hover:opacity-80 transition-opacity cursor-pointer shadow-sm group"
+                                    style={{ backgroundColor: despesa.card_color || '#E5E7EB' }}
+                                    title="Ver na Fatura"
+                                  >
                                     {(() => {
                                       const iconKey = (despesa.card_icon || '') as keyof typeof Lucide;
                                       const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
                                       return DynamicIcon ? <DynamicIcon className="w-3 h-3" style={{ color: 'white' }} /> : null;
                                     })()}
                                     <span className="text-xs font-medium text-white truncate">{despesa.card_name}</span>
-                                  </div>
+                                    <Lucide.ExternalLink className="w-2.5 h-2.5 text-white/70 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </button>
                                 ) : (
                                   <span className="text-xs text-gray-500">-</span>
                                 )}

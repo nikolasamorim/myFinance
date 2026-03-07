@@ -17,10 +17,21 @@ ALTER TABLE card_statements
   ADD COLUMN IF NOT EXISTS carry_forward_amount NUMERIC(15,2) NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
 
--- 1.2 Add missing columns to statement_items
+-- 1.2 Add missing columns and constraints to statement_items
 ALTER TABLE statement_items
   ADD COLUMN IF NOT EXISTS installment_number INTEGER,
   ADD COLUMN IF NOT EXISTS installment_total INTEGER;
+
+-- Add foreign key constraints for categories and cost_centers if they dont exist
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'statement_items_category_id_fkey') THEN
+    ALTER TABLE statement_items ADD CONSTRAINT statement_items_category_id_fkey FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'statement_items_cost_center_id_fkey') THEN
+    ALTER TABLE statement_items ADD CONSTRAINT statement_items_cost_center_id_fkey FOREIGN KEY (cost_center_id) REFERENCES cost_centers(cost_center_id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 -- Update type check constraint to include 'carry_forward'
 ALTER TABLE statement_items DROP CONSTRAINT IF EXISTS statement_items_type_check;
@@ -53,6 +64,19 @@ LANGUAGE sql IMMUTABLE AS $$
     LEAST(p_day, EXTRACT(DAY FROM (make_date(p_year, p_month, 1) + INTERVAL '1 month' - INTERVAL '1 day'))::INT)
   );
 $$;
+
+-- Drop all variations of the functions first to prevent PGRST203 ambiguous overloading
+-- Some might have different parameter orders (UUID, DATE vs DATE, UUID)
+DROP FUNCTION IF EXISTS compute_statement_window(UUID, DATE);
+DROP FUNCTION IF EXISTS compute_statement_window(DATE, UUID);
+DROP FUNCTION IF EXISTS ensure_open_statement(UUID, DATE);
+DROP FUNCTION IF EXISTS ensure_open_statement(DATE, UUID);
+DROP FUNCTION IF EXISTS sync_item_from_transaction(UUID);
+DROP FUNCTION IF EXISTS recalc_statement_amount(UUID);
+DROP FUNCTION IF EXISTS close_statement(UUID);
+DROP FUNCTION IF EXISTS register_statement_payment(UUID, NUMERIC, DATE, TEXT);
+DROP FUNCTION IF EXISTS move_item_to_next_cycle(UUID);
+DROP FUNCTION IF EXISTS backfill_statements_for_card(UUID);
 
 -- 2.1 compute_statement_window
 CREATE OR REPLACE FUNCTION compute_statement_window(card_id UUID, anchor_date DATE)
@@ -209,7 +233,9 @@ BEGIN
   v_statement_id := ensure_open_statement(v_txn.transaction_card_id, v_window.period_start);
 
   -- Determine item type
-  IF v_txn.installment_number IS NOT NULL THEN
+  IF v_txn.transaction_amount < 0 THEN
+    v_item_type := 'refund';
+  ELSIF v_txn.installment_number IS NOT NULL THEN
     v_item_type := 'installment';
   ELSE
     v_item_type := 'purchase';
@@ -224,7 +250,7 @@ BEGIN
   VALUES (
     v_statement_id, p_transaction_id, v_item_type,
     v_txn.transaction_description,
-    ABS(v_txn.transaction_amount),
+    v_txn.transaction_amount, -- Negative amounts (refunds) will decrease total
     v_txn.transaction_date::DATE,
     v_txn.transaction_category_id,
     v_txn.transaction_cost_center_id,
@@ -461,6 +487,57 @@ CREATE TRIGGER trg_statement_item_balance
 
 
 -- ============================================================================
+-- PHASE 4 — Security (RLS)
+-- ============================================================================
+
+-- Enable RLS
+ALTER TABLE card_statements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE statement_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE statement_payments ENABLE ROW LEVEL SECURITY;
+
+-- 4.1 card_statements policies
+DROP POLICY IF EXISTS "Users can view card_statements in their workspaces" ON card_statements;
+CREATE POLICY "Users can view card_statements in their workspaces"
+ON card_statements FOR SELECT TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM workspaces WHERE workspaces.workspace_id = card_statements.workspace_id
+    AND workspaces.workspace_owner_user_id = auth.uid()
+  ) OR EXISTS (
+    SELECT 1 FROM workspace_users WHERE workspace_users.workspace_user_workspace_id = card_statements.workspace_id
+    AND workspace_users.workspace_user_user_id = auth.uid()
+  )
+);
+
+-- 4.2 statement_items policies
+DROP POLICY IF EXISTS "Users can view statement_items in their workspaces" ON statement_items;
+CREATE POLICY "Users can view statement_items in their workspaces"
+ON statement_items FOR SELECT TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM workspaces WHERE workspaces.workspace_id = statement_items.workspace_id
+    AND workspaces.workspace_owner_user_id = auth.uid()
+  ) OR EXISTS (
+    SELECT 1 FROM workspace_users WHERE workspace_users.workspace_user_workspace_id = statement_items.workspace_id
+    AND workspace_users.workspace_user_user_id = auth.uid()
+  )
+);
+
+-- 4.3 statement_payments policies
+DROP POLICY IF EXISTS "Users can view statement_payments in their workspaces" ON statement_payments;
+CREATE POLICY "Users can view statement_payments in their workspaces"
+ON statement_payments FOR SELECT TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM workspaces WHERE workspaces.workspace_id = statement_payments.workspace_id
+    AND workspaces.workspace_owner_user_id = auth.uid()
+  ) OR EXISTS (
+    SELECT 1 FROM workspace_users WHERE workspace_users.workspace_user_workspace_id = statement_payments.workspace_id
+    AND workspace_users.workspace_user_user_id = auth.uid()
+  )
+);
+
+-- ============================================================================
 -- PHASE 6 — Backfill Function
 -- ============================================================================
 
@@ -481,3 +558,16 @@ BEGIN
   RETURN v_count;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================================
+-- PHASE 7 — Automatic Backfill for Existing Cards
+-- ============================================================================
+
+DO $$
+DECLARE
+    v_card_id UUID;
+BEGIN
+    FOR v_card_id IN SELECT credit_card_id FROM credit_cards LOOP
+        PERFORM backfill_statements_for_card(v_card_id);
+    END LOOP;
+END $$;
