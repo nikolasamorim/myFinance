@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { KanbanSquare as SquareKanban, ChevronLeft, ChevronRight, CreditCard, Calendar, DollarSign, CheckCircle, AlertTriangle, Wallet, ArrowRightLeft } from 'lucide-react';
+import { KanbanSquare as SquareKanban, CreditCard, DollarSign } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -12,10 +12,19 @@ import { FiltersPanel } from '../components/ui/FiltersPanel';
 import { SortPanel } from '../components/ui/SortPanel';
 import type { FilterField } from '../components/ui/FiltersPanel';
 import type { SortOption } from '../components/ui/SortPanel';
+import { MonthlyTimeline } from '../components/MonthlyTimeline';
+import type { MonthData } from '../components/MonthlyTimeline';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useCreditCards } from '../hooks/useCreditCards';
-import { useStatement, useStatementItems, useStatementMutations } from '../hooks/useStatements';
-import { formatCurrency, formatDate } from '../lib/utils';
+import {
+  useMultipleStatements,
+  useMultipleStatementItems,
+  useStatementMutations,
+  useStatementsForPeriods,
+} from '../hooks/useStatements';
+import { statementsService } from '../services/statements.service';
+import { useQueryClient } from '@tanstack/react-query';
+import { formatCurrency, cn } from '../lib/utils';
 
 const typeOptions = [
   { value: 'all', label: 'Todos' },
@@ -45,10 +54,43 @@ const invoiceSortOptions: SortOption[] = [
   { value: 'amount_asc', label: 'Valor (menor primeiro)' },
 ];
 
+function buildTimelinePeriods(): string[] {
+  const now = new Date();
+  const periods: string[] = [];
+  for (let i = -6; i <= 5; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    periods.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  return periods;
+}
+
+const TIMELINE_PERIODS = buildTimelinePeriods();
+const TODAY_MONTH = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+
+function getDaysUntil(dateStr: string): number {
+  const date = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((date.getTime() - today.getTime()) / 86400000);
+}
+
+function getNextClosingDate(closingDay: number): Date {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let d = new Date(today.getFullYear(), today.getMonth(), closingDay);
+  if (d <= today) d = new Date(today.getFullYear(), today.getMonth() + 1, closingDay);
+  return d;
+}
+
 function Invoice() {
   const navigate = useNavigate();
   const { currentWorkspace } = useWorkspace();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [activePaymentCard, setActivePaymentCard] = useState<{ cardId: string; statementId: string } | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
@@ -60,68 +102,214 @@ function Invoice() {
     method: 'pix',
   });
 
+  const period = searchParams.get('period') || TODAY_MONTH;
+
   const { data: creditCards = [] } = useCreditCards({ search: '' });
+  const allCardIds = useMemo(() => creditCards.map((c: any) => c.id), [creditCards]);
+  const cardMap = useMemo(() => new Map(creditCards.map((c: any) => [c.id, c])), [creditCards]);
 
-  const cardId = searchParams.get('cardId') || creditCards[0]?.id;
-  const period = searchParams.get('period') || new Date().toISOString().slice(0, 7);
-
-  const { data: statement, isLoading } = useStatement(cardId, period);
-  const { data: items = [] } = useStatementItems(cardId, statement?.id, filters);
-  const { closeStatement, registerPayment, moveItemToNextCycle } = useStatementMutations(cardId);
-
+  // Init selection with first card once creditCards loads
   useEffect(() => {
-    if (creditCards.length > 0 && !searchParams.get('cardId')) {
-      setSearchParams({ cardId: creditCards[0].id, period });
+    if (creditCards.length > 0 && selectedCards.length === 0) {
+      setSelectedCards([(creditCards[0] as any).id]);
     }
-  }, [creditCards, searchParams, setSearchParams, period]);
+  }, [creditCards.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCardChange = (newCardId: string) => {
-    setSearchParams({ cardId: newCardId, period });
+  // Current period statements
+  const allStatementResults = useMultipleStatements(allCardIds, period);
+
+  const statementMap = useMemo(() => {
+    const map = new Map<string, any>();
+    allStatementResults.forEach((result, i) => {
+      if (result.data && allCardIds[i]) map.set(allCardIds[i], result.data);
+    });
+    return map;
+  }, [allStatementResults, allCardIds]);
+
+  // Timeline: all periods × all cards
+  const timelineResults = useStatementsForPeriods(allCardIds, TIMELINE_PERIODS);
+
+  const timelineStatementsByPeriod = useMemo(() => {
+    const map = new Map<string, any[]>();
+    let idx = 0;
+    for (const _cardId of allCardIds) {
+      for (const p of TIMELINE_PERIODS) {
+        const result = timelineResults[idx++];
+        if (result?.data) {
+          if (!map.has(p)) map.set(p, []);
+          map.get(p)!.push(result.data);
+        }
+      }
+    }
+    return map;
+  }, [timelineResults, allCardIds]);
+
+  const monthsData = useMemo((): MonthData[] => {
+    return TIMELINE_PERIODS.map(monthKey => {
+      const statements = timelineStatementsByPeriod.get(monthKey) ?? [];
+      const totalAmount = statements.reduce((sum: number, s: any) => sum + (s.statement_amount ?? 0), 0);
+      const statuses: string[] = statements.map((s: any) => s.status).filter(Boolean);
+
+      const date = new Date(monthKey + '-15T12:00:00');
+      const monthName = date
+        .toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+        .replace(/\./g, '')
+        .replace(/\s+de\s+/, ' ')
+        .toUpperCase();
+
+      const status: MonthData['status'] =
+        statuses.length === 0 ? undefined
+        : statuses.some(s => s === 'open') ? 'open'
+        : statuses.every(s => s === 'paid_full') ? 'paid'
+        : 'closed';
+
+      return { monthKey, monthName, year: date.getFullYear(), totalAmount, status };
+    });
+  }, [timelineStatementsByPeriod]);
+
+  const isLoading = allCardIds.length > 0 && allStatementResults.some(r => r.isLoading);
+
+  const activeCardIds = selectedCards.length > 0 ? selectedCards : allCardIds;
+
+  const statementInfos = useMemo(() => {
+    return activeCardIds
+      .map(cardId => {
+        const stmt = statementMap.get(cardId);
+        if (!stmt) return null;
+        return { cardId, statementId: stmt.id, color: stmt.credit_card?.color ?? null };
+      })
+      .filter(Boolean) as Array<{ cardId: string; statementId: string; color: string | null }>;
+  }, [activeCardIds, statementMap]);
+
+  const allItemResults = useMultipleStatementItems(statementInfos, filters);
+
+  const mergedItems = useMemo(
+    () => allItemResults.flatMap(r => r.data ?? []),
+    [allItemResults]
+  );
+
+  const sortedItems = useMemo(() => {
+    return [...mergedItems].sort((a: any, b: any) => {
+      switch (sortBy) {
+        case 'date_desc': return new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime();
+        case 'date_asc':  return new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime();
+        case 'amount_desc': return Math.abs(b.amount) - Math.abs(a.amount);
+        case 'amount_asc':  return Math.abs(a.amount) - Math.abs(b.amount);
+        default: return 0;
+      }
+    });
+  }, [mergedItems, sortBy]);
+
+  const itemsByDate = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    for (const item of sortedItems) {
+      const key = item.occurred_at.slice(0, 10);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(item);
+    }
+    return groups;
+  }, [sortedItems]);
+
+  const totalAmount = useMemo(
+    () => mergedItems.reduce((sum: number, item: any) => sum + item.amount, 0),
+    [mergedItems]
+  );
+
+  // Aggregate summary values for selected cards
+  const selectedStatements = useMemo(
+    () => selectedCards.map((id: string) => statementMap.get(id)).filter(Boolean) as any[],
+    [selectedCards, statementMap]
+  );
+
+  const summaryStatementAmount = useMemo(
+    () => selectedStatements.reduce((s, stmt) => s + (stmt?.statement_amount ?? 0), 0),
+    [selectedStatements]
+  );
+
+  const summaryPaidAmount = useMemo(
+    () => selectedStatements.reduce((s, stmt) => s + (stmt?.paid_amount ?? 0), 0),
+    [selectedStatements]
+  );
+
+  const summaryLimit = useMemo(
+    () => selectedCards.reduce((s: number, id: string) => s + ((cardMap.get(id) as any)?.credit_limit ?? 0), 0),
+    [selectedCards, cardMap]
+  );
+
+  const earliestDueDate = useMemo(() => {
+    const dates = selectedStatements.map((s: any) => s?.due_date).filter(Boolean) as string[];
+    return dates.length ? dates.sort()[0] : null;
+  }, [selectedStatements]);
+
+  const primaryCard = useMemo(
+    () => selectedCards.length === 1 ? (cardMap.get(selectedCards[0]) as any) : null,
+    [selectedCards, cardMap]
+  );
+
+  const dueDays = earliestDueDate ? getDaysUntil(earliestDueDate) : null;
+  const dueDayColor =
+    dueDays === null ? 'text-gray-900'
+    : dueDays <= 3 ? 'text-red-500'
+    : dueDays <= 7 ? 'text-amber-500'
+    : 'text-gray-900';
+
+  const closingDays = useMemo(() => {
+    if (!primaryCard?.closing_day) return null;
+    const nextClose = getNextClosingDate(primaryCard.closing_day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.ceil((nextClose.getTime() - today.getTime()) / 86400000);
+  }, [primaryCard]);
+
+  // Mutations
+  const { registerPayment } = useStatementMutations(activePaymentCard?.cardId);
+
+  const handleMonthSelect = (monthKey: string) => {
+    setSelectedMonth(prev => (prev === monthKey ? null : monthKey));
   };
 
-  const handlePeriodChange = (direction: 'prev' | 'next') => {
-    const currentDate = new Date(period + '-01');
-    const newDate = new Date(currentDate);
-    newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
-    const newPeriod = newDate.toISOString().slice(0, 7);
-    setSearchParams({ cardId: cardId!, period: newPeriod });
+  const handleApplyFilter = (monthKey: string) => {
+    setSearchParams({ period: monthKey });
+    setSelectedCards([]);
+    setSelectedMonth(null);
   };
 
-  const handleCloseStatement = async () => {
-    if (!statement?.id) return;
+  const toggleCardSelection = (cardId: string) => {
+    setSelectedCards(prev => {
+      if (prev.includes(cardId)) {
+        return prev.length === 1 ? prev : prev.filter(id => id !== cardId);
+      }
+      return [...prev, cardId];
+    });
+  };
+
+  const openPaymentModal = (cardId: string, statementId: string) => {
+    setActivePaymentCard({ cardId, statementId });
+    setPaymentData({ amount: 0, paid_at: new Date().toISOString().split('T')[0], method: 'pix' });
+    setShowPaymentModal(true);
+  };
+
+  // Direct service call avoids the stale-closure issue with useStatementMutations
+  const handleCloseStatement = async (cardId: string, statementId: string) => {
     if (!window.confirm('Fechar esta fatura? Esta ação não pode ser desfeita.')) return;
-
     try {
-      await closeStatement.mutateAsync(statement.id);
-    } catch (error) {
+      await statementsService.closeStatement(currentWorkspace!.workspace_id, cardId, statementId);
+      queryClient.invalidateQueries({ queryKey: ['statement'] });
+      queryClient.invalidateQueries({ queryKey: ['statement-items'] });
+      queryClient.invalidateQueries({ queryKey: ['credit-cards'] });
+    } catch {
       alert('Erro ao fechar fatura');
     }
   };
 
   const handleRegisterPayment = async () => {
-    if (!statement?.id) return;
-
+    if (!activePaymentCard) return;
     try {
-      await registerPayment.mutateAsync({
-        statementId: statement.id,
-        paymentData,
-      });
+      await registerPayment.mutateAsync({ statementId: activePaymentCard.statementId, paymentData });
       setShowPaymentModal(false);
-      setPaymentData({
-        amount: 0,
-        paid_at: new Date().toISOString().split('T')[0],
-        method: 'pix',
-      });
-    } catch (error) {
+      setActivePaymentCard(null);
+    } catch {
       alert('Erro ao registrar pagamento');
-    }
-  };
-
-  const handleMoveItem = async (itemId: string) => {
-    try {
-      await moveItemToNextCycle.mutateAsync(itemId);
-    } catch (error) {
-      alert('Erro ao mover item');
     }
   };
 
@@ -169,70 +357,32 @@ function Invoice() {
     }
   };
 
-  const getMethodLabel = (method: string) => {
-    switch (method) {
-      case 'pix': return 'PIX';
-      case 'boleto': return 'Boleto';
-      case 'ted': return 'TED';
-      case 'dda': return 'Débito Automático';
-      default: return method;
-    }
-  };
-
-  const handleApplyFilters = (newFilters: Record<string, string>) => {
-    setFilters({
-      type: newFilters.type || 'all',
-      search: newFilters.search || '',
+  const formatDateLabel = (dateStr: string) =>
+    new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     });
-  };
-
-  const handleApplySort = (newSort: string) => {
-    setSortBy(newSort);
-  };
-
-  const cardOptions = creditCards.map(card => ({
-    value: card.id,
-    label: card.title,
-    icon: <CreditCard className="w-4 h-4" />,
-  }));
 
   const periodDate = new Date(period + '-01');
   const periodLabel = periodDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      switch (sortBy) {
-        case 'date_desc':
-          return new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime();
-        case 'date_asc':
-          return new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime();
-        case 'amount_desc':
-          return Math.abs(b.amount) - Math.abs(a.amount);
-        case 'amount_asc':
-          return Math.abs(a.amount) - Math.abs(b.amount);
-        default:
-          return 0;
-      }
-    });
-  }, [items, sortBy]);
 
   return (
     <>
       {isLoading ? (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
         </div>
       ) : (
         <div className="space-y-4 sm:space-y-6 w-full min-w-0">
-          {/* Standard Top Bar (Navigation + Global Actions) */}
+
+          {/* Top Bar */}
           <div className="flex items-center justify-between px-1 sm:px-0">
             <BreadcrumbBar segments={['Gerenciadores', 'Faturas']} onBack={() => navigate('/dashboard')} />
             <div className="relative">
               <VisualizationToolbar
                 onFilter={() => setShowFilters(prev => !prev)}
                 onSort={() => setShowSort(prev => !prev)}
-                onShare={() => { }}
-                onSettings={() => { }}
+                onShare={() => {}}
+                onSettings={() => {}}
                 activeFilter={filters.type !== 'all' || filters.search !== ''}
               />
               <FiltersPanel
@@ -241,322 +391,345 @@ function Invoice() {
                 fields={invoiceFilterFields}
                 currentFilters={filters as unknown as Record<string, string>}
                 defaultFilters={{ type: 'all', search: '' }}
-                onApply={handleApplyFilters}
+                onApply={newF => setFilters({ type: newF.type || 'all', search: newF.search || '' })}
               />
               <SortPanel
                 isOpen={showSort}
                 onClose={() => setShowSort(false)}
                 options={invoiceSortOptions}
                 currentSort={sortBy}
-                onApply={handleApplySort}
+                onApply={setSortBy}
               />
             </div>
           </div>
 
-          {/* Page Header (Title + Local Actions) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                <SquareKanban className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Faturas</h1>
-                <p className="text-sm sm:text-base text-gray-600">Gerencie faturas de cartão de crédito</p>
-              </div>
+          {/* Page Header */}
+          <div className="flex items-center space-x-2 sm:space-x-3 px-1 sm:px-0">
+            <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
+              <SquareKanban className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Faturas</h1>
+              <p className="text-sm sm:text-base text-gray-600">Gerencie faturas de cartão de crédito</p>
             </div>
           </div>
 
-          {/* Controls */}
+          {/* Monthly Timeline */}
           <div className="px-1 sm:px-0">
             <Card>
               <CardContent className="p-3 sm:p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-48">
-                      <Dropdown
-                        options={cardOptions}
-                        value={cardId || ''}
-                        onChange={handleCardChange}
-                        placeholder="Selecione um cartão"
-                      />
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePeriodChange('prev')}
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                      <span className="text-sm font-medium text-gray-900 min-w-32 text-center capitalize">
-                        {periodLabel}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePeriodChange('next')}
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {statement && (
-                    <div className="flex items-center space-x-2">
-                      {statement.status === 'open' && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowPaymentModal(true)}
-                          >
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            Registrar Pagamento
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleCloseStatement}
-                          >
-                            Fechar Fatura
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <MonthlyTimeline
+                  monthsData={monthsData}
+                  onMonthSelect={handleMonthSelect}
+                  selectedMonth={selectedMonth}
+                  currentMonth={period}
+                  onApplyFilter={handleApplyFilter}
+                  showApplyButton={true}
+                />
               </CardContent>
             </Card>
           </div>
 
+          {/* Card Selector */}
+          {creditCards.length > 0 && (
+            <div className="px-1 sm:px-0">
+              <div className="overflow-x-auto scrollbar-hide">
+                <div className="flex gap-3 pb-2">
+                  {creditCards.map((card: any) => {
+                    const stmt = statementMap.get(card.id);
+                    const isSelected = selectedCards.includes(card.id);
+                    const usagePercent = card.credit_limit > 0
+                      ? Math.min(100, ((stmt?.statement_amount ?? 0) / card.credit_limit) * 100)
+                      : 0;
+                    const isOverLimit = usagePercent > 80;
 
-          {/* Statement Summary */}
-          {statement && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 px-1 sm:px-0">
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-gray-600">Valor da Fatura</p>
-                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mt-1">
-                        {formatCurrency(statement.statement_amount)}
-                      </p>
-                      {statement.total_paid > 0 && (
-                        <p className="text-xs text-green-600 mt-0.5">
-                          Pago: {formatCurrency(statement.total_paid)}
+                    return (
+                      <div
+                        key={card.id}
+                        onClick={() => toggleCardSelection(card.id)}
+                        className={cn(
+                          'flex-shrink-0 w-60 rounded-2xl border p-4 cursor-pointer transition-all duration-200',
+                          isSelected
+                            ? 'border-purple-400 bg-purple-50 shadow-sm'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        )}
+                      >
+                        {/* Card name + status badge */}
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CreditCard className="w-4 h-4 flex-shrink-0" style={{ color: card.color ?? '#6B7280' }} />
+                            <span className="font-semibold text-sm text-gray-900 truncate">{card.title}</span>
+                          </div>
+                          {stmt && (
+                            <span className={cn(
+                              'flex-shrink-0 inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded-full',
+                              getStatusColor(stmt.status)
+                            )}>
+                              {getStatusLabel(stmt.status)}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Statement amount */}
+                        <p className="text-xl font-bold text-gray-900">
+                          {stmt ? formatCurrency(stmt.statement_amount) : '—'}
                         </p>
-                      )}
-                    </div>
-                    <div className="p-2 sm:p-3 bg-purple-100 rounded-lg flex-shrink-0">
-                      <SquareKanban className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                        {card.credit_limit > 0 && (
+                          <p className="text-xs text-gray-400 mb-3">de {formatCurrency(card.credit_limit)}</p>
+                        )}
 
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-gray-600">Pagamento Mínimo</p>
-                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-orange-600 mt-1">
-                        {formatCurrency(statement.min_payment_amount)}
-                      </p>
-                    </div>
-                    <div className="p-2 sm:p-3 bg-orange-100 rounded-lg flex-shrink-0">
-                      <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-orange-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                        {/* Usage bar */}
+                        {card.credit_limit > 0 && (
+                          <>
+                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1">
+                              <div
+                                className={cn('h-full rounded-full transition-all', isOverLimit ? 'bg-red-500' : 'bg-purple-500')}
+                                style={{ width: `${usagePercent}%` }}
+                              />
+                            </div>
+                            <p className="text-[11px] text-gray-500 mb-3">
+                              Disponível: {formatCurrency(card.credit_limit - (stmt?.statement_amount ?? 0))}
+                            </p>
+                          </>
+                        )}
 
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-gray-600">Vencimento</p>
-                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 mt-1">
-                        {formatDate(statement.due_date)}
-                      </p>
-                    </div>
-                    <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
-                      <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                        {/* Metadata grid */}
+                        <div className="border-t border-gray-100 pt-2">
+                          <div className="grid grid-cols-3 gap-1">
+                            <div>
+                              <p className="text-[9px] text-gray-400 uppercase tracking-wide">Fechamento</p>
+                              <p className="text-[11px] font-medium text-gray-700">
+                                {card.closing_day ? `Dia ${card.closing_day}` : '—'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-gray-400 uppercase tracking-wide">Vencimento</p>
+                              <p className="text-[11px] font-medium text-gray-700">
+                                {card.due_day ? `Dia ${card.due_day}` : '—'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-gray-400 uppercase tracking-wide">Pago</p>
+                              <p className="text-[11px] font-medium text-green-600">
+                                {stmt ? formatCurrency(stmt.paid_amount ?? 0) : '—'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
 
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-gray-600">Status</p>
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-1 ${getStatusColor(statement.status)}`}>
-                        {getStatusLabel(statement.status)}
-                      </span>
-                    </div>
-                    <div className="p-2 sm:p-3 bg-gray-100 rounded-lg flex-shrink-0">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-gray-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {statement.carry_forward_amount > 0 && (
-                <Card>
-                  <CardContent className="p-3 sm:p-4 lg:p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs sm:text-sm font-medium text-gray-600">Saldo Anterior</p>
-                        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-600 mt-1">
-                          {formatCurrency(statement.carry_forward_amount)}
-                        </p>
+                        {/* Per-card actions */}
+                        {stmt?.status === 'open' && (
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={e => { e.stopPropagation(); openPaymentModal(card.id, stmt.id); }}
+                            >
+                              <DollarSign className="w-3 h-3 mr-1" />Pagar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={e => { e.stopPropagation(); handleCloseStatement(card.id, stmt.id); }}
+                            >
+                              Fechar
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                      <div className="p-2 sm:p-3 bg-amber-100 rounded-lg flex-shrink-0">
-                        <ArrowRightLeft className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-amber-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {statement.credit_card && (
-                <Card>
-                  <CardContent className="p-3 sm:p-4 lg:p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs sm:text-sm font-medium text-gray-600">Limite Disponível</p>
-                        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-600 mt-1">
-                          {formatCurrency((statement.credit_card.credit_card_limit ?? 0) - (statement.credit_card.current_balance ?? 0))}
-                        </p>
-                      </div>
-                      <div className="p-2 sm:p-3 bg-emerald-100 rounded-lg flex-shrink-0">
-                        <Wallet className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-emerald-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    );
+                  })}
+                </div>
+              </div>
+              {selectedCards.length > 1 && (
+                <button
+                  onClick={() => setSelectedCards([(creditCards[0] as any).id])}
+                  className="mt-2 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  Limpar seleção
+                </button>
               )}
             </div>
           )}
 
-          {/* Statement Items */}
+          {/* Summary Panel */}
+          {selectedStatements.length > 0 && (
+            <div className="px-1 sm:px-0">
+              <Card>
+                <CardContent className="p-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+
+                    {/* Col 1+2: Payment progress */}
+                    <div className="col-span-1 sm:col-span-2 px-5 py-4">
+                      <p className="text-xs font-medium text-gray-500 mb-2">Progresso do Pagamento</p>
+                      {summaryStatementAmount > 0 ? (
+                        <>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+                            <div
+                              className={cn(
+                                'h-full rounded-full transition-all',
+                                summaryPaidAmount >= summaryStatementAmount ? 'bg-green-500' : 'bg-purple-500'
+                              )}
+                              style={{ width: `${Math.min(100, (summaryPaidAmount / summaryStatementAmount) * 100)}%` }}
+                            />
+                          </div>
+                          {summaryPaidAmount >= summaryStatementAmount ? (
+                            <p className="text-green-600 text-xs font-medium">Fatura quitada</p>
+                          ) : (
+                            <div className="flex justify-between">
+                              <span className="text-[11px] text-green-600">
+                                Pago: {formatCurrency(summaryPaidAmount)}
+                              </span>
+                              <span className="text-[11px] text-amber-600">
+                                Restante: {formatCurrency(summaryStatementAmount - summaryPaidAmount)}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-xs text-gray-400">Sem lançamentos neste período</p>
+                      )}
+                    </div>
+
+                    {/* Col 3: Closing day */}
+                    <div className="px-5 py-4">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Fechamento em</p>
+                      {primaryCard?.closing_day ? (
+                        <>
+                          <p className="text-2xl font-bold text-gray-900 leading-none">
+                            {closingDays}<span className="text-base font-semibold">d</span>
+                          </p>
+                          <p className="text-[11px] text-gray-400 mt-1">dia {primaryCard.closing_day}</p>
+                        </>
+                      ) : (
+                        <p className="text-2xl font-bold text-gray-400">—</p>
+                      )}
+                    </div>
+
+                    {/* Col 4: Due date */}
+                    <div className="px-5 py-4">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Vencimento em</p>
+                      {dueDays !== null ? (
+                        <>
+                          <p className={cn('text-2xl font-bold leading-none', dueDayColor)}>
+                            {dueDays}<span className="text-base font-semibold">d</span>
+                          </p>
+                          <p className="text-[11px] text-gray-400 mt-1">
+                            {new Date(earliestDueDate! + 'T12:00:00').toLocaleDateString('pt-BR')}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-2xl font-bold text-gray-400">—</p>
+                      )}
+                    </div>
+
+                  </div>
+
+                  {/* Available limit — full-width bottom row */}
+                  {summaryLimit > 0 && (
+                    <div className="border-t border-gray-100 px-5 py-3 flex items-center justify-between">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide">Limite Disponível</p>
+                      <div className="text-right">
+                        <span className="text-base font-bold text-gray-900">
+                          {formatCurrency(summaryLimit - summaryStatementAmount)}
+                        </span>
+                        <span className="text-[11px] text-gray-400 ml-1.5">
+                          de {formatCurrency(summaryLimit)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Items Grid */}
           <div className="px-1 sm:px-0">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Itens da Fatura</CardTitle>
-              </CardHeader>
-              <CardContent className="py-0 px-1 sm:px-6">
-                <div className="w-full overflow-x-auto">
-                  <table className="w-full min-w-[800px]">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[60px]">Tipo</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Data</th>
-                        <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[200px]">Descrição</th>
-                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Valor</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Categoria</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedItems.map((item) => (
-                        <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
-                            <span className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full ${getTypeColor(item.type)}`}>
-                              {getTypeLabel(item.type)}
-                            </span>
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            {formatDate(item.occurred_at)}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
-                            {item.description}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium">
-                            <span className={item.amount < 0 ? 'text-green-600' : 'text-gray-900'}>
-                              {formatCurrency(Math.abs(item.amount))}
-                            </span>
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                            {item.category?.category_name || '-'}
-                          </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4">
-                            <div className="flex justify-center space-x-1">
-                              {statement?.status === 'open' && item.type !== 'payment' && (
-                                <button
-                                  onClick={() => handleMoveItem(item.id)}
-                                  className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                                  title="Mover para próximo ciclo"
-                                >
-                                  <ChevronRight className="w-3 h-3" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  {items.length === 0 && (
-                    <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                      <SquareKanban className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
-                      <p className="text-base sm:text-lg font-medium">Nenhum item na fatura</p>
-                      <p className="text-xs sm:text-sm">Itens aparecerão automaticamente quando transações forem criadas</p>
-                    </div>
-                  )}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg sm:text-xl capitalize">
+                      Lançamentos — {periodLabel}
+                    </CardTitle>
+                    <p className="text-sm text-gray-500 mt-0.5">{mergedItems.length} transações</p>
+                  </div>
+                  <span className="text-base sm:text-lg font-bold text-gray-900">
+                    {formatCurrency(totalAmount)}
+                  </span>
                 </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {Object.keys(itemsByDate).length > 0 ? (
+                  Object.entries(itemsByDate).map(([date, dateItems]) => (
+                    <div key={date} className="mb-6 last:mb-0">
+                      <h3 className="text-xs sm:text-sm font-semibold text-gray-600 mb-3 pb-2 border-b border-gray-100 capitalize">
+                        {formatDateLabel(date)}
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {(dateItems as any[]).map((item: any) => {
+                          const cardInfo = cardMap.get(item._cardId);
+                          return (
+                            <div
+                              key={item.id}
+                              className="border-l-4 p-3 sm:p-4 rounded-lg bg-white border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                              style={{ borderLeftColor: item._cardColor ?? '#E5E7EB' }}
+                            >
+                              <div className="mb-2">
+                                <span className={cn(
+                                  'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full',
+                                  getTypeColor(item.type)
+                                )}>
+                                  {getTypeLabel(item.type)}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium text-gray-900 line-clamp-2">{item.description}</p>
+                              {item.category?.category_name && (
+                                <p className="text-xs text-gray-400 mt-1">{item.category.category_name}</p>
+                              )}
+                              <div className="flex items-center justify-between mt-3">
+                                {cardInfo && (
+                                  <span
+                                    className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium text-white truncate max-w-[120px]"
+                                    style={{ backgroundColor: item._cardColor ?? '#9CA3AF' }}
+                                  >
+                                    {(cardInfo as any).title}
+                                  </span>
+                                )}
+                                <span className={cn(
+                                  'text-sm font-semibold ml-auto',
+                                  item.amount < 0 ? 'text-green-600' : 'text-gray-900'
+                                )}>
+                                  {formatCurrency(Math.abs(item.amount))}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <SquareKanban className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-base sm:text-lg font-medium">Nenhum item na fatura</p>
+                    <p className="text-xs sm:text-sm text-gray-400">
+                      Itens aparecerão automaticamente quando transações forem criadas
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Payments History */}
-          {statement?.payments && statement.payments.length > 0 && (
-            <div className="px-1 sm:px-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg sm:text-xl">Pagamentos Registrados</CardTitle>
-                </CardHeader>
-                <CardContent className="py-0 px-1 sm:px-6 pb-4">
-                  <div className="w-full overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600">Data</th>
-                          <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600">Método</th>
-                          <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600">Valor</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {statement.payments.map((payment: any) => (
-                          <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                              {formatDate(payment.paid_at)}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
-                              {getMethodLabel(payment.method)}
-                            </td>
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-green-600">
-                              {formatCurrency(payment.amount)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </div>
       )}
 
       {/* Payment Modal */}
       <Modal
         isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
+        onClose={() => { setShowPaymentModal(false); setActivePaymentCard(null); }}
         title="Registrar Pagamento"
       >
         <div className="space-y-4">
@@ -565,41 +738,29 @@ function Invoice() {
             type="number"
             step="0.01"
             value={paymentData.amount}
-            onChange={(e) => setPaymentData(prev => ({ ...prev, amount: Number(e.target.value) }))}
+            onChange={e => setPaymentData(prev => ({ ...prev, amount: Number(e.target.value) }))}
             required
           />
-
           <Input
             label="Data do Pagamento"
             type="date"
             value={paymentData.paid_at}
-            onChange={(e) => setPaymentData(prev => ({ ...prev, paid_at: e.target.value }))}
+            onChange={e => setPaymentData(prev => ({ ...prev, paid_at: e.target.value }))}
             required
           />
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Método de Pagamento
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Método de Pagamento</label>
             <Dropdown
               options={paymentMethodOptions}
               value={paymentData.method}
-              onChange={(value) => setPaymentData(prev => ({ ...prev, method: value }))}
+              onChange={value => setPaymentData(prev => ({ ...prev, method: value }))}
             />
           </div>
-
           <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowPaymentModal(false)}
-            >
+            <Button variant="outline" onClick={() => { setShowPaymentModal(false); setActivePaymentCard(null); }}>
               Cancelar
             </Button>
-            <Button
-              onClick={handleRegisterPayment}
-              loading={registerPayment.isPending}
-            >
+            <Button onClick={handleRegisterPayment} loading={registerPayment.isPending}>
               Registrar Pagamento
             </Button>
           </div>
