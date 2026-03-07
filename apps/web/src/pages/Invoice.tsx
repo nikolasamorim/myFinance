@@ -660,7 +660,7 @@ function Invoice() {
                   </span>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent>
                 {Object.keys(itemsByDate).length > 0 ? (
                   Object.entries(itemsByDate).map(([date, dateItems]) => (
                     <div key={date} className="mb-6 last:mb-0">
