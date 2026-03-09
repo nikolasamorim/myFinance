@@ -34,10 +34,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         };
     }
 
-    // Netlify strips the function prefix from event.path.
-    // Redirect: /api/* → /.netlify/functions/api/:splat
-    // event.path arrives as /v1/... but Express routes expect /api/v1/...
-    const fixedEvent = { ...event, path: `/api${event.path}` };
-
-    return serverlessHandler(fixedEvent, context) as any;
+    // Netlify passes the original request path in event.path (e.g. /api/v1/workspaces).
+    // Express routes are mounted at /api/v1/... so no path rewriting needed.
+    return serverlessHandler(event, context) as any;
 };
