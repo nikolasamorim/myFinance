@@ -2,11 +2,21 @@
   command = "npm run build:web"
   publish = "apps/web/dist"
 
+[build.environment]
+  NODE_VERSION = "20"
+
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# Rotas da API → Netlify Functions
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# SPA fallback — necessário para React Router funcionar em produção
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
