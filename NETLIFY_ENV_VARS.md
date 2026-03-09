@@ -7,15 +7,18 @@ Configure todas as variáveis abaixo em:
 
 ## Variáveis obrigatórias
 
-| Variável | Descrição | Onde obter |
-|---|---|---|
-| `SUPABASE_URL` | URL do projeto Supabase | [Supabase Dashboard](https://supabase.com/dashboard/project/vsaamypohfkmsgvxiwze/settings/api) → Project URL |
-| `SUPABASE_ANON_KEY` | Chave pública anon do Supabase | Mesmo painel → `anon` `public` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chave service_role (admin, bypassa RLS) | Mesmo painel → `service_role` `secret` |
-| `VITE_SUPABASE_URL` | Mesmo valor de `SUPABASE_URL` | Mesmo painel → Project URL |
-| `VITE_SUPABASE_ANON_KEY` | Mesmo valor de `SUPABASE_ANON_KEY` | Mesmo painel → `anon` `public` |
+| Variável | Descrição | Valor em produção | Onde obter |
+|---|---|---|---|
+| `SUPABASE_URL` | URL do projeto Supabase | `https://vsaamypohfkmsgvxiwze.supabase.co` | [Supabase Dashboard](https://supabase.com/dashboard/project/vsaamypohfkmsgvxiwze/settings/api) → Project URL |
+| `SUPABASE_ANON_KEY` | Chave pública anon do Supabase | *(valor do painel)* | Mesmo painel → `anon` `public` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave service_role (admin, bypassa RLS) | *(valor do painel)* | Mesmo painel → `service_role` `secret` |
+| `VITE_SUPABASE_URL` | Mesmo valor de `SUPABASE_URL` | `https://vsaamypohfkmsgvxiwze.supabase.co` | Mesmo painel → Project URL |
+| `VITE_SUPABASE_ANON_KEY` | Mesmo valor de `SUPABASE_ANON_KEY` | *(valor do painel)* | Mesmo painel → `anon` `public` |
+| `VITE_API_URL` | URL base da API para o frontend | `/api/v1` | Valor fixo — digite exatamente `/api/v1` |
 
-> **Por que duas vezes?**
+> **⚠️ `VITE_API_URL` é obrigatória!** Sem ela, `apiClient` fica `null` e todas as chamadas da API falham silenciosamente com TypeError.
+>
+> **Por que duas vezes para Supabase?**
 > - `SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` → usadas pelas **Netlify Functions** (Node.js, servidor)
 > - `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` → usadas pelo **frontend Vite** (browser, expostas ao cliente)
 
@@ -26,7 +29,6 @@ Configure todas as variáveis abaixo em:
 | Variável | Descrição | Valor padrão |
 |---|---|---|
 | `CORS_ORIGINS` | Origens permitidas para a API Express | `http://localhost:5173` |
-| `VITE_API_URL` | URL base da API para o frontend | vazio (usa `/api` relativo) |
 | `NODE_ENV` | Ambiente de execução | `production` (configurado automaticamente pelo Netlify) |
 
 ---

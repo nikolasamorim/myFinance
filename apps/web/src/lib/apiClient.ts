@@ -36,13 +36,20 @@ async function apiFetch<T>(
         },
     });
 
+    const isJson = response.headers.get('content-type')?.includes('application/json');
+
     if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
+        const body = isJson ? await response.json().catch(() => ({})) : {};
         const msg = body?.error?.message ?? `HTTP ${response.status}`;
         throw new Error(msg);
     }
 
     if (response.status === 204) return undefined as T;
+
+    if (!isJson) {
+        throw new Error(`Resposta inesperada do servidor (não é JSON). Verifique se VITE_API_URL está configurada corretamente.`);
+    }
+
     return response.json() as Promise<T>;
 }
 
