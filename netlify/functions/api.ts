@@ -34,5 +34,10 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         };
     }
 
-    return serverlessHandler(event, context) as any;
+    // Netlify strips the function prefix from event.path.
+    // Redirect: /api/* → /.netlify/functions/api/:splat
+    // event.path arrives as /v1/... but Express routes expect /api/v1/...
+    const fixedEvent = { ...event, path: `/api${event.path}` };
+
+    return serverlessHandler(fixedEvent, context) as any;
 };
