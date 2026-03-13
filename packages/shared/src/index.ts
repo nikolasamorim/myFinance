@@ -268,13 +268,65 @@ export interface Broker {
   updated_at?: string | null;
 }
 
+export type NotificationType =
+  | 'invoice_closing'
+  | 'invoice_due'
+  | 'transaction_status_changed'
+  | 'recurrence_processed'
+  | 'recurrence_paused'
+  | 'recurrence_canceled'
+  | 'account_low_balance'
+  | 'budget_exceeded'
+  | 'custom';
+
+export type NotificationEntityType =
+  | 'transaction'
+  | 'account'
+  | 'category'
+  | 'credit_card'
+  | 'recurrence_rule';
+
 export interface Notification {
   id: string;
   user_id: string;
+  workspace_id: string;
+  type: NotificationType;
   title: string;
-  description: string;
+  message: string;
+  entity_type?: NotificationEntityType;
+  entity_id?: string;
+  data?: Record<string, unknown>;
   is_read: boolean;
+  is_dismissed: boolean;
   created_at: string;
+  scheduled_for?: string;
+}
+
+export interface NotificationPreference {
+  id: string;
+  user_id: string;
+  workspace_id: string;
+  notification_type: NotificationType;
+  enabled: boolean;
+  advance_days?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationSubscription {
+  id: string;
+  user_id: string;
+  workspace_id: string;
+  entity_type: NotificationEntityType;
+  entity_id: string;
+  notification_types: NotificationType[];
+  created_at: string;
+}
+
+export interface NotificationFilters {
+  unread_only?: boolean;
+  type?: NotificationType;
+  entity_type?: NotificationEntityType;
 }
 
 export interface DashboardStats {

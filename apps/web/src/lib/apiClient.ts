@@ -60,6 +60,8 @@ export const apiClient = API_URL
             apiFetch<T>(path, { method: 'POST', body: JSON.stringify(body) }),
         put: <T>(path: string, body: unknown) =>
             apiFetch<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
+        patch: <T>(path: string, body: unknown) =>
+            apiFetch<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
         delete: (path: string) => apiFetch<void>(path, { method: 'DELETE' }),
     }
     : null;

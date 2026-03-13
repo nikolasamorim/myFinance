@@ -1,5 +1,6 @@
 import { Router, Response, NextFunction, RequestHandler } from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
+import { notifyInvoiceClosing } from '../lib/notificationService';
 
 const router = Router({ mergeParams: true });
 router.use(requireAuth as RequestHandler);
@@ -80,12 +81,33 @@ router.get('/:statementId/items', h(async (req, res, next) => {
 /** POST /statements/:statementId/close */
 router.post('/:statementId/close', h(async (req, res, next) => {
     try {
-        const { statementId } = req.params;
+        const { wid, cardId, statementId } = req.params;
 
         const { error } = await req.supabase.rpc('close_statement', {
             p_statement_id: statementId,
         });
         if (error) throw error;
+
+        // Fire-and-forget: fetch statement + card info for the notification
+        Promise.resolve(
+            req.supabase
+                .from('card_statements')
+                .select('due_date, total_paid, credit_cards(credit_card_name)')
+                .eq('id', statementId)
+                .maybeSingle()
+        ).then(({ data: stmt }) => {
+            if (!stmt) return;
+            const cardName = (stmt.credit_cards as any)?.credit_card_name ?? cardId;
+            notifyInvoiceClosing(
+                req.supabase,
+                req.user.id,
+                wid,
+                cardId,
+                cardName,
+                stmt.due_date,
+                stmt.total_paid ?? 0
+            );
+        }).catch(() => {});
 
         res.json({ success: true });
     } catch (err) { next(err); }

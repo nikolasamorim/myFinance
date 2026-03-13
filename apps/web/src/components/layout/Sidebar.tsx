@@ -28,6 +28,8 @@ import { cn } from '../../lib/utils';
 import { useSidebar } from '../../context/SidebarContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
+import { NotificationPanel } from '../notifications/NotificationPanel';
+import { useUnreadNotificationCount } from '../../hooks/useNotifications';
 import { Dropdown } from '../ui/Dropdown';
 import { useTheme } from '../../hooks/useTheme';
 import { SidebarToggleButton } from '../ui/SidebarToggleButton';
@@ -133,6 +135,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { data: unreadCount } = useUnreadNotificationCount();
 
   const getWorkspaceIcon = (workspace: any) => {
     if (workspace?.workspace_icon) return <span className="text-lg">{workspace.workspace_icon}</span>;
@@ -324,9 +327,8 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
               title="Notificações"
             >
               <span className={cn('min-w-0 flex items-center', isCollapsed ? '' : 'gap-3', isCollapsed ? '' : 'flex-1')}>
-                <span className="relative flex-shrink-0">
+                <span className="flex-shrink-0">
                   <Bell className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
                 </span>
 
                 {!isCollapsed && (
@@ -334,8 +336,10 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
                 )}
               </span>
 
-              {!isCollapsed && (
-                <ChevronDown className={cn('w-4 h-4 flex-shrink-0 transition-transform', showNotifications && 'rotate-180')} />
+              {!isCollapsed && (unreadCount ?? 0) > 0 && (
+                <span className="flex-shrink-0 min-w-[1.25rem] h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {(unreadCount ?? 0) > 99 ? '99+' : unreadCount}
+                </span>
               )}
             </button>
 
@@ -348,12 +352,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
                 )}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="p-3 border-b border-gray-100">
-                  <h3 className="text-sm font-semibold text-gray-900 truncate">Notificações</h3>
-                </div>
-                <div className="p-3">
-                  <p className="text-sm text-gray-500 text-center truncate">Nenhuma notificação no momento</p>
-                </div>
+                <NotificationPanel onClose={() => setShowNotifications(false)} />
               </div>
             )}
           </div>

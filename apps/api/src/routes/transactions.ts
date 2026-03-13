@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction, RequestHandler } from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
+import { notifyTransactionStatusChange } from '../lib/notificationService';
 
 const router = Router({ mergeParams: true });
 router.use(requireAuth as RequestHandler);
@@ -84,6 +85,16 @@ router.put('/:id', h(async (req, res, next) => {
             .select()
             .single();
         if (error) throw error;
+        if (req.body.transaction_status !== undefined) {
+            notifyTransactionStatusChange(
+                req.supabase,
+                req.user.id,
+                wid,
+                id,
+                data.transaction_description ?? id,
+                req.body.transaction_status
+            );
+        }
         res.json(data);
     } catch (err) { next(err); }
 }));

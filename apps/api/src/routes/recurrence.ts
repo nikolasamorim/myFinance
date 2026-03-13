@@ -1,5 +1,6 @@
 import { Router, Response, NextFunction, RequestHandler } from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
+import { notifyRecurrenceStatusChange } from '../lib/notificationService';
 
 const router = Router({ mergeParams: true });
 router.use(requireAuth as RequestHandler);
@@ -80,9 +81,10 @@ router.delete('/:id', h(async (req, res, next) => {
 /** POST /api/v1/workspaces/:wid/recurrence-rules/:id/pause */
 router.post('/:id/pause', h(async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const { wid, id } = req.params;
         const { data, error } = await req.supabase.from('recurrence_rules').update({ status: 'paused', updated_at: new Date().toISOString() }).eq('id', id).select().single();
         if (error) throw error;
+        notifyRecurrenceStatusChange(req.supabase, req.user.id, wid, id, data.description ?? id, 'paused');
         res.json(data);
     } catch (err) { next(err); }
 }));
@@ -90,10 +92,11 @@ router.post('/:id/pause', h(async (req, res, next) => {
 /** POST /api/v1/workspaces/:wid/recurrence-rules/:id/resume */
 router.post('/:id/resume', h(async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const { wid, id } = req.params;
         const { data, error } = await req.supabase.from('recurrence_rules').update({ status: 'active', error_count: 0, last_error_at: null, last_error_message: null, updated_at: new Date().toISOString() }).eq('id', id).select().single();
         if (error) throw error;
         await triggerGeneration(req.supabase, id);
+        notifyRecurrenceStatusChange(req.supabase, req.user.id, wid, id, data.description ?? id, 'active');
         res.json(data);
     } catch (err) { next(err); }
 }));
@@ -101,11 +104,12 @@ router.post('/:id/resume', h(async (req, res, next) => {
 /** POST /api/v1/workspaces/:wid/recurrence-rules/:id/cancel */
 router.post('/:id/cancel', h(async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const { wid, id } = req.params;
         const todayISO = toISO(new Date());
         await req.supabase.from('transactions').delete().eq('parent_recurrence_rule_id', id).gte('recurrence_instance_date', todayISO);
         const { data, error } = await req.supabase.from('recurrence_rules').update({ status: 'canceled', next_run_at: null, updated_at: new Date().toISOString() }).eq('id', id).select().single();
         if (error) throw error;
+        notifyRecurrenceStatusChange(req.supabase, req.user.id, wid, id, data.description ?? id, 'canceled');
         res.json(data);
     } catch (err) { next(err); }
 }));

@@ -14,6 +14,8 @@ import creditCardsRouter from './routes/creditCards';
 import recurrenceRouter from './routes/recurrence';
 import dashboardRouter from './routes/dashboard';
 import statementsRouter from './routes/statements';
+import notificationsRouter from './routes/notifications';
+import notificationPreferencesRouter from './routes/notificationPreferences';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -56,6 +58,8 @@ app.use('/api/v1/workspaces/:wid/credit-cards', creditCardsRouter);
 app.use('/api/v1/workspaces/:wid/recurrence-rules', recurrenceRouter);
 app.use('/api/v1/workspaces/:wid/dashboard', dashboardRouter);
 app.use('/api/v1/workspaces/:wid/credit-cards/:cardId/statements', statementsRouter);
+app.use('/api/v1/workspaces/:wid/notifications', notificationsRouter);
+app.use('/api/v1/workspaces/:wid/notification-preferences', notificationPreferencesRouter);
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req, res) => {

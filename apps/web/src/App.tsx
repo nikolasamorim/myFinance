@@ -21,6 +21,8 @@ import { Categorias } from './pages/organizadores/Categorias';
 import { CentrosDeCusto } from './pages/organizadores/CentrosDeCusto';
 import { History } from './pages/History';
 import Invoice from './pages/Invoice';
+import { Notifications } from './pages/Notifications';
+import { NotificationSettings } from './pages/NotificationSettings';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -171,6 +173,26 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <Settings />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/notifications"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Notifications />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings/notifications"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <NotificationSettings />
                         </Layout>
                       </ProtectedRoute>
                     }
