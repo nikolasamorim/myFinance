@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase, supabaseUrl } from '../lib/supabase';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -23,13 +22,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    // Prevent multiple initializations
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-
     console.log('🔄 AuthContext: Initializing auth listener');
 
     // In development/Bolt environment, check for existing session first

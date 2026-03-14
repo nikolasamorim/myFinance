@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { workspaceService } from '../services/workspace.service';
 import { useAuth } from './AuthContext';
-import { supabase } from '../lib/supabase';
 import type { WorkspaceContextType, Workspace, WorkspaceRole } from '../types';
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -25,13 +24,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   const fetchWorkspaces = async () => {
     if (!user || !isAuthenticated || hasLoadedWorkspaces.current) {
-      return;
-    }
-
-    // Ensure a valid token exists before calling the API
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session?.access_token) {
-      console.warn('🏢 WorkspaceContext: No valid token yet, skipping fetch');
       return;
     }
 
@@ -81,42 +73,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       hasLoadedWorkspaces.current = false;
     }
   }, [user, isAuthenticated, authLoading]);
-
-  // Listen to Supabase session changes directly to handle the race condition
-  // where isAuthenticated is already true but getSession() hasn't persisted the
-  // token yet when WorkspaceContext first tries to fetch.
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token) {
-        if (!hasLoadedWorkspaces.current) {
-          console.log('🏢 WorkspaceContext: Session token confirmed via onAuthStateChange, fetching workspaces');
-          // Call the service directly here so we always have a fresh token context
-          try {
-            setLoading(true);
-            hasLoadedWorkspaces.current = true;
-            const data = await workspaceService.getUserWorkspaces();
-            setWorkspaces(data);
-            if (data.length > 0) {
-              setCurrentWorkspaceState(data[0]);
-              setUserRole(data[0].workspace_owner_user_id === session.user.id ? 'owner' : 'member');
-            } else {
-              setCurrentWorkspaceState(null);
-              setUserRole(null);
-            }
-          } catch (error) {
-            console.error('❌ WorkspaceContext: Error fetching workspaces (onAuthStateChange):', error);
-            hasLoadedWorkspaces.current = false;
-            setWorkspaces([]);
-            setCurrentWorkspaceState(null);
-            setUserRole(null);
-          } finally {
-            setLoading(false);
-          }
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   const value: WorkspaceContextType = {
     currentWorkspace,
