@@ -1,4 +1,5 @@
 import { apiClient } from '../lib/apiClient';
+import { supabase } from '../lib/supabase';
 import type { Workspace, WorkspaceMember, Team } from '../types';
 
 function requireApiClient() {
@@ -47,5 +48,22 @@ export const workspaceService = {
 
   async deleteTeam(workspaceId: string, teamId: string): Promise<void> {
     return requireApiClient().delete(`/workspaces/${workspaceId}/teams/${teamId}`);
+  },
+
+  async uploadWorkspaceIcon(workspaceId: string, file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `workspace-icons/${workspaceId}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('workspace-icons')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('workspace-icons')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
   },
 };

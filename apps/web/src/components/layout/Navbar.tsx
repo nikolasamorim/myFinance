@@ -32,6 +32,8 @@ export function Navbar() {
 
   const getWorkspaceIcon = (workspace: any) => {
     if (workspace.workspace_icon) {
+      const isUrl = workspace.workspace_icon.startsWith('http') || workspace.workspace_icon.startsWith('/');
+      if (isUrl) return <img src={workspace.workspace_icon} alt="workspace" className="w-full h-full object-cover rounded-lg" />;
       return <span className="text-lg">{workspace.workspace_icon}</span>;
     }
     
