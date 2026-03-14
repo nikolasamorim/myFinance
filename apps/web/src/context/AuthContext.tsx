@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
+  loginWithGoogle: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -164,6 +165,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(storageKey);
   };
 
+  const loginWithGoogle = async () => {
+    console.log('🔐 AuthContext: Starting Google login');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/` },
+    });
+    if (error) {
+      console.error('❌ AuthContext: Google login error:', error);
+      throw error;
+    }
+  };
+
   const checkWorkspaces = async (): Promise<boolean> => {
     try {
       console.log('🔍 AuthContext: Checking session validity');
@@ -191,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    loginWithGoogle,
     checkWorkspaces,
   };
 
