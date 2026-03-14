@@ -351,12 +351,43 @@ export interface AuthContextType {
   checkWorkspaces: () => Promise<boolean>;
 }
 
+export type WorkspaceRole = 'owner' | 'admin' | 'member';
+
+export interface WorkspaceMember {
+  workspace_id: string;
+  user_id: string;
+  role: WorkspaceRole;
+  email: string;
+  name: string;
+  joined_at: string;
+}
+
+export interface Team {
+  team_id: string;
+  workspace_id: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+}
+
+export type TeamRole = 'admin' | 'member';
+
+export interface TeamMember {
+  team_id: string;
+  user_id: string;
+  role: TeamRole;
+  name: string;
+  email: string;
+  joined_at: string;
+}
+
 export interface WorkspaceContextType {
   currentWorkspace: Workspace | null;
   workspaces: Workspace[];
   setCurrentWorkspace: (workspace: Workspace) => void;
   loading: boolean;
   refetchWorkspaces: () => Promise<void>;
+  userRole: WorkspaceRole | null;
 }
 
 export interface Visualization {

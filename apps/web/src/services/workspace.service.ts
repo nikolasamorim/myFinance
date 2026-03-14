@@ -1,5 +1,5 @@
 import { apiClient } from '../lib/apiClient';
-import type { Workspace } from '../types';
+import type { Workspace, WorkspaceMember, Team } from '../types';
 
 function requireApiClient() {
   if (!apiClient) {
@@ -31,5 +31,21 @@ export const workspaceService = {
 
   async deleteWorkspace(id: string): Promise<void> {
     return requireApiClient().delete(`/workspaces/${id}`);
+  },
+
+  async getMembers(workspaceId: string): Promise<WorkspaceMember[]> {
+    return requireApiClient().get<WorkspaceMember[]>(`/workspaces/${workspaceId}/members`);
+  },
+
+  async getTeams(workspaceId: string): Promise<Team[]> {
+    return requireApiClient().get<Team[]>(`/workspaces/${workspaceId}/teams`);
+  },
+
+  async createTeam(workspaceId: string, name: string): Promise<Team> {
+    return requireApiClient().post<Team>(`/workspaces/${workspaceId}/teams`, { name });
+  },
+
+  async deleteTeam(workspaceId: string, teamId: string): Promise<void> {
+    return requireApiClient().delete(`/workspaces/${workspaceId}/teams/${teamId}`);
   },
 };

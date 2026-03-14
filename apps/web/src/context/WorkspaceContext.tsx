@@ -1,16 +1,26 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { workspaceService } from '../services/workspace.service';
 import { useAuth } from './AuthContext';
-import type { WorkspaceContextType, Workspace } from '../types';
+import type { WorkspaceContextType, Workspace, WorkspaceRole } from '../types';
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
+  const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<WorkspaceRole | null>(null);
   const hasLoadedWorkspaces = useRef(false);
+
+  const deriveRole = (workspace: Workspace, userId: string): WorkspaceRole => {
+    return workspace.workspace_owner_user_id === userId ? 'owner' : 'member';
+  };
+
+  const setCurrentWorkspace = (workspace: Workspace) => {
+    setCurrentWorkspaceState(workspace);
+    if (user) setUserRole(deriveRole(workspace, user.id));
+  };
 
   const fetchWorkspaces = async () => {
     if (!user || !isAuthenticated || hasLoadedWorkspaces.current) {
@@ -21,24 +31,26 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       console.log('🏢 WorkspaceContext: Starting workspace fetch for user:', user.id);
       setLoading(true);
       hasLoadedWorkspaces.current = true;
-      
+
       const data = await workspaceService.getUserWorkspaces();
       console.log('🏢 WorkspaceContext: Workspaces fetched:', data.length);
-      
+
       setWorkspaces(data);
-      
-      // Set first workspace as current if available
+
       if (data.length > 0) {
         console.log('🏢 WorkspaceContext: Setting first workspace as current:', data[0].workspace_id);
-        setCurrentWorkspace(data[0]);
+        setCurrentWorkspaceState(data[0]);
+        setUserRole(deriveRole(data[0], user.id));
       } else {
         console.log('🏢 WorkspaceContext: No workspaces found');
-        setCurrentWorkspace(null);
+        setCurrentWorkspaceState(null);
+        setUserRole(null);
       }
     } catch (error) {
       console.error('❌ WorkspaceContext: Error fetching workspaces:', error);
       setWorkspaces([]);
-      setCurrentWorkspace(null);
+      setCurrentWorkspaceState(null);
+      setUserRole(null);
     } finally {
       setLoading(false);
     }
@@ -56,7 +68,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     } else if (!isAuthenticated) {
       console.log('🏢 WorkspaceContext: User not authenticated, resetting workspace state');
       setWorkspaces([]);
-      setCurrentWorkspace(null);
+      setCurrentWorkspaceState(null);
+      setUserRole(null);
       hasLoadedWorkspaces.current = false;
     }
   }, [user, isAuthenticated, authLoading]);
@@ -67,6 +80,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setCurrentWorkspace,
     loading,
     refetchWorkspaces,
+    userRole,
   };
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
