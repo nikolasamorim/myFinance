@@ -2,12 +2,12 @@
 @layer utilities {
   /* ========= Design tokens (CSS vars) ========= */
   .dark {
-    --ds-surface: #1D2125;            /* fundo base */
-    --ds-surface-raised: #22272B;     /* cartões/painéis */
-    --ds-surface-sunken: #1D2125;     /* áreas “afundadas”, sidebar */
-    --ds-border: #2C333A;             /* bordas/divisórias */
-    --ds-hover: #2C333A;              /* hover de superfície */
-    --ds-overlay: rgba(9, 30, 66, .31); /* sombras/overlays Atlassian */
+    --ds-surface: #161618;            /* fundo base — cinza neutro escuro */
+    --ds-surface-raised: #1e1e21;     /* cartões/painéis */
+    --ds-surface-sunken: #111113;     /* áreas “afundadas”, sidebar */
+    --ds-border: #2d2d30;             /* bordas/divisórias */
+    --ds-hover: #28282c;              /* hover de superfície */
+    --ds-overlay: rgba(0, 0, 0, .4);  /* sombras/overlays */
 
     /* Cores para contraste */
     --ds-surface-ct: #FFFFFF;          /* fundo base */
@@ -16,17 +16,16 @@
     --ds-border-ct: #DFE1E6;           /* bordas/divisórias */
     --ds-hover-ct: #EBECF0;            /* hover de superfície */
 
-    --ds-text: #DEE4EA;               /* texto alto contraste */
-    --ds-text-secondary: #B6C2CF;     /* texto médio */
-    --ds-text-subtle: #9FADBC;        /* texto sutil */
-    --ds-icon: #9FADBC;               /* ícones padrão */
+    --ds-text: #e8e8ea;               /* texto alto contraste */
+    --ds-text-secondary: #afafb3;     /* texto médio */
+    --ds-text-subtle: #6e6e73;        /* texto sutil */
+    --ds-icon: #6e6e73;               /* ícones padrão */
 
     /* Cores para contraste */
-    --ds-text-ct: #172B4D;            /* texto alto contraste */
-    --ds-text-secondary-ct: #44546F;  /* texto médio */
-    --ds-text-subtle-ct: #626F86;     /* texto sutil */
-    --ds-icon-ct: #626F86;            /* ícones padrão */
-
+    --ds-text-ct: #1c1c1e;            /* texto alto contraste */
+    --ds-text-secondary-ct: #44444a;  /* texto médio */
+    --ds-text-subtle-ct: #6e6e73;     /* texto sutil */
+    --ds-icon-ct: #6e6e73;            /* ícones padrão */
 
     --ds-link: #579DFF;               /* links */
     --ds-focus: #1D7AFC;              /* foco e “selected” */

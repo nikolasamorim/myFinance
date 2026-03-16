@@ -8,25 +8,38 @@ import {
   LogOut,
   User,
   X,
+  Sun,
+  Moon,
+  Monitor,
+  Palette,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebar } from '../../context/SidebarContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
+import { useTheme } from '../../context/ThemeContext';
 import { getWorkspaceIcon } from '../../lib/workspaceUtils';
 import { workspaceService } from '../../services/workspace.service';
 import { SettingsModal } from './SettingsModal';
+
+const THEME_OPTIONS = [
+  { value: 'light' as const, label: 'Claro', icon: Sun },
+  { value: 'dark' as const, label: 'Escuro', icon: Moon },
+  { value: 'system' as const, label: 'Sistema', icon: Monitor },
+];
 
 export function WorkspaceDropdown() {
   const { isCollapsed } = useSidebar();
   const { user, logout } = useAuth();
   const { currentWorkspace, workspaces, setCurrentWorkspace, refetchWorkspaces } = useWorkspace();
+  const { theme, setTheme } = useTheme();
 
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showNewWorkspace, setShowNewWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +51,7 @@ export function WorkspaceDropdown() {
         setIsOpen(false);
         setShowNewWorkspace(false);
         setNewWorkspaceName('');
+        setShowThemeMenu(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -103,7 +117,7 @@ export function WorkspaceDropdown() {
       {isOpen && (
         <div
           className={cn(
-            'absolute z-50 bg-white rounded-xl shadow-xl border border-gray-200 py-1 min-w-[260px]',
+            'absolute z-50 bg-white rounded-xl shadow-xl border border-gray-200 py-1 w-fit min-w-[260px]',
             isCollapsed ? 'left-full ml-2 top-0' : 'left-0 right-0 top-full mt-1'
           )}
         >
@@ -133,7 +147,40 @@ export function WorkspaceDropdown() {
                 <UserPlus className="w-3.5 h-3.5" />
                 Convidar
               </button>
+              <button
+                onClick={() => setShowThemeMenu((v) => !v)}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-md transition-colors',
+                  showThemeMenu
+                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                    : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                )}
+              >
+                <Palette className="w-3.5 h-3.5" />
+                Tema
+              </button>
             </div>
+
+            {showThemeMenu && (
+              <div className="mt-2 flex gap-1.5">
+                {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => setTheme(value)}
+                    className={cn(
+                      'flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-xs font-medium transition-colors border',
+                      theme === value
+                        ? 'bg-blue-50 border-blue-300 text-blue-700'
+                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                    {theme === value && <Check className="w-3 h-3" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Workspace list */}
