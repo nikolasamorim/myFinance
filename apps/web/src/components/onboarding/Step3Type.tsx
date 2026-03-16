@@ -38,10 +38,10 @@ export function Step3Type() {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-text-primary">
           Você está criando esse espaço para quem?
         </h2>
-        <p className="text-gray-600">
+        <p className="text-text-secondary">
           Isso nos ajuda a personalizar sua experiência
         </p>
       </div>
@@ -58,7 +58,7 @@ export function Step3Type() {
               className={`p-6 rounded-xl border-2 transition-all text-left hover:scale-105 ${
                 isSelected 
                   ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200 hover:border-gray-300'
+                  : 'border-border hover:border-border'
               }`}
             >
               <div className="flex items-start space-x-4">
@@ -66,10 +66,10 @@ export function Step3Type() {
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-1">
+                  <h3 className="font-semibold text-text-primary mb-1">
                     {option.label}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-text-secondary">
                     {option.description}
                   </p>
                 </div>

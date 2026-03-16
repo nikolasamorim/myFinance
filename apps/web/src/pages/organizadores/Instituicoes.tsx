@@ -10,8 +10,8 @@ export function Instituicoes() {
           <Building className="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Instituições</h1>
-          <p className="text-gray-600">Gerencie bancos e instituições financeiras</p>
+          <h1 className="text-2xl font-bold text-text-primary">Instituições</h1>
+          <p className="text-text-secondary">Gerencie bancos e instituições financeiras</p>
         </div>
       </div>
 
@@ -22,10 +22,10 @@ export function Instituicoes() {
         <CardContent>
           <div className="text-center py-12">
             <Building className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-text-primary mb-2">
               Módulo em Desenvolvimento
             </h3>
-            <p className="text-gray-600">
+            <p className="text-text-secondary">
               O gerenciador de instituições será implementado em breve.
             </p>
           </div>

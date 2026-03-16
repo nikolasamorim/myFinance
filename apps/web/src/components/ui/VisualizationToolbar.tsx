@@ -27,13 +27,13 @@ function ToolbarButton({
       title={title}
       className={cn(
         'relative p-2 rounded-lg transition-all duration-150',
-        'text-gray-500 hover:text-gray-900 hover:bg-gray-100',
-        active && 'text-gray-900 bg-gray-100'
+        'text-text-muted hover:text-text-primary hover:bg-bg-elevated',
+        active && 'text-text-primary bg-bg-elevated'
       )}
     >
       {icon}
       {active && (
-        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-blue-500" />
+        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-accent" />
       )}
     </button>
   );

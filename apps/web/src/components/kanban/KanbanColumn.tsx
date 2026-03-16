@@ -55,7 +55,7 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex flex-col bg-gray-50 rounded-lg p-4 min-h-[400px] transition-colors',
+        'flex flex-col bg-bg-surface rounded-lg p-4 min-h-[400px] transition-colors',
         isOver && 'bg-blue-50 ring-2 ring-blue-200',
         className
       )}
@@ -63,8 +63,8 @@ export function KanbanColumn({
       {/* Column Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-gray-900">{title}</h3>
-          <p className="text-sm text-gray-500">{topLevelItems.length} itens</p>
+          <h3 className="font-semibold text-text-primary">{title}</h3>
+          <p className="text-sm text-text-muted">{topLevelItems.length} itens</p>
         </div>
         <Button
           size="sm"
@@ -84,9 +84,9 @@ export function KanbanColumn({
           strategy={verticalListSortingStrategy}
         >
           {topLevelItems.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                <Plus className="w-6 h-6 text-gray-400" />
+            <div className="text-center py-8 text-text-muted">
+              <div className="w-12 h-12 bg-bg-elevated rounded-lg mx-auto mb-3 flex items-center justify-center">
+                <Plus className="w-6 h-6 text-text-muted" />
               </div>
               <p className="text-sm font-medium">{emptyMessage}</p>
               <p className="text-xs">Clique em "Adicionar" para começar</p>

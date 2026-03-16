@@ -1,231 +1,31 @@
-/* ===== Jira Dark Theme – Tailwind overrides ===== */
-@layer utilities {
-  /* ========= Design tokens (CSS vars) ========= */
-  .dark {
-    --ds-surface: #161618;            /* fundo base — cinza neutro escuro */
-    --ds-surface-raised: #1e1e21;     /* cartões/painéis */
-    --ds-surface-sunken: #111113;     /* áreas “afundadas”, sidebar */
-    --ds-border: #2d2d30;             /* bordas/divisórias */
-    --ds-hover: #28282c;              /* hover de superfície */
-    --ds-overlay: rgba(0, 0, 0, .4);  /* sombras/overlays */
-
-    /* Cores para contraste */
-    --ds-surface-ct: #FFFFFF;          /* fundo base */
-    --ds-surface-raised-ct: #F7F8F9;   /* cartões/painéis */
-    --ds-surface-sunken-ct: #F1F2F4;   /* áreas “afundadas”, sidebar */
-    --ds-border-ct: #DFE1E6;           /* bordas/divisórias */
-    --ds-hover-ct: #EBECF0;            /* hover de superfície */
-
-    --ds-text: #e8e8ea;               /* texto alto contraste */
-    --ds-text-secondary: #afafb3;     /* texto médio */
-    --ds-text-subtle: #6e6e73;        /* texto sutil */
-    --ds-icon: #6e6e73;               /* ícones padrão */
-
-    /* Cores para contraste */
-    --ds-text-ct: #1c1c1e;            /* texto alto contraste */
-    --ds-text-secondary-ct: #44444a;  /* texto médio */
-    --ds-text-subtle-ct: #6e6e73;     /* texto sutil */
-    --ds-icon-ct: #6e6e73;            /* ícones padrão */
-
-    --ds-link: #579DFF;               /* links */
-    --ds-focus: #1D7AFC;              /* foco e “selected” */
-    --ds-selected: #1D7AFC;           /* selecionado */
-
-    --ds-accent-blue: #579DFF;
-    --ds-accent-green: #4BCE97;
-    --ds-accent-yellow: #F5CD47;
-    --ds-accent-red: #F87168;
-    --ds-accent-purple: #9F8FEF;
-  }
-
-  /* -------- Superfícies -------- */
-  .dark .bg-white:not(.ignoreOverride),
-  .dark .bg-gray-50:not(.ignoreOverride),
-  .dark .bg-gray-100:not(.ignoreOverride),
-  .dark .bg-slate-50:not(.ignoreOverride),
-  .dark .bg-slate-100:not(.ignoreOverride) { @apply bg-[var(--ds-surface)]; }
-
-  .dark .bg-black:not(.ignoreOverride) {@apply bg-[var(--ds-surface-ct)];}
-
-  .dark .bg-gray-200:not(.ignoreOverride),
-  .dark .bg-gray-300:not(.ignoreOverride),
-  .dark .bg-slate-200\/60:not(.ignoreOverride),
-  .dark .bg-slate-100\/50:not(.ignoreOverride) { @apply bg-[var(--ds-surface-raised)]; }
-
-  /* sombras/overlays contidas no dark */
-  .dark .shadow-lg:not(.ignoreOverride) { @apply shadow-[0_12px_32px_var(--ds-overlay)]; }
-
-  /* -------- Tipografia -------- */
-  .dark .text-black:not(.ignoreOverride),
-  .dark .text-gray-900:not(.ignoreOverride),
-  .dark .text-slate-900:not(.ignoreOverride) { 
-    @apply text-[var(--ds-text)]; 
-  }
-
-  .dark .text-white:not(.fix):not(.ignoreOverride) { 
-    @apply text-[var(--ds-text-ct)]; 
-  }
-
-  .dark .text-gray-800:not(.ignoreOverride),
-  .dark .text-gray-700:not(.ignoreOverride),
-  .dark .text-slate-700:not(.ignoreOverride) { 
-    @apply text-[var(--ds-text-secondary)]; 
-  }
-
-  .dark .text-gray-600:not(.ignoreOverride),
-  .dark .text-gray-500:not(.ignoreOverride),
-  .dark .text-gray-400:not(.ignoreOverride) { 
-    @apply text-[var(--ds-text-subtle)]; 
-  }
-
-  /* -------- Bordas / divisórias / rings -------- */
-  .dark .border-gray-100:not(.ignoreOverride),
-  .dark .border-gray-200:not(.ignoreOverride),
-  .dark .border-gray-300:not(.ignoreOverride) { 
-    @apply border-[var(--ds-border)]; 
-  }
-
-  /* focus ring consistente (A11y) */
-  .dark .focus\:ring-gray-200:focus,
-  .dark .focus\:ring-gray-300:focus { @apply ring-[var(--ds-focus)]; }
-
-  .dark hr {
-    @apply border-[var(--ds-border)];
-  }
-
-  /* -------- Hovers / estados -------- */
-  .dark .hover\:bg-gray-50:hover:not(.ignoreOverride),
-  .dark .hover\:bg-gray-100:hover:not(.ignoreOverride),
-  .dark .hover\:bg-gray-200:hover:not(.ignoreOverride) { 
-    @apply bg-[var(--ds-hover)]; 
-  }
-
-  .dark .hover\:text-gray-900:hover:not(.ignoreOverride) { @apply text-[var(--ds-text)]; }
-
-  /* ------- Inputs / selects / textareas ------- */
-  .dark input:not([type="checkbox"]):not([type="radio"]),
-  .dark select,
-  .dark textarea {
-    @apply bg-[var(--ds-surface)] text-[var(--ds-text)] placeholder-[var(--ds-text-subtle)] border border-[var(--ds-border)];
-  }
-  .dark input:focus,
-  .dark select:focus,
-  .dark textarea:focus {
-    @apply outline-none ring-2 ring-[var(--ds-focus)] border-[var(--ds-border)];
-  }
-  .dark .disabled\:bg-gray-100:disabled { @apply bg-[var(--ds-surface-raised)]; }
-
-  /* ------- Botões neutros / ghost ------- */
-  .dark .bg-gray-100.text-gray-700,
-  .dark .text-gray-700.bg-transparent { @apply text-[var(--ds-text-secondary)]; }
-  .dark .hover\:bg-gray-100:hover { @apply bg-[var(--ds-hover)]; }
-
-  /* ------- Badges / chips suaves ------- */
-  .dark .bg-gray-100.text-gray-800 { @apply bg-[var(--ds-surface-raised)] text-[var(--ds-text-secondary)]; }
-  .dark .bg-gray-200.text-gray-800 { @apply bg-[var(--ds-hover)] text-[var(--ds-text)]; }
-
-  /* ------- Tabelas ------- */
-  .dark table { @apply text-[var(--ds-text-secondary)]; }
-  .dark thead th { @apply bg-[var(--ds-surface)] text-[color:var(--ds-text-subtle)] border-b border-[var(--ds-border)]; }
-  .dark tbody tr { @apply border-b border-[var(--ds-border)]; }
-  .dark tbody tr:hover { @apply bg-[#2C333A]/60; }
-  .dark td { @apply text-[var(--ds-text-secondary)]; }
-
-  /* ------- Sidebar / Nav ------- */
-  .dark .sidebar,
-  .dark nav,
-  .dark .menu-surface { @apply bg-[var(--ds-surface-sunken)] border-[var(--ds-border)]; }
-
-  .dark .nav-item,
-  .dark .menu-item { @apply text-[var(--ds-text-secondary)]; }
-
-  .dark .nav-item:hover,
-  .dark .menu-item:hover { @apply bg-[var(--ds-hover)] text-[var(--ds-text)]; }
-
-  .dark .nav-item-active,
-  .dark .menu-item-active {
-    @apply bg-[var(--ds-surface-raised)] text-[var(--ds-text)] border border-[var(--ds-border)];
-  }
-
-  /* ------- Cards / sections ------- */
-  .dark .card {
-    @apply bg-[var(--ds-surface-raised)] border border-[var(--ds-border)] text-[var(--ds-text-secondary)];
-  }
-
-  /* ------- Tooltip / badge de notificação ------- */
-  .dark .tooltip { @apply bg-[var(--ds-surface-raised)] text-[var(--ds-text)] border border-[var(--ds-border)]; }
-  .dark .badge-dot { @apply ring-2 ring-[var(--ds-surface)]; }
-
-  /* ------- Ícones ------- */
-  .dark .text-gray-600 svg,
-  .dark svg.text-gray-600 { @apply text-[var(--ds-icon)]; }
-  .dark .text-gray-400 svg,
-  .dark svg.text-gray-400 { @apply text-[var(--ds-text-subtle)]; }
-
-  /* ------- Skeletons / pulse ------- */
-  .dark .animate-pulse { --tw-gradient-from: transparent; } /* evita brilho azulado */
-  .dark .skeleton { @apply bg-[var(--ds-hover)]; }
-
-  /* ===== Card do mês vigente ===== */
-  .dark #selected-month-card { @apply bg-[var(--ds-surface-raised)] ring-2 ring-[var(--ds-focus)]; }
-  .dark #selected-month-card:hover { @apply bg-[var(--ds-hover)]; }
-
-  /* neutralizar utilitárias azuis herdadas no dark (para o card) */
-  .dark #selected-month-card.bg-blue-50        { @apply bg-[var(--ds-surface-raised)]; }
-  .dark #selected-month-card.hover\:bg-blue-50:hover { @apply bg-[var(--ds-hover)]; }
-  .dark #selected-month-card.border-blue-200   { @apply border-[var(--ds-border)]; }
-  .dark #selected-month-card.ring-blue-500     { @apply ring-[var(--ds-focus)]; }
-
-  /* textos internos do card em caso de azuis herdados */
-  .dark #selected-month-card .text-blue-600 { @apply text-[var(--ds-text)]; }
-  .dark #selected-month-card .text-blue-500 { @apply text-[var(--ds-text-secondary)]; }
-
-  /* ===== Cores “de marca” nos sumários (aprox. Atlassian) ===== */
-  /* VERDE */
-  .dark .bg-green-50 .text-gray-900,
-  .dark .bg-green-50 .text-green-700,
-  .dark .bg-green-50 .text-gray-500,
-  .dark .bg-green-50 .text-gray-600 { @apply text-[#4BCE97]; }
-
-  /* AMARELO */
-  .dark .bg-yellow-50 .text-gray-900,
-  .dark .bg-yellow-50 .text-yellow-700,
-  .dark .bg-yellow-50 .text-gray-500,
-  .dark .bg-yellow-50 .text-gray-600 { @apply text-[#F5CD47]; }
-
-  /* AZUL */
-  .dark .bg-blue-50 .text-gray-900,
-  .dark .bg-blue-50 .text-blue-700,
-  .dark .bg-blue-50 .text-gray-500,
-  .dark .bg-blue-50 .text-gray-600 { @apply text-[#579DFF]; }
-
-  /* VERMELHO */
-  .dark .bg-red-50 .text-gray-900,
-  .dark .bg-red-50 .text-red-700,
-  .dark .bg-red-50 .text-gray-500,
-  .dark .bg-red-50 .text-gray-600 { @apply text-[#F87168]; }
-
-  /* ÍNDIGO → roxo Atlassian */
-  .dark .bg-purple-50 .text-gray-900,
-  .dark .bg-purple-50 .text-purple-700,
-  .dark .bg-purple-50 .text-gray-500,
-  .dark .bg-purple-50 .text-gray-600 { @apply text-[#9F8FEF]; }
-
-  /* desaturação leve (genérica) para utilitárias */
-  .dark .text-green-600  { @apply text-[#4BCE97]; }
-  .dark .text-red-600    { @apply text-[#F87168]; }
-  .dark .text-orange-600 { @apply text-[#F5CD47]; } /* aprox. para warnings */
-  .dark .text-blue-600   { @apply text-[#579DFF]; }
-  .dark .text-purple-600 { @apply text-[#9F8FEF]; }
-  .dark .text-yellow-600 { @apply text-[#F5CD47]; }
-
-  /* ===== Links / estados focados ===== */
-  .dark a { @apply text-[var(--ds-link)]; }
-  .dark .ring-blue-500 { @apply ring-[var(--ds-focus)]; }
+/* ===== Design tokens — light (default) ===== */
+:root {
+  --color-bg-page: #ffffff;
+  --color-bg-surface: #f5f5f4;
+  --color-bg-elevated: #e7e5e4;
+  --color-border: #d6d3d1;
+  --color-text-primary: #1c1917;
+  --color-text-secondary: #78716c;
+  --color-text-muted: #a8a29e;
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
 }
 
-/* ===== Scrollbars (fora do @apply por compatibilidade) ===== */
+/* ===== Design tokens — dark ===== */
+.dark {
+  --color-bg-page: #0f0e0d;
+  --color-bg-surface: #1a1917;
+  --color-bg-elevated: #252320;
+  --color-border: #2e2c2a;
+  --color-text-primary: #fafaf9;
+  --color-text-secondary: #a8a29e;
+  --color-text-muted: #57534e;
+  --color-accent: #818cf8;
+  --color-accent-hover: #6366f1;
+}
+
+/* ===== Scrollbars (dark mode) ===== */
 .dark *::-webkit-scrollbar        { width: 10px; height: 10px; }
-.dark *::-webkit-scrollbar-track  { background-color: var(--ds-surface-sunken); }
-.dark *::-webkit-scrollbar-thumb  { background-color: var(--ds-border); border-radius: .375rem; }
-.dark *::-webkit-scrollbar-thumb:hover { background-color: #3A444D; }
+.dark *::-webkit-scrollbar-track  { background-color: var(--color-bg-page); }
+.dark *::-webkit-scrollbar-thumb  { background-color: var(--color-border); border-radius: .375rem; }
+.dark *::-webkit-scrollbar-thumb:hover { background-color: var(--color-bg-elevated); }

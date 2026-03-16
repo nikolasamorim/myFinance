@@ -77,9 +77,9 @@ export function MonthlyTimeline({
 
   const statusColor = (s?: string) => {
     if (s === 'open') return 'text-blue-600 bg-blue-50';
-    if (s === 'closed') return 'text-gray-600 bg-gray-50';
+    if (s === 'closed') return 'text-text-secondary bg-bg-surface';
     if (s === 'paid') return 'text-green-600 bg-green-50';
-    return 'text-gray-400 bg-gray-50';
+    return 'text-text-muted bg-bg-surface';
   };
 
   return (
@@ -120,10 +120,10 @@ export function MonthlyTimeline({
                       height: barH,
                       transform: isSelected ? 'scaleX(1.15)' : undefined,
                       backgroundColor: isSelected
-                        ? '#7C3AED'
+                        ? 'var(--color-accent)'
                         : isCurrent
-                        ? '#8B5CF6'
-                        : '#D1D5DB',
+                        ? 'var(--color-accent)'
+                        : 'var(--color-bg-elevated)',
                       opacity: isSelected ? 1 : isCurrent ? 0.9 : 0.65,
                     }}
                   />
@@ -134,10 +134,10 @@ export function MonthlyTimeline({
                   className={cn(
                     'text-xs font-semibold uppercase tracking-wide transition-colors leading-none',
                     isSelected
-                      ? 'text-purple-700'
+                      ? 'text-accent'
                       : isCurrent
-                      ? 'text-purple-500'
-                      : 'text-gray-400 group-hover:text-gray-600'
+                      ? 'text-accent/70'
+                      : 'text-text-muted group-hover:text-text-secondary'
                   )}
                 >
                   {month.monthName}
@@ -147,7 +147,7 @@ export function MonthlyTimeline({
                 <span
                   className={cn(
                     'text-xs leading-none transition-colors',
-                    isSelected ? 'text-purple-600 font-medium' : 'text-gray-300 group-hover:text-gray-400'
+                    isSelected ? 'text-accent font-medium' : 'text-text-muted/60 group-hover:text-text-muted'
                   )}
                 >
                   {month.totalAmount > 0
@@ -164,17 +164,17 @@ export function MonthlyTimeline({
 
       {/* Info card */}
       {selectedData && (
-        <div className="mt-3 p-3 sm:p-4 rounded-lg border border-gray-200 bg-gray-50 animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="mt-3 p-3 sm:p-4 rounded-lg border border-border bg-bg-surface animate-in fade-in slide-in-from-top-1 duration-200">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 capitalize">
+              <p className="text-sm font-semibold text-text-primary capitalize">
                 {selectedData.monthName}
               </p>
 
               <div className="mt-2 space-y-1.5">
                 {selectedData.totalAmount > 0 && (
                   <Row label="Total da fatura">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-text-primary">
                       {formatCurrency(selectedData.totalAmount)}
                     </span>
                   </Row>
@@ -221,13 +221,13 @@ export function MonthlyTimeline({
           </div>
 
           {canApply && (
-            <div className="mt-3 pt-3 border-t border-gray-200 flex items-center gap-3">
+            <div className="mt-3 pt-3 border-t border-border flex items-center gap-3">
               <Button size="sm" onClick={() => onApplyFilter(selectedMonth!)}>
                 Aplicar — {selectedData.monthName}
               </Button>
               <button
                 onClick={() => onMonthSelect(selectedMonth!)}
-                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-xs text-text-muted hover:text-text-secondary transition-colors"
               >
                 Cancelar
               </button>
@@ -242,7 +242,7 @@ export function MonthlyTimeline({
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between text-sm gap-4">
-      <span className="text-gray-500">{label}</span>
+      <span className="text-text-muted">{label}</span>
       {children}
     </div>
   );

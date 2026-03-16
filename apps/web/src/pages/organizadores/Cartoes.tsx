@@ -187,7 +187,7 @@ export function Cartoes() {
               <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Cartoes de Credito</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Cartoes de Credito</h1>
               <p className="text-sm sm:text-base text-gray-600">Gerencie seus cartoes de credito</p>
             </div>
           </div>
@@ -262,7 +262,7 @@ export function Cartoes() {
                                     )}
                                   </div>
                                   <div>
-                                    <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{card.title}</p>
+                                    <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{card.title}</p>
                                     {card.description && (
                                       <p className="text-xs text-gray-500 truncate">{card.description}</p>
                                     )}
@@ -274,10 +274,10 @@ export function Cartoes() {
                                   {getFlagLabel(card.flag)}
                                 </span>
                               </td>
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-text-primary">
                                 {formatCurrency(Number(card.limit))}
                               </td>
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-text-primary">
                                 {formatCurrency(Number(card.initial_balance || 0))}
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">

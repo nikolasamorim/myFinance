@@ -195,7 +195,7 @@ export function CentrosDeCusto() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-3">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 truncate">{costCenter.title}</p>
+              <p className="font-medium text-text-primary truncate">{costCenter.title}</p>
               <div className="flex items-center space-x-2 mt-1">
                 <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getTypeColor(costCenter.type)}`}>
                   {getTypeLabel(costCenter.type)}
@@ -263,7 +263,7 @@ export function CentrosDeCusto() {
               <Target className="w-5 h-5 sm:w-6 sm:h-6 text-sky-600" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Centro de Custo</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Centro de Custo</h1>
               <p className="text-sm sm:text-base text-gray-600">Organize custos por centros de responsabilidade</p>
             </div>
           </div>
@@ -338,7 +338,7 @@ export function CentrosDeCusto() {
                             <tr key={costCenter.id} className="border-b border-gray-100 hover:bg-gray-50">
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div>
-                                  <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{costCenter.title}</p>
+                                  <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{costCenter.title}</p>
                                 </div>
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">

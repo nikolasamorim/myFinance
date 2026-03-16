@@ -11,12 +11,12 @@ export function IncomeExpenseTable({ data }: IncomeExpenseTableProps) {
     <div className="w-full overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-200">
-            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[60px]">Mês</th>
-            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Receitas</th>
-            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Despesas</th>
-            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">Saldo</th>
-            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[70px]">% Economia</th>
+          <tr className="border-b border-border">
+            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[60px]">Mês</th>
+            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Receitas</th>
+            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Despesas</th>
+            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[70px]">Saldo</th>
+            <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[70px]">% Economia</th>
           </tr>
         </thead>
         <tbody>
@@ -25,8 +25,8 @@ export function IncomeExpenseTable({ data }: IncomeExpenseTableProps) {
             const savingsRate = month.income > 0 ? ((balance / month.income) * 100) : 0;
             
             return (
-              <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-900 capitalize">
+              <tr key={index} className="border-b border-border hover:bg-bg-elevated">
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-primary capitalize">
                   {month.month}
                 </td>
                 <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-green-600 font-medium">
@@ -50,8 +50,8 @@ export function IncomeExpenseTable({ data }: IncomeExpenseTableProps) {
           })}
         </tbody>
         <tfoot>
-          <tr className="border-t-2 border-gray-300 bg-gray-50">
-            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-bold text-gray-900">Total</td>
+          <tr className="border-t-2 border-border bg-bg-surface">
+            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-bold text-text-primary">Total</td>
             <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-green-600 font-bold">
               {formatCurrency(data.reduce((acc, month) => acc + month.income, 0))}
             </td>
@@ -64,7 +64,7 @@ export function IncomeExpenseTable({ data }: IncomeExpenseTableProps) {
             }`}>
               {formatCurrency(data.reduce((acc, month) => acc + (month.income - month.expenses), 0))}
             </td>
-            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-gray-600 font-bold">
+            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right text-text-secondary font-bold">
               {data.reduce((acc, month) => acc + month.income, 0) > 0 
                 ? (((data.reduce((acc, month) => acc + (month.income - month.expenses), 0)) / 
                    data.reduce((acc, month) => acc + month.income, 0)) * 100).toFixed(1)

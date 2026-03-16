@@ -46,7 +46,7 @@ export function HierarchyItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group bg-white border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-all',
+        'group bg-bg-page border border-border rounded-lg p-3 hover:border-border transition-all',
         isDragging && 'opacity-50 shadow-lg z-50',
         level > 0 && 'ml-6'
       )}
@@ -56,7 +56,7 @@ export function HierarchyItem({
         <button
           {...attributes}
           {...listeners}
-          className="p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+          className="p-1 text-text-muted hover:text-text-secondary cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
           title="Arrastar para reordenar"
         >
           <GripVertical className="w-4 h-4" />
@@ -66,8 +66,8 @@ export function HierarchyItem({
         <button
           onClick={onToggleExpanded}
           className={cn(
-            'p-1 rounded hover:bg-gray-100 transition-colors',
-            hasChildren ? 'text-gray-600' : 'text-transparent cursor-default'
+            'p-1 rounded hover:bg-bg-elevated transition-colors',
+            hasChildren ? 'text-text-secondary' : 'text-transparent cursor-default'
           )}
           disabled={!hasChildren}
         >
@@ -91,21 +91,21 @@ export function HierarchyItem({
         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onCreateChild}
-            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            className="p-1.5 text-text-muted hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
             title="Adicionar sub-item"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onEdit}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
+            className="p-1.5 text-text-muted hover:text-text-secondary hover:bg-bg-surface rounded transition-colors"
             title="Editar"
           >
             <Edit className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onDelete}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+            className="p-1.5 text-text-muted hover:text-red-600 hover:bg-red-50 rounded transition-colors"
             title="Excluir"
           >
             <Trash2 className="w-3.5 h-3.5" />

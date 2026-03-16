@@ -67,7 +67,7 @@ export function KanbanCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'bg-white rounded-lg border border-gray-200 shadow-sm transition-all',
+        'bg-bg-page rounded-lg border border-border shadow-sm transition-all',
         isDragging && 'opacity-50 shadow-lg z-50 rotate-2',
         level > 0 && 'ml-4 border-l-4 border-blue-200'
       )}
@@ -79,7 +79,7 @@ export function KanbanCard({
           <button
             {...attributes}
             {...listeners}
-            className="p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity mt-0.5"
+            className="p-1 text-text-muted hover:text-text-secondary cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity mt-0.5"
             title="Arrastar para reordenar"
           >
             <GripVertical className="w-4 h-4" />
@@ -89,8 +89,8 @@ export function KanbanCard({
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className={cn(
-              'p-1 rounded hover:bg-gray-100 transition-colors mt-0.5',
-              hasChildren ? 'text-gray-600' : 'text-transparent cursor-default'
+              'p-1 rounded hover:bg-bg-elevated transition-colors mt-0.5',
+              hasChildren ? 'text-text-secondary' : 'text-transparent cursor-default'
             )}
             disabled={!hasChildren}
           >
@@ -109,9 +109,9 @@ export function KanbanCard({
           <div className="flex-1 min-w-0">
             {renderContent ? renderContent(item) : (
               <div>
-                <h4 className="font-medium text-gray-900 truncate">{item.title}</h4>
+                <h4 className="font-medium text-text-primary truncate">{item.title}</h4>
                 {item.description && (
-                  <p className="text-sm text-gray-500 mt-1 truncate">{item.description}</p>
+                  <p className="text-sm text-text-muted mt-1 truncate">{item.description}</p>
                 )}
               </div>
             )}
@@ -121,21 +121,21 @@ export function KanbanCard({
           <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onCreate(item.id, columnType)}
-              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              className="p-1.5 text-text-muted hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
               title="Adicionar sub-item"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onEdit(item)}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
+              className="p-1.5 text-text-muted hover:text-text-secondary hover:bg-bg-surface rounded transition-colors"
               title="Editar"
             >
               <Edit className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onDelete(item.id)}
-              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              className="p-1.5 text-text-muted hover:text-red-600 hover:bg-red-50 rounded transition-colors"
               title="Excluir"
             >
               <Trash2 className="w-3.5 h-3.5" />

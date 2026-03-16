@@ -49,8 +49,6 @@ const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode; group?: st
   { id: 'integracoes', label: 'Integrações', icon: <Plug className="w-4 h-4" />, group: 'Workspace' },
 ];
 
-// ─── Section: Workspace ───────────────────────────────────────────────────────
-
 function WorkspaceSection() {
   const { currentWorkspace, refetchWorkspaces } = useWorkspace();
   const [name, setName] = useState(currentWorkspace?.workspace_name ?? '');
@@ -84,7 +82,6 @@ function WorkspaceSection() {
     const file = e.target.files?.[0];
     if (!file || !currentWorkspace) return;
 
-    // Show preview
     const reader = new FileReader();
     reader.onload = (ev) => setIconPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
@@ -107,18 +104,17 @@ function WorkspaceSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Workspace</h2>
-        <p className="text-sm text-gray-500 mt-1">Gerencie as configurações do seu workspace.</p>
+        <h2 className="text-lg font-semibold text-text-primary">Workspace</h2>
+        <p className="text-sm text-text-muted mt-1">Gerencie as configurações do seu workspace.</p>
       </div>
 
       <div className="space-y-4">
-        {/* Icon upload */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Ícone / Foto</label>
+          <label className="block text-sm font-medium text-text-secondary mb-2">Ícone / Foto</label>
           <div className="flex items-center gap-4">
             <div className="relative flex-shrink-0">
               <div
-                className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center text-2xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                className="w-16 h-16 bg-bg-elevated rounded-xl flex items-center justify-center text-2xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => iconInputRef.current?.click()}
               >
                 {iconSrc ? (
@@ -128,7 +124,7 @@ function WorkspaceSection() {
                 )}
               </div>
               <button
-                className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700"
+                className="absolute -bottom-1 -right-1 w-5 h-5 bg-accent rounded-full flex items-center justify-center text-white hover:bg-accent-hover"
                 onClick={() => iconInputRef.current?.click()}
                 disabled={uploadingIcon}
               >
@@ -146,7 +142,7 @@ function WorkspaceSection() {
                 onChange={handleIconChange}
               />
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-text-muted">
               <p>Clique para alterar o ícone do workspace.</p>
               <p className="text-xs mt-0.5">PNG, JPG ou GIF. Máx. 2MB.</p>
             </div>
@@ -154,23 +150,23 @@ function WorkspaceSection() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nome do workspace</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Nome do workspace</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-bg-page text-text-primary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent placeholder-text-muted"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-          <p className="text-sm text-gray-600 capitalize">{currentWorkspace?.workspace_type}</p>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Tipo</label>
+          <p className="text-sm text-text-secondary capitalize">{currentWorkspace?.workspace_type}</p>
         </div>
 
         <button
           onClick={handleSave}
           disabled={saving || !name.trim()}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="px-4 py-2 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors"
         >
           {saving ? 'Salvando...' : saved ? 'Salvo!' : 'Salvar alterações'}
         </button>
@@ -178,8 +174,6 @@ function WorkspaceSection() {
     </div>
   );
 }
-
-// ─── Section: Membros ─────────────────────────────────────────────────────────
 
 function MembrosSection() {
   const { data: members, isLoading } = useWorkspaceMembers();
@@ -194,13 +188,13 @@ function MembrosSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Membros</h2>
-          <p className="text-sm text-gray-500 mt-1">Pessoas com acesso a este workspace.</p>
+          <h2 className="text-lg font-semibold text-text-primary">Membros</h2>
+          <p className="text-sm text-text-muted mt-1">Pessoas com acesso a este workspace.</p>
         </div>
         <button
           disabled
           title="Em breve"
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-muted bg-bg-elevated rounded-lg cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">Convidar membro</span>
@@ -210,32 +204,30 @@ function MembrosSection() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+          <Loader2 className="w-5 h-5 text-text-muted animate-spin" />
         </div>
       ) : (
         <div className="space-y-2">
           {(members ?? []).map((m) => (
-            <div key={m.user_id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                <User className="w-4 h-4 text-gray-600" />
+            <div key={m.user_id} className="flex items-center gap-3 p-3 bg-bg-surface rounded-lg">
+              <div className="w-8 h-8 bg-bg-elevated rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-text-muted" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate">{m.name || m.email}</p>
-                <p className="text-xs text-gray-500 truncate">{m.email}</p>
+                <p className="text-sm font-medium text-text-primary truncate">{m.name || m.email}</p>
+                <p className="text-xs text-text-muted truncate">{m.email}</p>
               </div>
-              <span className="text-xs text-gray-500 flex-shrink-0">{roleLabel[m.role] ?? m.role}</span>
+              <span className="text-xs text-text-muted flex-shrink-0">{roleLabel[m.role] ?? m.role}</span>
             </div>
           ))}
           {!isLoading && (members ?? []).length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4">Nenhum membro encontrado.</p>
+            <p className="text-sm text-text-muted text-center py-4">Nenhum membro encontrado.</p>
           )}
         </div>
       )}
     </div>
   );
 }
-
-// ─── Section: Equipes ─────────────────────────────────────────────────────────
 
 function EquipesSection() {
   const { data: teams, isLoading } = useTeams();
@@ -257,44 +249,42 @@ function EquipesSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Equipes</h2>
-        <p className="text-sm text-gray-500 mt-1">Organize membros em equipes dentro do workspace.</p>
+        <h2 className="text-lg font-semibold text-text-primary">Equipes</h2>
+        <p className="text-sm text-text-muted mt-1">Organize membros em equipes dentro do workspace.</p>
       </div>
 
-      {/* Create team */}
       <div className="flex gap-2">
         <input
           value={newTeamName}
           onChange={(e) => setNewTeamName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
           placeholder="Nome da equipe"
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
+          className="flex-1 bg-bg-page text-text-primary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent min-w-0 placeholder-text-muted"
         />
         <button
           onClick={handleCreate}
           disabled={!newTeamName.trim() || createTeam.isPending}
-          className="px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1.5 flex-shrink-0"
+          className="px-3 sm:px-4 py-2 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors flex items-center gap-1.5 flex-shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">Criar</span>
         </button>
       </div>
 
-      {/* Team list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+          <Loader2 className="w-5 h-5 text-text-muted animate-spin" />
         </div>
       ) : (
         <div className="space-y-2">
           {(teams ?? []).map((t) => (
-            <div key={t.team_id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <UsersRound className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              <span className="flex-1 text-sm font-medium text-gray-900 truncate">{t.name}</span>
+            <div key={t.team_id} className="flex items-center gap-3 p-3 bg-bg-surface rounded-lg">
+              <UsersRound className="w-4 h-4 text-text-muted flex-shrink-0" />
+              <span className="flex-1 text-sm font-medium text-text-primary truncate">{t.name}</span>
               <button
                 onClick={() => deleteTeam.mutate(t.team_id)}
                 disabled={deleteTeam.isPending}
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-text-muted hover:text-red-500 transition-colors"
                 title="Remover equipe"
               >
                 <Trash2 className="w-4 h-4" />
@@ -302,7 +292,7 @@ function EquipesSection() {
             </div>
           ))}
           {!isLoading && (teams ?? []).length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4">Nenhuma equipe criada ainda.</p>
+            <p className="text-sm text-text-muted text-center py-4">Nenhuma equipe criada ainda.</p>
           )}
         </div>
       )}
@@ -310,24 +300,20 @@ function EquipesSection() {
   );
 }
 
-// ─── Section: Stub ────────────────────────────────────────────────────────────
-
 function StubSection({ title, description }: { title: string; description: string }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-        <p className="text-sm text-gray-500 mt-1">{description}</p>
+        <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+        <p className="text-sm text-text-muted mt-1">{description}</p>
       </div>
-      <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center">
-        <p className="text-sm text-gray-400 font-medium">Em breve</p>
-        <p className="text-xs text-gray-400 mt-1">Esta funcionalidade estará disponível em breve.</p>
+      <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
+        <p className="text-sm text-text-muted font-medium">Em breve</p>
+        <p className="text-xs text-text-muted mt-1">Esta funcionalidade estará disponível em breve.</p>
       </div>
     </div>
   );
 }
-
-// ─── Main modal ───────────────────────────────────────────────────────────────
 
 export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: SettingsModalProps) {
   const [activeSection, setActiveSection] = useState<Section>(initialSection);
@@ -347,17 +333,12 @@ export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: Set
   if (!isOpen) return null;
 
   const groups = ['Pessoal', 'Workspace'];
-
   const activeItem = NAV_ITEMS.find((i) => i.id === activeSection);
 
   const renderContent = () => {
     switch (activeSection) {
       case 'conta':
-        return (
-          <div className="-mx-4 sm:-mx-6 -my-4">
-            <Settings />
-          </div>
-        );
+        return <div className="-mx-4 sm:-mx-6 -my-4"><Settings /></div>;
       case 'workspace':
         return <WorkspaceSection />;
       case 'membros':
@@ -367,11 +348,7 @@ export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: Set
       case 'administradores':
         return <StubSection title="Administradores" description="Gerencie os administradores do workspace." />;
       case 'notificacoes':
-        return (
-          <div className="-mx-4 sm:-mx-6 -my-4">
-            <NotificationSettings />
-          </div>
-        );
+        return <div className="-mx-4 sm:-mx-6 -my-4"><NotificationSettings /></div>;
       case 'integracoes':
         return <StubSection title="Integrações" description="Conecte o workspace com ferramentas externas." />;
     }
@@ -382,13 +359,13 @@ export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: Set
     setShowMobileNav(false);
   };
 
-  const Sidebar = (
+  const SidebarNav = (
     <div className="py-4 px-2 sm:py-6 sm:px-3">
       {groups.map((group) => {
         const items = NAV_ITEMS.filter((i) => i.group === group);
         return (
           <div key={group} className="mb-5">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 mb-1">
+            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider px-3 mb-1">
               {group}
             </p>
             {items.map((item) => (
@@ -398,8 +375,8 @@ export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: Set
                 className={cn(
                   'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left',
                   activeSection === item.id
-                    ? 'bg-white text-gray-900 font-medium shadow-sm border border-gray-200'
-                    : 'text-gray-600 hover:bg-white hover:text-gray-900'
+                    ? 'bg-bg-page text-text-primary font-medium shadow-sm border border-border'
+                    : 'text-text-secondary hover:bg-bg-page hover:text-text-primary'
                 )}
               >
                 {item.icon}
@@ -414,57 +391,50 @@ export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: Set
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 ignoreOverride"
+        className="fixed inset-0 bg-black bg-opacity-50"
         onClick={onClose}
       />
 
-      {/* Modal container */}
       <div className="flex items-stretch sm:items-center justify-center min-h-screen sm:p-4">
-        <div className="relative bg-white sm:rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden sm:max-h-[90vh] min-h-screen sm:min-h-0 h-screen sm:h-auto">
-          {/* Close button */}
+        <div className="relative bg-bg-page sm:rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden sm:max-h-[90vh] min-h-screen sm:min-h-0 h-screen sm:h-auto">
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 p-1.5 text-text-muted hover:text-text-secondary hover:bg-bg-elevated rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
 
-          {/* Mobile header bar */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 sm:hidden bg-gray-50 flex-shrink-0">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-border sm:hidden bg-bg-surface flex-shrink-0">
             <button
               onClick={() => setShowMobileNav(!showMobileNav)}
-              className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-elevated rounded-lg transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+            <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
               {activeItem?.icon}
               {activeItem?.label}
             </div>
           </div>
 
           <div className="flex flex-1 min-h-0 relative">
-            {/* Mobile nav overlay */}
             {showMobileNav && (
               <div className="absolute inset-0 z-10 sm:hidden">
                 <div
                   className="absolute inset-0 bg-black bg-opacity-20"
                   onClick={() => setShowMobileNav(false)}
                 />
-                <div className="absolute left-0 top-0 bottom-0 w-56 bg-gray-50 overflow-y-auto shadow-lg border-r border-gray-200">
-                  {Sidebar}
+                <div className="absolute left-0 top-0 bottom-0 w-56 bg-bg-surface overflow-y-auto shadow-lg border-r border-border">
+                  {SidebarNav}
                 </div>
               </div>
             )}
 
-            {/* Desktop sidebar nav */}
-            <div className="hidden sm:block w-52 flex-shrink-0 border-r border-gray-200 overflow-y-auto bg-gray-50">
-              {Sidebar}
+            <div className="hidden sm:block w-52 flex-shrink-0 border-r border-border overflow-y-auto bg-bg-surface">
+              {SidebarNav}
             </div>
 
-            {/* Content */}
             <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
               {renderContent()}
             </div>

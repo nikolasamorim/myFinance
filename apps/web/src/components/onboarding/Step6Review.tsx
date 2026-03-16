@@ -70,22 +70,22 @@ export function Step6Review() {
           <Check className="w-8 h-8 text-white" />
         </div>
         
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-text-primary">
           Perfeito! Vamos revisar
         </h2>
-        <p className="text-gray-600">
+        <p className="text-text-secondary">
           Confirme as informações do seu workspace antes de criar
         </p>
       </div>
 
-      <div className="max-w-md mx-auto bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+      <div className="max-w-md mx-auto bg-bg-page border border-border rounded-xl p-6 space-y-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
             <span className="text-lg">📊</span>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Nome</p>
-            <p className="font-semibold text-gray-900">{data.name}</p>
+            <p className="text-sm text-text-muted">Nome</p>
+            <p className="font-semibold text-text-primary">{data.name}</p>
           </div>
         </div>
 
@@ -94,8 +94,8 @@ export function Step6Review() {
             <TypeIcon className="w-5 h-5 text-purple-600" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Tipo</p>
-            <p className="font-semibold text-gray-900">{getTypeLabel(data.context_type)}</p>
+            <p className="text-sm text-text-muted">Tipo</p>
+            <p className="font-semibold text-text-primary">{getTypeLabel(data.context_type)}</p>
           </div>
         </div>
 
@@ -104,8 +104,8 @@ export function Step6Review() {
             <SharingIcon className="w-5 h-5 text-green-600" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Acesso</p>
-            <p className="font-semibold text-gray-900">
+            <p className="text-sm text-text-muted">Acesso</p>
+            <p className="font-semibold text-text-primary">
               {data.shared ? 'Compartilhado' : 'Apenas você'}
             </p>
           </div>
@@ -116,8 +116,8 @@ export function Step6Review() {
             <span className="text-lg">🎯</span>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Objetivo</p>
-            <p className="font-semibold text-gray-900">{data.main_goal}</p>
+            <p className="text-sm text-text-muted">Objetivo</p>
+            <p className="font-semibold text-text-primary">{data.main_goal}</p>
           </div>
         </div>
       </div>

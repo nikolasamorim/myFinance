@@ -581,7 +581,7 @@ export function AdvancedTransactionModal({
       case 'expense': return 'text-red-600';
       case 'debt': return 'text-orange-600';
       case 'investment': return 'text-blue-600';
-      default: return 'text-gray-600';
+      default: return 'text-text-secondary';
     }
   };
 
@@ -616,7 +616,7 @@ export function AdvancedTransactionModal({
             <div className="space-y-6">
               {/* Basic Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                <h3 className="text-lg font-semibold text-text-primary border-b border-border pb-2">
                   Informações Básicas
                 </h3>
                 
@@ -656,7 +656,7 @@ export function AdvancedTransactionModal({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Valor *
                     </label>
                     <input
@@ -665,7 +665,7 @@ export function AdvancedTransactionModal({
                       onChange={handleCurrencyChange}
                       placeholder="R$ 0,00"
                       className={cn(
-                        'block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent',
+                        'block w-full px-3 py-2 text-sm border border-border rounded-md shadow-sm placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent',
                         errors.amount && 'border-red-300 focus:ring-red-500'
                       )}
                       required
@@ -676,7 +676,7 @@ export function AdvancedTransactionModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Método de Pagamento *
                     </label>
                     <Controller
@@ -700,13 +700,13 @@ export function AdvancedTransactionModal({
 
               {/* Account and Payment Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                <h3 className="text-lg font-semibold text-text-primary border-b border-border pb-2">
                   Conta e Pagamento
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Conta Bancária / Caixa *
                     </label>
                     <Controller
@@ -729,7 +729,7 @@ export function AdvancedTransactionModal({
                   {/* Credit Card - Only for expenses */}
                   {transactionType === 'expense' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text-secondary mb-2">
                         Cartão de Crédito (opcional)
                       </label>
                       <Controller
@@ -754,13 +754,13 @@ export function AdvancedTransactionModal({
 
               {/* Organization */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                <h3 className="text-lg font-semibold text-text-primary border-b border-border pb-2">
                   Organização
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Centro de Custo (opcional)
                     </label>
                     <Controller
@@ -778,7 +778,7 @@ export function AdvancedTransactionModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Categoria (opcional)
                     </label>
                     <Controller
@@ -800,7 +800,7 @@ export function AdvancedTransactionModal({
               {/* Options */}
               {!isEditing && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                  <h3 className="text-lg font-semibold text-text-primary border-b border-border pb-2">
                     Opções Avançadas
                   </h3>
 
@@ -809,15 +809,15 @@ export function AdvancedTransactionModal({
                       <input
                         type="checkbox"
                         {...register('is_installment')}
-                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mr-2 h-4 w-4 text-accent focus:ring-accent border-border rounded"
                       />
-                      <span className="text-sm font-medium text-gray-700">É parcelado?</span>
+                      <span className="text-sm font-medium text-text-secondary">É parcelado?</span>
                     </label>
 
                     {/* Installment Field - Only show when installment is enabled */}
                     {isInstallment && (
                       <div className="flex items-center space-x-2">
-                        <label className="text-sm font-medium text-gray-700">Parcela:</label>
+                        <label className="text-sm font-medium text-text-secondary">Parcela:</label>
                         <div className="flex items-center space-x-1">
                           <input
                             type="number"
@@ -825,16 +825,16 @@ export function AdvancedTransactionModal({
                             max={totalInstallments}
                             value={currentInstallmentNumber}
                             onChange={(e) => setCurrentInstallmentNumber(Number(e.target.value))}
-                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-16 px-2 py-1 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent"
                           />
-                          <span className="text-sm text-gray-600">/</span>
+                          <span className="text-sm text-text-secondary">/</span>
                           <input
                             type="number"
                             min="2"
                             max="99"
                             value={totalInstallments}
                             onChange={(e) => setTotalInstallments(Number(e.target.value))}
-                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-16 px-2 py-1 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent"
                           />
                         </div>
                       </div>
@@ -844,9 +844,9 @@ export function AdvancedTransactionModal({
                       <input
                         type="checkbox"
                         {...register('is_recurring')}
-                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mr-2 h-4 w-4 text-accent focus:ring-accent border-border rounded"
                       />
-                      <span className="text-sm font-medium text-gray-700">É recorrente?</span>
+                      <span className="text-sm font-medium text-text-secondary">É recorrente?</span>
                     </label>
                   </div>
                 </div>
@@ -857,10 +857,10 @@ export function AdvancedTransactionModal({
           {activeTab === 'installments' && !isEditing && isInstallment && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-text-primary">
                   Configuração de Parcelas
                 </h3>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-text-secondary">
                   Valor principal: <span className="font-semibold">{formatCurrency(mainAmount || 0)}</span>
                 </div>
               </div>
@@ -883,7 +883,7 @@ export function AdvancedTransactionModal({
               {installmentsGenerated && installments.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-gray-900">
+                    <h4 className="font-medium text-text-primary">
                       Lista de Parcelas ({installments.length})
                     </h4>
                     <Button
@@ -897,23 +897,23 @@ export function AdvancedTransactionModal({
                     </Button>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="border border-border rounded-lg overflow-hidden">
                     <div className="max-h-64 overflow-y-auto">
                       <table className="w-full">
-                        <thead className="bg-gray-50 sticky top-0">
+                        <thead className="bg-bg-surface sticky top-0">
                           <tr>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Parcela</th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Data</th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Competência</th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-600">Centro de Custo</th>
-                            <th className="text-right py-2 px-3 text-xs font-medium text-gray-600">Valor</th>
-                            <th className="text-center py-2 px-3 text-xs font-medium text-gray-600">Ações</th>
+                            <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">Parcela</th>
+                            <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">Data</th>
+                            <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">Competência</th>
+                            <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">Centro de Custo</th>
+                            <th className="text-right py-2 px-3 text-xs font-medium text-text-secondary">Valor</th>
+                            <th className="text-center py-2 px-3 text-xs font-medium text-text-secondary">Ações</th>
                           </tr>
                         </thead>
                         <tbody>
                           {installments.map((installment, index) => (
-                            <tr key={installment.id} className="border-t border-gray-100">
-                              <td className="py-2 px-3 text-sm text-gray-900">
+                            <tr key={installment.id} className="border-t border-border">
+                              <td className="py-2 px-3 text-sm text-text-primary">
                                 {installment.number}/{installments.length}
                               </td>
                               <td className="py-2 px-3">
@@ -921,7 +921,7 @@ export function AdvancedTransactionModal({
                                   type="date"
                                   value={installment.date}
                                   onChange={(e) => updateInstallment(installment.id, 'date', e.target.value)}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="text-xs border border-border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-accent"
                                 />
                               </td>
                               <td className="py-2 px-3">
@@ -929,14 +929,14 @@ export function AdvancedTransactionModal({
                                   type="month"
                                   value={installment.competence}
                                   onChange={(e) => updateInstallment(installment.id, 'competence', e.target.value)}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="text-xs border border-border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-accent"
                                 />
                               </td>
                               <td className="py-2 px-3">
                                 <select
                                   value={installment.cost_center_id}
                                   onChange={(e) => updateInstallment(installment.id, 'cost_center_id', e.target.value)}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="text-xs border border-border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-accent"
                                 >
                                   <option value="">Nenhum</option>
                                   {costCenters.map(center => (
@@ -952,7 +952,7 @@ export function AdvancedTransactionModal({
                                   step="0.01"
                                   value={installment.amount}
                                   onChange={(e) => updateInstallment(installment.id, 'amount', Number(e.target.value))}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 w-full text-right focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="text-xs border border-border rounded px-2 py-1 w-full text-right focus:outline-none focus:ring-1 focus:ring-accent"
                                 />
                               </td>
                               <td className="py-2 px-3">
@@ -960,7 +960,7 @@ export function AdvancedTransactionModal({
                                   <button
                                     type="button"
                                     onClick={() => deleteInstallment(installment.id)}
-                                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    className="p-1 text-text-muted hover:text-red-600 transition-colors"
                                     title="Excluir parcela"
                                   >
                                     <Trash2 className="w-3 h-3" />
@@ -974,9 +974,9 @@ export function AdvancedTransactionModal({
                     </div>
 
                     {/* Summary Row */}
-                    <div className="bg-gray-50 border-t border-gray-200 px-3 py-2">
+                    <div className="bg-bg-surface border-t border-border px-3 py-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-medium text-text-primary">
                           Total das Parcelas:
                         </span>
                         <div className="flex items-center space-x-2">
@@ -1009,8 +1009,8 @@ export function AdvancedTransactionModal({
               )}
 
               {!installmentsGenerated && (
-                <div className="text-center py-8 text-gray-500">
-                  <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <div className="text-center py-8 text-text-muted">
+                  <CreditCard className="w-12 h-12 text-text-muted mx-auto mb-3" />
                   <p className="text-sm font-medium">Nenhuma parcela gerada</p>
                   <p className="text-xs">Clique em "Visualizar Parcelas" para gerar as parcelas automaticamente</p>
                 </div>
@@ -1021,10 +1021,10 @@ export function AdvancedTransactionModal({
           {activeTab === 'recurrence' && !isEditing && isRecurring && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-text-primary">
                   Configuração de Recorrência
                 </h3>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-text-secondary">
                   Valor por ocorrência: <span className="font-semibold">{formatCurrency(mainAmount || 0)}</span>
                 </div>
               </div>
@@ -1050,7 +1050,7 @@ export function AdvancedTransactionModal({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Tipo de Recorrência
                     </label>
                     <Dropdown
@@ -1074,7 +1074,7 @@ export function AdvancedTransactionModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
                     Ajuste de Vencimento
                   </label>
                   <Dropdown
@@ -1082,7 +1082,7 @@ export function AdvancedTransactionModal({
                     value={recurrenceData.due_adjustment}
                     onChange={(value) => setRecurrenceData(prev => ({ ...prev, due_adjustment: value as any }))}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-text-muted mt-1">
                     Como ajustar vencimentos que caem em fins de semana ou feriados
                   </p>
                 </div>
@@ -1143,8 +1143,8 @@ export function AdvancedTransactionModal({
         </div>
 
         {/* Form Actions */}
-        <div className="flex justify-between items-center pt-6 border-t border-gray-200">
-          <div className="text-sm text-gray-600 space-y-1">
+        <div className="flex justify-between items-center pt-6 border-t border-border">
+          <div className="text-sm text-text-secondary space-y-1">
             {isInstallment && (
               <div className={cn(
                 installmentsGenerated && installmentsValid ? 'text-green-600' : 'text-yellow-600'

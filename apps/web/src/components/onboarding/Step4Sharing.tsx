@@ -31,10 +31,10 @@ export function Step4Sharing() {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-text-primary">
           Quem vai usar esse espaço?
         </h2>
-        <p className="text-gray-600">
+        <p className="text-text-secondary">
           Defina se outras pessoas poderão acessar este workspace
         </p>
       </div>
@@ -51,7 +51,7 @@ export function Step4Sharing() {
               className={`p-6 rounded-xl border-2 transition-all text-left hover:scale-105 ${
                 isSelected 
                   ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200 hover:border-gray-300'
+                  : 'border-border hover:border-border'
               }`}
             >
               <div className="flex items-start space-x-4">
@@ -59,10 +59,10 @@ export function Step4Sharing() {
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-1">
+                  <h3 className="font-semibold text-text-primary mb-1">
                     {option.label}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-text-secondary">
                     {option.description}
                   </p>
                 </div>

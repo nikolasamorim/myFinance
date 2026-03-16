@@ -305,7 +305,7 @@ export function Dashboard() {
       case 'pending':
         return 'text-yellow-600 bg-yellow-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-text-secondary bg-bg-surface';
     }
   };
 
@@ -331,7 +331,7 @@ export function Dashboard() {
       case 'debt':
         return 'text-orange-600 bg-orange-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-text-secondary bg-bg-surface';
     }
   };
 
@@ -357,8 +357,8 @@ export function Dashboard() {
 
   if (workspaceLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-bg-surface flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -436,8 +436,8 @@ export function Dashboard() {
               <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-sm sm:text-base text-gray-600">Visao geral das suas financas</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Dashboard</h1>
+              <p className="text-sm sm:text-base text-text-secondary">Visao geral das suas financas</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -454,8 +454,8 @@ export function Dashboard() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Saldo</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Saldo</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-text-primary mt-1">
                     {
                       // Saldo considerando SOMENTE lançamentos pagos/recebidos no período filtrado:
                       // (receitas pagas - despesas pagas)
@@ -474,7 +474,7 @@ export function Dashboard() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Receitas</p>
+                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Receitas</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mt-1">
                     {
                       // Total de RECEITAS PAGAS no período filtrado
@@ -500,7 +500,7 @@ export function Dashboard() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Despesas</p>
+                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Despesas</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mt-1">
                     {
                       // Total de DESPESAS PAGAS no período filtrado
@@ -526,7 +526,7 @@ export function Dashboard() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Investido</p>
+                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Total Investido</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 mt-1">
                     {
                       // Total de INVESTIMENTOS PAGOS no período filtrado
@@ -595,10 +595,10 @@ export function Dashboard() {
                         className={cn(
                           'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-md',
                           isUserSelected
-                            ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-400 shadow-lg transform scale-105'
+                            ? 'bg-accent/5 border-accent ring-2 ring-accent/40 shadow-lg transform scale-105'
                             : isHighlighted
-                              ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500'
-                              : 'border-gray-200 bg-white hover:border-gray-300 hover:scale-102'
+                              ? 'bg-accent/5 border-accent/30 ring-2 ring-accent/50'
+                              : 'border-border bg-bg-page hover:border-border hover:scale-102'
                         )}
                         style={{ scrollSnapAlign: 'start' }}
                         title={isUserSelected ? 'Click Apply Filter to apply' : month.isSelected ? 'Selected by period filter' : 'Click to select month'}
@@ -607,7 +607,7 @@ export function Dashboard() {
                           <h3
                             className={cn(
                               'font-semibold capitalize',
-                              isHighlighted ? 'text-blue-700' : 'text-gray-900' // << mesma cor no título
+                              isHighlighted ? 'text-accent' : 'text-text-primary' // << mesma cor no título
                             )}
                           >
                             {month.monthName}
@@ -615,32 +615,32 @@ export function Dashboard() {
 
                           {/* Apenas o mês atual mostra o subtítulo */}
                           {month.isCurrentMonth && (
-                            <span className="text-xs text-blue-600 font-medium">Mês Atual</span>
+                            <span className="text-xs text-accent font-medium">Mês Atual</span>
                           )}
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Receita:</span>
+                            <span className="text-text-secondary">Receita:</span>
                             <span className="font-medium text-green-600">
                               {formatCurrency(month.income)}
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Despesa:</span>
+                            <span className="text-text-secondary">Despesa:</span>
                             <span className="font-medium text-red-600">
                               {formatCurrency(month.expense)}
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Investimento:</span>
+                            <span className="text-text-secondary">Investimento:</span>
                             <span className="font-medium text-blue-600">
                               {formatCurrency(month.debtReceived)}
                             </span>
                           </div>
                           <hr className="my-2" />
                           <div className="flex justify-between text-sm font-semibold">
-                            <span className="text-gray-900">Saldo:</span>
+                            <span className="text-text-primary">Saldo:</span>
                             <span className={cn('font-bold', positiveBalance ? 'text-green-600' : 'text-red-600')}>
                               {formatCurrency(month.income - month.expense)}
                             </span>
@@ -657,7 +657,7 @@ export function Dashboard() {
                 <div className="flex justify-center pb-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
                   <Button
                     onClick={handleApplyMonthFilter}
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                    className="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                   >
                     Apply Filter
                   </Button>
@@ -688,35 +688,35 @@ export function Dashboard() {
                   <div className="max-h-[560px] overflow-y-auto">
                     <table className="w-full min-w-[800px]">
                       <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[60px]">
+                        <tr className="border-b border-border">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary w-[60px]">
                             Tipo
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[70px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary w-[70px]">
                             Status
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[160px]">
                             Título
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[110px]">
                             Data
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[120px]">
                             Valor
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[160px]">
                             Conta Bancária
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[130px]">
                             C. Crédito
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[110px]">
                             Categoria
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[130px]">
                             C. Custo
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">
                             Ações
                           </th>
                         </tr>
@@ -726,12 +726,12 @@ export function Dashboard() {
                         {sortedTransactions.map((transaction) => (
                           <tr
                             key={transaction.transaction_id}
-                            className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                            className="border-b border-border hover:bg-bg-elevated cursor-pointer"
                             onClick={() => handleEditTransaction(transaction)}
                           >
                             <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
                               <span
-                                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-bg-surface"
                                 title={getTypeLabel(transaction.transaction_type)}
                               >
                                 {getTypeIcon(transaction.transaction_type)}
@@ -740,20 +740,20 @@ export function Dashboard() {
 
                             <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
                               <span
-                                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-bg-surface"
                                 title={getStatusLabel(transaction.transaction_status || "pending")}
                               >
                                 {getStatusIcon(transaction.transaction_status || "pending")}
                               </span>
                             </td>
 
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-primary">
                               <span className="truncate block max-w-[140px] sm:max-w-none">
                                 {transaction.transaction_description}
                               </span>
                             </td>
 
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-text-secondary">
                               {formatDate(transaction.transaction_date)}
                             </td>
 
@@ -761,7 +761,7 @@ export function Dashboard() {
                               {formatCurrency(Number(transaction.transaction_amount))}
                             </td>
 
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900"> <div className="flex items-center gap-2"> {/* Quadrado com cor e ícone Lucide centralizado */} <div className="flex items-center justify-center text-white p-1.5 rounded-lg" /* tamanho consistente por linha */ style={{ backgroundColor: transaction.transaction_account_color || 'unset' }} > {(() => { const iconKey = (transaction.transaction_account_icon || '') as keyof typeof Lucide; const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>; return DynamicIcon ? (<DynamicIcon className="w-3 h-3" />) : null; })()} </div> {/* Nome da conta */} <span className="truncate block max-w-[140px] sm:max-w-none"> {transaction.transaction_account} </span> </div> </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-primary"> <div className="flex items-center gap-2"> {/* Quadrado com cor e ícone Lucide centralizado */} <div className="flex items-center justify-center text-white p-1.5 rounded-lg" /* tamanho consistente por linha */ style={{ backgroundColor: transaction.transaction_account_color || 'unset' }} > {(() => { const iconKey = (transaction.transaction_account_icon || '') as keyof typeof Lucide; const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>; return DynamicIcon ? (<DynamicIcon className="w-3 h-3" />) : null; })()} </div> {/* Nome da conta */} <span className="truncate block max-w-[140px] sm:max-w-none"> {transaction.transaction_account} </span> </div> </td>
 
                             <td className="py-2 sm:py-3 px-2 sm:px-4">
                               {transaction.transaction_card_name ? (
@@ -776,7 +776,7 @@ export function Dashboard() {
                                   <span className="text-xs font-medium text-white truncate">{transaction.transaction_card_name}</span>
                                 </div>
                               ) : (
-                                <span className="text-xs text-gray-500">-</span>
+                                <span className="text-xs text-text-muted">-</span>
                               )}
                             </td>
 
@@ -793,7 +793,7 @@ export function Dashboard() {
                                   <span className="text-xs font-medium text-white truncate">{transaction.transaction_category_name}</span>
                                 </div>
                               ) : (
-                                <span className="text-xs text-gray-500">-</span>
+                                <span className="text-xs text-text-muted">-</span>
                               )}
                             </td>
 
@@ -810,7 +810,7 @@ export function Dashboard() {
                                   <span className="text-xs font-medium text-white truncate">{transaction.transaction_cost_center_name}</span>
                                 </div>
                               ) : (
-                                <span className="text-xs text-gray-500">-</span>
+                                <span className="text-xs text-text-muted">-</span>
                               )}
                             </td>
 
@@ -819,7 +819,7 @@ export function Dashboard() {
                                 {(transaction.transaction_status === 'pending' || transaction.transaction_status === 'scheduled' || transaction.transaction_status === 'overdue') && (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); markInstallmentAsPaid.mutate(transaction.transaction_id); }}
-                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-green-600 transition-colors"
+                                    className="p-0.5 sm:p-1 text-text-muted hover:text-green-600 transition-colors"
                                     title="Marcar como pago"
                                   >
                                     <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -827,14 +827,14 @@ export function Dashboard() {
                                 )}
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleEditTransaction(transaction); }}
-                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                  className="p-0.5 sm:p-1 text-text-muted hover:text-text-primary transition-colors"
                                   title="Editar"
                                 >
                                   <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </button>
                                 <button
                                   onClick={(e) => { e.stopPropagation(); if (window.confirm('Tem certeza que deseja excluir esta transação?')) { deleteTransaction.mutate(transaction.transaction_id); } }}
-                                  className="p-0.5 sm:p-1 text-gray-400 hover:text-rose-600 transition-colors"
+                                  className="p-0.5 sm:p-1 text-text-muted hover:text-rose-600 transition-colors"
                                   title="Excluir"
                                 >
                                   <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -848,7 +848,7 @@ export function Dashboard() {
                   </div>
 
                   {sortedTransactions.length === 0 && (
-                    <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
+                    <div className="text-center py-6 sm:py-8 text-text-muted px-4">
                       <p className="text-base sm:text-lg font-medium">Nenhuma transação encontrada</p>
                       <p className="text-xs sm:text-sm">Comece criando sua primeira transação</p>
                     </div>

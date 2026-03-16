@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, TrendingUp, TrendingDown, AlertTriangle, PiggyBank } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { useFloating, autoUpdate, offset, flip, shift, useClick, useDismiss, useInteractions, FloatingPortal } from '@floating-ui/react';
 import { cn } from '../../lib/utils';
 
@@ -32,26 +32,11 @@ const transactionTypes: TransactionType[] = [
     icon: <TrendingDown className="w-5 h-5" />,
     color: 'from-red-500 to-pink-600',
   },
-  // {
-  //   value: 'debt',
-  //   label: 'Dívida',
-  //   description: 'Valores devidos',
-  //   icon: <AlertTriangle className="w-5 h-5" />,
-  //   color: 'from-orange-500 to-red-600',
-  // },
-  // {
-  //   value: 'investment',
-  //   label: 'Investimento',
-  //   description: 'Aplicações financeiras',
-  //   icon: <PiggyBank className="w-5 h-5" />,
-  //   color: 'from-blue-500 to-indigo-600',
-  // },
 ];
 
 export function TransactionTypeSelector({ onSelect, trigger, className }: TransactionTypeSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Floating UI setup
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
@@ -76,7 +61,7 @@ export function TransactionTypeSelector({ onSelect, trigger, className }: Transa
   const defaultTrigger = (
     <button
       className={cn(
-        'flex items-center space-x-2 px-3 py-1.5 text-sm font-medium bg-black text-white rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors',
+        'flex items-center space-x-2 px-3 py-1.5 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent transition-colors',
         className
       )}
     >
@@ -90,47 +75,40 @@ export function TransactionTypeSelector({ onSelect, trigger, className }: Transa
 
   return (
     <>
-      {/* Trigger button */}
-      <div
-        ref={refs.setReference}
-        {...getReferenceProps()}
-      >
+      <div ref={refs.setReference} {...getReferenceProps()}>
         {trigger || defaultTrigger}
       </div>
 
-      {/* Dropdown */}
       {isOpen && (
         <FloatingPortal>
           <div
             ref={refs.setFloating}
             style={floatingStyles}
             {...getFloatingProps()}
-            className="bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-80 overflow-hidden"
+            className="bg-bg-page border border-border rounded-lg shadow-lg z-50 w-80 overflow-hidden"
           >
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-              <h3 className="text-sm font-semibold text-gray-900">Selecione o tipo de transação</h3>
-              <p className="text-xs text-gray-600 mt-1">Escolha o tipo antes de preencher os dados</p>
+            <div className="px-4 py-3 border-b border-border bg-bg-surface">
+              <h3 className="text-sm font-semibold text-text-primary">Selecione o tipo de transação</h3>
+              <p className="text-xs text-text-secondary mt-1">Escolha o tipo antes de preencher os dados</p>
             </div>
 
-            {/* Transaction Types */}
             <div className="py-2">
               {transactionTypes.map((type) => (
                 <button
                   key={type.value}
                   onClick={() => handleSelect(type.value)}
-                  className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                  className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-bg-elevated transition-colors text-left"
                 >
                   <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${type.color} flex items-center justify-center flex-shrink-0`}>
-                    <div className="text-white ignoreOverride">
+                    <div className="text-white">
                       {type.icon}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-900">
+                    <h4 className="text-sm font-semibold text-text-primary">
                       {type.label}
                     </h4>
-                    <p className="text-xs text-gray-600 mt-0.5">
+                    <p className="text-xs text-text-secondary mt-0.5">
                       {type.description}
                     </p>
                   </div>

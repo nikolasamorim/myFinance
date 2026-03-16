@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Check, ArrowUpDown } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from '../../lib/utils';
 
@@ -65,15 +65,15 @@ export function SortPanel({
         ref={panelRef}
         className={cn(
           'absolute right-0 top-2 w-72',
-          'bg-white rounded-xl border border-gray-200 shadow-xl',
+          'bg-bg-page rounded-xl border border-border shadow-xl',
           'animate-in fade-in slide-in-from-top-2 duration-200'
         )}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-900">Ordenar por</h3>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <h3 className="text-sm font-semibold text-text-primary">Ordenar por</h3>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-1 text-text-muted hover:text-text-secondary rounded-lg hover:bg-bg-elevated transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -88,8 +88,8 @@ export function SortPanel({
                 'w-full px-3 py-2 rounded-lg text-left text-sm transition-all',
                 'flex items-center justify-between',
                 tempSort === option.value
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  ? 'bg-text-primary text-bg-page'
+                  : 'bg-bg-surface text-text-secondary hover:bg-bg-elevated'
               )}
             >
               <span>{option.label}</span>
@@ -100,7 +100,7 @@ export function SortPanel({
           ))}
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-border bg-bg-surface rounded-b-xl">
           <Button
             type="button"
             size="sm"

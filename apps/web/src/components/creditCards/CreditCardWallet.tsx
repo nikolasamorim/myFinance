@@ -47,13 +47,13 @@ export function CreditCardWallet({ cards, onEdit, onDelete }: CreditCardWalletPr
   if (cards.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-gray-200 rounded-xl mx-auto mb-4 flex items-center justify-center">
-          <CreditCard className="w-8 h-8 text-gray-400" />
+        <div className="w-16 h-16 bg-bg-elevated rounded-xl mx-auto mb-4 flex items-center justify-center">
+          <CreditCard className="w-8 h-8 text-text-muted" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="text-lg font-semibold text-text-primary mb-2">
           Nenhum cartão cadastrado
         </h3>
-        <p className="text-gray-600">
+        <p className="text-text-secondary">
           Comece adicionando seu primeiro cartão de crédito
         </p>
       </div>

@@ -114,15 +114,15 @@ export function VisualizationControls({
     <>
       <div className="flex items-center space-x-2">
         {/* Quick Type Selector */}
-        <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex items-center space-x-1 bg-bg-elevated rounded-lg p-1">
           {visualizationTypes.map((type) => (
             <button
               key={type.value}
               onClick={() => handleTypeChange(type.value)}
               className={`p-1.5 rounded transition-colors ${
                 currentVisualization?.visualization_type === type.value
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-bg-page text-accent shadow-sm'
+                  : 'text-text-secondary hover:text-text-primary'
               }`}
               title={type.label}
             >
@@ -174,7 +174,7 @@ export function VisualizationControls({
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-secondary mb-2">
               Tipo de visualização
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -184,8 +184,8 @@ export function VisualizationControls({
                   onClick={() => setSelectedType(type.value as any)}
                   className={`p-3 rounded-lg border-2 transition-all ${
                     selectedType === type.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-accent bg-accent/5'
+                      : 'border-border hover:border-border'
                   }`}
                 >
                   <div className="flex flex-col items-center space-y-1">

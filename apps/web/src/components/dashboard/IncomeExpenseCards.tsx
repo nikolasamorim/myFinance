@@ -26,7 +26,7 @@ export function IncomeExpenseCards({ data }: IncomeExpenseCardsProps) {
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-xs font-medium text-gray-600">Receita do Mês</p>
+              <p className="text-xs sm:text-xs font-medium text-text-secondary">Receita do Mês</p>
               <p className="text-sm sm:text-lg font-bold text-green-600 mt-1">
                 {formatCurrency(currentMonthData.income)}
               </p>
@@ -43,7 +43,7 @@ export function IncomeExpenseCards({ data }: IncomeExpenseCardsProps) {
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-xs font-medium text-gray-600">Despesa do Mês</p>
+              <p className="text-xs sm:text-xs font-medium text-text-secondary">Despesa do Mês</p>
               <p className="text-sm sm:text-lg font-bold text-red-600 mt-1">
                 {formatCurrency(currentMonthData.expenses)}
               </p>
@@ -60,7 +60,7 @@ export function IncomeExpenseCards({ data }: IncomeExpenseCardsProps) {
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-xs font-medium text-gray-600">Saldo Total</p>
+              <p className="text-xs sm:text-xs font-medium text-text-secondary">Saldo Total</p>
               <p className={`text-sm sm:text-lg font-bold mt-1 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(balance)}
               </p>

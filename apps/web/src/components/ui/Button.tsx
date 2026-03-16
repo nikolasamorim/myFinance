@@ -17,12 +17,12 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
-  
+
   const variants = {
-    primary: 'bg-black text-white hover:bg-gray-800 focus:ring-gray-500',
-    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500',
-    outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+    primary: 'bg-accent text-white hover:bg-accent-hover focus:ring-accent',
+    secondary: 'bg-bg-elevated text-text-primary hover:bg-border focus:ring-accent',
+    outline: 'border border-border bg-bg-page text-text-secondary hover:bg-bg-elevated focus:ring-accent',
+    ghost: 'text-text-secondary hover:bg-bg-elevated focus:ring-accent',
   };
 
   const sizes = {

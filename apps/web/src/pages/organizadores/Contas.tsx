@@ -178,7 +178,7 @@ export function Contas() {
               <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Caixa / Conta</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Caixa / Conta</h1>
               <p className="text-sm sm:text-base text-gray-600">Gerencie contas bancarias e caixa</p>
             </div>
           </div>
@@ -217,7 +217,7 @@ export function Contas() {
                         <tr key={account.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-2 sm:py-3 px-2 sm:px-4">
                             <div>
-                              <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{account.title}</p>
+                              <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{account.title}</p>
                               {account.description && (
                                 <p className="text-xs text-gray-500 truncate">{account.description}</p>
                               )}
@@ -228,7 +228,7 @@ export function Contas() {
                               {getTypeLabel(account.type)}
                             </span>
                           </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-gray-900">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-text-primary">
                             {formatCurrency(Number(account.initial_balance))}
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">

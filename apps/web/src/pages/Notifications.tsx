@@ -37,7 +37,7 @@ function getNotificationIcon(type: NotificationType) {
     case 'budget_exceeded':
       return <AlertCircle size={18} className="text-orange-500" />;
     default:
-      return <Bell size={18} className="text-gray-500" />;
+      return <Bell size={18} className="text-text-muted" />;
   }
 }
 
@@ -68,7 +68,7 @@ function NotificationRow({
   return (
     <div
       className={cn(
-        'flex gap-4 p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors',
+        'flex gap-4 p-4 border-b border-border last:border-0 hover:bg-bg-surface transition-colors',
         !notification.is_read && 'bg-blue-50/30'
       )}
     >
@@ -77,15 +77,15 @@ function NotificationRow({
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <p className={cn('text-sm text-gray-900', !notification.is_read && 'font-semibold')}>
+          <p className={cn('text-sm text-text-primary', !notification.is_read && 'font-semibold')}>
             {notification.title}
           </p>
-          <span className="text-xs text-gray-400 flex-shrink-0 mt-0.5">
+          <span className="text-xs text-text-muted flex-shrink-0 mt-0.5">
             {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
           </span>
         </div>
-        <p className="text-sm text-gray-500 mt-0.5">{notification.message}</p>
-        <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+        <p className="text-sm text-text-muted mt-0.5">{notification.message}</p>
+        <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-bg-elevated text-text-secondary">
           {TYPE_LABELS[notification.type]}
         </span>
       </div>
@@ -93,7 +93,7 @@ function NotificationRow({
         {!notification.is_read && (
           <button
             onClick={() => onMarkRead(notification.id)}
-            className="p-1.5 rounded-lg hover:bg-green-100 text-gray-400 hover:text-green-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-green-100 text-text-muted hover:text-green-600 transition-colors"
             title="Marcar como lida"
           >
             <Check size={14} />
@@ -102,7 +102,7 @@ function NotificationRow({
         {notification.entity_id && (
           <button
             onClick={handleNavigate}
-            className="p-1.5 rounded-lg hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-blue-100 text-text-muted hover:text-blue-600 transition-colors"
             title="Ver detalhes"
           >
             <ArrowRight size={14} />
@@ -110,7 +110,7 @@ function NotificationRow({
         )}
         <button
           onClick={() => onDismiss(notification.id)}
-          className="p-1.5 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-red-100 text-text-muted hover:text-red-500 transition-colors"
           title="Dispensar"
         >
           <X size={14} />
@@ -162,10 +162,10 @@ export function Notifications() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Bell className="w-6 h-6 text-gray-700" />
-          <h1 className="text-xl font-semibold text-gray-900">Notificações</h1>
+          <Bell className="w-6 h-6 text-text-secondary" />
+          <h1 className="text-xl font-semibold text-text-primary">Notificações</h1>
           {total > 0 && (
-            <span className="text-sm text-gray-500">({total})</span>
+            <span className="text-sm text-text-muted">({total})</span>
           )}
         </div>
         {notifications.some((n) => !n.is_read) && (
@@ -183,7 +183,7 @@ export function Notifications() {
       {/* Filters */}
       <div className="flex items-center gap-3 mb-4">
         {/* Tabs */}
-        <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+        <div className="flex rounded-lg border border-border overflow-hidden">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -192,7 +192,7 @@ export function Notifications() {
                 'px-4 py-1.5 text-sm transition-colors',
                 activeTab === tab.key
                   ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  : 'text-text-secondary hover:bg-bg-surface'
               )}
             >
               {tab.label}
@@ -202,11 +202,11 @@ export function Notifications() {
 
         {/* Type filter */}
         <div className="flex items-center gap-1.5 ml-auto">
-          <Filter size={14} className="text-gray-400" />
+          <Filter size={14} className="text-text-muted" />
           <select
             value={typeFilter}
             onChange={handleTypeFilter}
-            className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="text-sm border border-border rounded-lg px-2 py-1.5 text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
           >
             <option value="">Todos os tipos</option>
             {Object.entries(TYPE_LABELS).map(([key, label]) => (
@@ -217,29 +217,29 @@ export function Notifications() {
       </div>
 
       {/* Content */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-bg-page rounded-xl border border-border overflow-hidden">
         {isLoading ? (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-border">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex gap-4 p-4 animate-pulse">
-                <div className="w-5 h-5 rounded-full bg-gray-200 flex-shrink-0 mt-0.5" />
+                <div className="w-5 h-5 rounded-full bg-bg-elevated flex-shrink-0 mt-0.5" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  <div className="h-3 bg-gray-200 rounded w-3/4" />
+                  <div className="h-4 bg-bg-elevated rounded w-1/2" />
+                  <div className="h-3 bg-bg-elevated rounded w-3/4" />
                 </div>
               </div>
             ))}
           </div>
         ) : notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Bell size={40} className="text-gray-200 mb-3" />
-            <p className="text-gray-500 font-medium">Nenhuma notificação</p>
-            <p className="text-sm text-gray-400 mt-1">
+            <Bell size={40} className="text-text-muted mb-3" />
+            <p className="text-text-muted font-medium">Nenhuma notificação</p>
+            <p className="text-sm text-text-muted mt-1">
               {activeTab === 'unread' ? 'Você está em dia!' : 'As notificações aparecerão aqui.'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-border">
             {notifications.map((n) => (
               <NotificationRow
                 key={n.id}
@@ -255,21 +255,21 @@ export function Notifications() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-text-muted">
             Página {page} de {totalPages}
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Anterior
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Próxima
             </button>

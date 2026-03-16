@@ -113,16 +113,16 @@ export function Settings() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-64 mb-8"></div>
+            <div className="h-8 bg-bg-elevated rounded w-64 mb-8"></div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-6">
-                <div className="h-64 bg-gray-200 rounded-xl"></div>
-                <div className="h-96 bg-gray-200 rounded-xl"></div>
+                <div className="h-64 bg-bg-elevated rounded-xl"></div>
+                <div className="h-96 bg-bg-elevated rounded-xl"></div>
               </div>
-              <div className="h-64 bg-gray-200 rounded-xl"></div>
+              <div className="h-64 bg-bg-elevated rounded-xl"></div>
             </div>
           </div>
         </div>
@@ -176,7 +176,7 @@ export function Settings() {
         <div className="flex items-center space-x-4">
           <div className="relative">
             <div
-              className={`w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden ${editingSection === 'profile' ? 'cursor-pointer' : ''}`}
+              className={`w-20 h-20 bg-bg-elevated rounded-full flex items-center justify-center overflow-hidden ${editingSection === 'profile' ? 'cursor-pointer' : ''}`}
               onClick={handleAvatarClick}
             >
               {avatarSrc ? (
@@ -186,12 +186,12 @@ export function Settings() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <User className="w-8 h-8 text-gray-600" />
+                <User className="w-8 h-8 text-text-secondary" />
               )}
             </div>
             {editingSection === 'profile' && (
               <button
-                className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700"
+                className="absolute -bottom-1 -right-1 w-6 h-6 bg-accent rounded-full flex items-center justify-center text-white hover:bg-accent-hover"
                 onClick={handleAvatarClick}
                 disabled={uploadAvatar.isPending}
               >
@@ -219,17 +219,17 @@ export function Settings() {
                 className="text-lg font-semibold"
               />
             ) : (
-              <h2 className="text-lg font-semibold text-gray-900 truncate">
+              <h2 className="text-lg font-semibold text-text-primary truncate">
                 {profile?.name || 'Nome não informado'}
               </h2>
             )}
-            <p className="text-sm text-gray-600 truncate">{profile?.email}</p>
+            <p className="text-sm text-text-secondary truncate">{profile?.email}</p>
           </div>
         </div>
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-text-secondary mb-2">
             Tags
           </label>
           {editingSection === 'profile' ? (
@@ -243,18 +243,18 @@ export function Settings() {
               {profile?.tags?.map((tag, index) => (
                 <span
                   key={index}
-                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                  className="px-2 py-1 bg-accent/10 text-accent text-xs rounded-full"
                 >
                   {tag}
                 </span>
-              )) || <span className="text-sm text-gray-500">Nenhuma tag adicionada</span>}
+              )) || <span className="text-sm text-text-muted">Nenhuma tag adicionada</span>}
             </div>
           )}
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-text-secondary mb-2">
             Descrição
           </label>
           {editingSection === 'profile' ? (
@@ -262,11 +262,11 @@ export function Settings() {
               value={profileData.description || ''}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Conte um pouco sobre você..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent"
+              className="w-full px-3 py-2 border border-border rounded-md bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent"
               rows={3}
             />
           ) : (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-text-secondary">
               {profile?.description || 'Nenhuma descrição adicionada'}
             </p>
           )}
@@ -315,7 +315,7 @@ export function Settings() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Gender */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1">
               Gênero
             </label>
             {editingSection === 'personal' ? (
@@ -326,7 +326,7 @@ export function Settings() {
                 placeholder="Selecione"
               />
             ) : (
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-text-primary">
                 {genderOptions.find(g => g.value === profile?.gender)?.label || 'Não informado'}
               </p>
             )}
@@ -334,7 +334,7 @@ export function Settings() {
 
           {/* Birth Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1">
               Data de Nascimento
             </label>
             {editingSection === 'personal' ? (
@@ -344,7 +344,7 @@ export function Settings() {
                 onChange={(e) => handleInputChange('birth_date', e.target.value)}
               />
             ) : (
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-text-primary">
                 {profile?.birth_date ? new Date(profile.birth_date).toLocaleDateString('pt-BR') : 'Não informado'}
               </p>
             )}
@@ -353,10 +353,10 @@ export function Settings() {
 
         {/* Identification Code */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-text-secondary mb-1">
             Código de Identificação
           </label>
-          <p className="text-sm text-gray-900 font-mono bg-gray-50 px-3 py-2 rounded border break-all">
+          <p className="text-sm text-text-primary font-mono bg-bg-surface px-3 py-2 rounded border border-border break-all">
             {profile?.identification_code || 'Não gerado'}
           </p>
         </div>
@@ -364,7 +364,7 @@ export function Settings() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Hometown */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1">
               Cidade Natal
             </label>
             {editingSection === 'personal' ? (
@@ -374,7 +374,7 @@ export function Settings() {
                 placeholder="Ex: São Paulo, SP"
               />
             ) : (
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-text-primary">
                 {profile?.hometown || 'Não informado'}
               </p>
             )}
@@ -382,7 +382,7 @@ export function Settings() {
 
           {/* Nationality */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1">
               Nacionalidade
             </label>
             {editingSection === 'personal' ? (
@@ -392,7 +392,7 @@ export function Settings() {
                 placeholder="Ex: Brasileira"
               />
             ) : (
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-text-primary">
                 {profile?.nationality || 'Não informado'}
               </p>
             )}
@@ -402,7 +402,7 @@ export function Settings() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Languages */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1">
               Idiomas
             </label>
             {editingSection === 'personal' ? (
@@ -412,7 +412,7 @@ export function Settings() {
                 placeholder="Ex: Português, Inglês"
               />
             ) : (
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-text-primary">
                 {profile?.languages?.join(', ') || 'Não informado'}
               </p>
             )}
@@ -420,7 +420,7 @@ export function Settings() {
 
           {/* Marital Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1">
               Estado Civil
             </label>
             {editingSection === 'personal' ? (
@@ -431,7 +431,7 @@ export function Settings() {
                 placeholder="Selecione"
               />
             ) : (
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-text-primary">
                 {maritalStatusOptions.find(m => m.value === profile?.marital_status)?.label || 'Não informado'}
               </p>
             )}
@@ -441,7 +441,7 @@ export function Settings() {
         {/* Addresses */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1">
               Endereço Permanente
             </label>
             {editingSection === 'personal' ? (
@@ -449,18 +449,18 @@ export function Settings() {
                 value={profileData.permanent_address || ''}
                 onChange={(e) => handleInputChange('permanent_address', e.target.value)}
                 placeholder="Endereço completo..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent"
+                className="w-full px-3 py-2 border border-border rounded-md bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent"
                 rows={2}
               />
             ) : (
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-text-primary">
                 {profile?.permanent_address || 'Não informado'}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-text-secondary mb-1">
               Endereço Atual
             </label>
             {editingSection === 'personal' ? (
@@ -468,11 +468,11 @@ export function Settings() {
                 value={profileData.current_address || ''}
                 onChange={(e) => handleInputChange('current_address', e.target.value)}
                 placeholder="Endereço completo..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent"
+                className="w-full px-3 py-2 border border-border rounded-md bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent"
                 rows={2}
               />
             ) : (
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-text-primary">
                 {profile?.current_address || 'Não informado'}
               </p>
             )}
@@ -492,10 +492,10 @@ export function Settings() {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Email */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-bg-surface rounded-lg">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-700">E-mail</p>
-            <p className="text-sm text-gray-900 truncate">{profile?.email}</p>
+            <p className="text-sm font-medium text-text-secondary">E-mail</p>
+            <p className="text-sm text-text-primary truncate">{profile?.email}</p>
           </div>
           <Button
             variant="outline"
@@ -508,10 +508,10 @@ export function Settings() {
         </div>
 
         {/* Password */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-bg-surface rounded-lg">
           <div>
-            <p className="text-sm font-medium text-gray-700">Senha</p>
-            <p className="text-sm text-gray-500">••••••••</p>
+            <p className="text-sm font-medium text-text-secondary">Senha</p>
+            <p className="text-sm text-text-muted">••••••••</p>
           </div>
           <Button
             variant="outline"
@@ -524,10 +524,10 @@ export function Settings() {
         </div>
 
         {/* Two Factor Authentication */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-bg-surface rounded-lg">
           <div>
-            <p className="text-sm font-medium text-gray-700">Autenticação de 2 Fatores</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm font-medium text-text-secondary">Autenticação de 2 Fatores</p>
+            <p className="text-sm text-text-muted">
               {profile?.two_factor_enabled ? 'Ativada' : 'Desativada'}
             </p>
           </div>
@@ -549,20 +549,20 @@ export function Settings() {
     <>
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Configurações da Conta</h1>
-          <p className="text-gray-600 mt-1 text-sm">Gerencie suas informações pessoais e configurações de segurança</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Configurações da Conta</h1>
+          <p className="text-text-secondary mt-1 text-sm">Gerencie suas informações pessoais e configurações de segurança</p>
         </div>
 
         {/* Mobile tabs */}
-        <div className="flex lg:hidden border-b border-gray-200 overflow-x-auto">
+        <div className="flex lg:hidden border-b border-border overflow-x-auto">
           {mobileTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setMobileTab(tab.id)}
               className={`flex-1 min-w-fit px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 mobileTab === tab.id
-                  ? 'border-black text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-accent text-text-primary'
+                  : 'border-transparent text-text-muted hover:text-text-secondary'
               }`}
             >
               {tab.label}
@@ -666,14 +666,14 @@ export function Settings() {
           {!profile?.two_factor_enabled ? (
             <>
               <div className="text-center">
-                <div className="w-40 h-40 sm:w-48 sm:h-48 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                  <p className="text-gray-500">QR Code aqui</p>
+                <div className="w-40 h-40 sm:w-48 sm:h-48 bg-bg-elevated rounded-lg mx-auto mb-4 flex items-center justify-center">
+                  <p className="text-text-muted">QR Code aqui</p>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-text-secondary mb-4">
                   Escaneie este QR code com seu app autenticador
                 </p>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-xs font-mono text-gray-700 break-all">
+                <div className="bg-bg-surface p-3 rounded-lg">
+                  <p className="text-xs font-mono text-text-secondary break-all">
                     Chave secreta: ABCD-EFGH-IJKL-MNOP
                   </p>
                 </div>
@@ -698,7 +698,7 @@ export function Settings() {
                 <Shield className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-lg font-semibold">2FA Ativado</h3>
-              <p className="text-gray-600">
+              <p className="text-text-secondary">
                 Sua conta está protegida com autenticação de dois fatores.
               </p>
               <div className="flex justify-center space-x-3">

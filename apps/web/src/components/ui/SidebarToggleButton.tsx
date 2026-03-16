@@ -22,9 +22,9 @@ export function SidebarToggleButton({ onMobileToggle }: SidebarToggleButtonProps
     <button
       onClick={handleClick}
       className={cn(
-        'flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-1',
-        'flex' // Show on all screen sizes
+        'flex items-center justify-center p-2 text-text-secondary hover:text-text-primary hover:bg-bg-elevated rounded-lg transition-all duration-200',
+        'focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-1',
+        'flex'
       )}
       title={onMobileToggle ? 'Abrir menu' : (isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar')}
     >

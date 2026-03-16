@@ -13,11 +13,11 @@ export function Step1Welcome() {
           <Sparkles className="w-10 h-10 text-white" />
         </div>
         
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-text-primary">
           Bem-vindo a Azami
         </h1>
         
-        <p className="text-lg text-gray-600 max-w-md mx-auto leading-relaxed">
+        <p className="text-lg text-text-secondary max-w-md mx-auto leading-relaxed">
           Vamos criar seu primeiro espaço financeiro para você começar a organizar suas finanças de forma inteligente.
         </p>
       </div>

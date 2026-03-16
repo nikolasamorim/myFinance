@@ -248,10 +248,10 @@ function Invoice() {
 
   const dueDays = earliestDueDate ? getDaysUntil(earliestDueDate) : null;
   const dueDayColor =
-    dueDays === null ? 'text-gray-900'
+    dueDays === null ? 'text-text-primary'
     : dueDays <= 3 ? 'text-red-500'
     : dueDays <= 7 ? 'text-amber-500'
-    : 'text-gray-900';
+    : 'text-text-primary';
 
   const closingDays = useMemo(() => {
     if (!primaryCard?.closing_day) return null;
@@ -316,10 +316,10 @@ function Invoice() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open': return 'text-blue-600 bg-blue-50';
-      case 'closed': return 'text-gray-600 bg-gray-50';
+      case 'closed': return 'text-text-secondary bg-bg-surface';
       case 'paid_partial': return 'text-yellow-600 bg-yellow-50';
       case 'paid_full': return 'text-green-600 bg-green-50';
-      default: return 'text-gray-600 bg-gray-50';
+      default: return 'text-text-secondary bg-bg-surface';
     }
   };
 
@@ -341,7 +341,7 @@ function Invoice() {
       case 'payment': return 'text-blue-600 bg-blue-50';
       case 'adjustment': return 'text-orange-600 bg-orange-50';
       case 'carry_forward': return 'text-amber-600 bg-amber-50';
-      default: return 'text-gray-600 bg-gray-50';
+      default: return 'text-text-secondary bg-bg-surface';
     }
   };
 
@@ -368,7 +368,7 @@ function Invoice() {
   return (
     <>
       {isLoading ? (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-bg-surface flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
         </div>
       ) : (
@@ -409,8 +409,8 @@ function Invoice() {
               <SquareKanban className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Faturas</h1>
-              <p className="text-sm sm:text-base text-gray-600">Gerencie faturas de cartão de crédito</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Faturas</h1>
+              <p className="text-sm sm:text-base text-text-secondary">Gerencie faturas de cartão de crédito</p>
             </div>
           </div>
 
@@ -451,14 +451,14 @@ function Invoice() {
                           'flex-shrink-0 w-60 rounded-2xl border p-4 cursor-pointer transition-all duration-200',
                           isSelected
                             ? 'border-purple-400 bg-purple-50 shadow-sm'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
+                            : 'border-border bg-bg-page hover:border-border'
                         )}
                       >
                         {/* Card name + status badge */}
                         <div className="flex items-center justify-between gap-2 mb-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <CreditCard className="w-4 h-4 flex-shrink-0" style={{ color: card.color ?? '#6B7280' }} />
-                            <span className="font-semibold text-sm text-gray-900 truncate">{card.title}</span>
+                            <span className="font-semibold text-sm text-text-primary truncate">{card.title}</span>
                           </div>
                           {stmt && (
                             <span className={cn(
@@ -471,40 +471,40 @@ function Invoice() {
                         </div>
 
                         {/* Statement amount */}
-                        <p className="text-xl font-bold text-gray-900">
+                        <p className="text-xl font-bold text-text-primary">
                           {stmt ? formatCurrency(stmt.statement_amount) : '—'}
                         </p>
                         {card.credit_limit > 0 && (
-                          <p className="text-xs text-gray-400 mb-3">de {formatCurrency(card.credit_limit)}</p>
+                          <p className="text-xs text-text-muted mb-3">de {formatCurrency(card.credit_limit)}</p>
                         )}
 
                         {/* Usage bar */}
                         {card.credit_limit > 0 && (
                           <>
-                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1">
+                            <div className="h-1.5 bg-bg-elevated rounded-full overflow-hidden mb-1">
                               <div
                                 className={cn('h-full rounded-full transition-all', isOverLimit ? 'bg-red-500' : 'bg-purple-500')}
                                 style={{ width: `${usagePercent}%` }}
                               />
                             </div>
-                            <p className="text-[11px] text-gray-500 mb-3">
+                            <p className="text-[11px] text-text-muted mb-3">
                               Disponível: {formatCurrency(card.credit_limit - (stmt?.statement_amount ?? 0))}
                             </p>
                           </>
                         )}
 
                         {/* Metadata grid */}
-                        <div className="border-t border-gray-100 pt-2">
+                        <div className="border-t border-border pt-2">
                           <div className="grid grid-cols-3 gap-1">
                             <div>
-                              <p className="text-[9px] text-gray-400 uppercase tracking-wide">Fechamento</p>
-                              <p className="text-[11px] font-medium text-gray-700">
+                              <p className="text-[9px] text-text-muted uppercase tracking-wide">Fechamento</p>
+                              <p className="text-[11px] font-medium text-text-secondary">
                                 {card.closing_day ? `Dia ${card.closing_day}` : '—'}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[9px] text-gray-400 uppercase tracking-wide">Vencimento</p>
-                              <p className="text-[11px] font-medium text-gray-700">
+                              <p className="text-[9px] text-text-muted uppercase tracking-wide">Vencimento</p>
+                              <p className="text-[11px] font-medium text-text-secondary">
                                 {card.due_day ? `Dia ${card.due_day}` : '—'}
                               </p>
                             </div>
@@ -544,7 +544,7 @@ function Invoice() {
               {selectedCards.length > 1 && (
                 <button
                   onClick={() => setSelectedCards([(creditCards[0] as any).id])}
-                  className="mt-2 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                  className="mt-2 text-xs text-text-muted hover:text-text-secondary transition-colors"
                 >
                   Limpar seleção
                 </button>
@@ -557,14 +557,14 @@ function Invoice() {
             <div className="px-1 sm:px-0">
               <Card>
                 <CardContent className="p-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border">
 
                     {/* Col 1+2: Payment progress */}
                     <div className="col-span-1 sm:col-span-2 px-5 py-4">
-                      <p className="text-xs font-medium text-gray-500 mb-2">Progresso do Pagamento</p>
+                      <p className="text-xs font-medium text-text-muted mb-2">Progresso do Pagamento</p>
                       {summaryStatementAmount > 0 ? (
                         <>
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+                          <div className="h-2 bg-bg-elevated rounded-full overflow-hidden mb-2">
                             <div
                               className={cn(
                                 'h-full rounded-full transition-all',
@@ -587,39 +587,39 @@ function Invoice() {
                           )}
                         </>
                       ) : (
-                        <p className="text-xs text-gray-400">Sem lançamentos neste período</p>
+                        <p className="text-xs text-text-muted">Sem lançamentos neste período</p>
                       )}
                     </div>
 
                     {/* Col 3: Closing day */}
                     <div className="px-5 py-4">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Fechamento em</p>
+                      <p className="text-[10px] text-text-muted uppercase tracking-wide mb-1">Fechamento em</p>
                       {primaryCard?.closing_day ? (
                         <>
-                          <p className="text-2xl font-bold text-gray-900 leading-none">
+                          <p className="text-2xl font-bold text-text-primary leading-none">
                             {closingDays}<span className="text-base font-semibold">d</span>
                           </p>
-                          <p className="text-[11px] text-gray-400 mt-1">dia {primaryCard.closing_day}</p>
+                          <p className="text-[11px] text-text-muted mt-1">dia {primaryCard.closing_day}</p>
                         </>
                       ) : (
-                        <p className="text-2xl font-bold text-gray-400">—</p>
+                        <p className="text-2xl font-bold text-text-muted">—</p>
                       )}
                     </div>
 
                     {/* Col 4: Due date */}
                     <div className="px-5 py-4">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Vencimento em</p>
+                      <p className="text-[10px] text-text-muted uppercase tracking-wide mb-1">Vencimento em</p>
                       {dueDays !== null ? (
                         <>
                           <p className={cn('text-2xl font-bold leading-none', dueDayColor)}>
                             {dueDays}<span className="text-base font-semibold">d</span>
                           </p>
-                          <p className="text-[11px] text-gray-400 mt-1">
+                          <p className="text-[11px] text-text-muted mt-1">
                             {new Date(earliestDueDate! + 'T12:00:00').toLocaleDateString('pt-BR')}
                           </p>
                         </>
                       ) : (
-                        <p className="text-2xl font-bold text-gray-400">—</p>
+                        <p className="text-2xl font-bold text-text-muted">—</p>
                       )}
                     </div>
 
@@ -627,13 +627,13 @@ function Invoice() {
 
                   {/* Available limit — full-width bottom row */}
                   {summaryLimit > 0 && (
-                    <div className="border-t border-gray-100 px-5 py-3 flex items-center justify-between">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wide">Limite Disponível</p>
+                    <div className="border-t border-border px-5 py-3 flex items-center justify-between">
+                      <p className="text-[10px] text-text-muted uppercase tracking-wide">Limite Disponível</p>
                       <div className="text-right">
-                        <span className="text-base font-bold text-gray-900">
+                        <span className="text-base font-bold text-text-primary">
                           {formatCurrency(summaryLimit - summaryStatementAmount)}
                         </span>
-                        <span className="text-[11px] text-gray-400 ml-1.5">
+                        <span className="text-[11px] text-text-muted ml-1.5">
                           de {formatCurrency(summaryLimit)}
                         </span>
                       </div>
@@ -653,9 +653,9 @@ function Invoice() {
                     <CardTitle className="text-lg sm:text-xl capitalize">
                       Lançamentos — {periodLabel}
                     </CardTitle>
-                    <p className="text-sm text-gray-500 mt-0.5">{mergedItems.length} transações</p>
+                    <p className="text-sm text-text-muted mt-0.5">{mergedItems.length} transações</p>
                   </div>
-                  <span className="text-base sm:text-lg font-bold text-gray-900">
+                  <span className="text-base sm:text-lg font-bold text-text-primary">
                     {formatCurrency(totalAmount)}
                   </span>
                 </div>
@@ -664,7 +664,7 @@ function Invoice() {
                 {Object.keys(itemsByDate).length > 0 ? (
                   Object.entries(itemsByDate).map(([date, dateItems]) => (
                     <div key={date} className="mb-6 last:mb-0">
-                      <h3 className="text-xs sm:text-sm font-semibold text-gray-600 mb-3 pb-2 border-b border-gray-100 capitalize">
+                      <h3 className="text-xs sm:text-sm font-semibold text-text-secondary mb-3 pb-2 border-b border-border capitalize">
                         {formatDateLabel(date)}
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -673,7 +673,7 @@ function Invoice() {
                           return (
                             <div
                               key={item.id}
-                              className="border-l-4 p-3 sm:p-4 rounded-lg bg-white border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                              className="border-l-4 p-3 sm:p-4 rounded-lg bg-bg-page border border-border hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
                               style={{ borderLeftColor: item._cardColor ?? '#E5E7EB' }}
                             >
                               <div className="mb-2">
@@ -684,9 +684,9 @@ function Invoice() {
                                   {getTypeLabel(item.type)}
                                 </span>
                               </div>
-                              <p className="text-sm font-medium text-gray-900 line-clamp-2">{item.description}</p>
+                              <p className="text-sm font-medium text-text-primary line-clamp-2">{item.description}</p>
                               {item.category?.category_name && (
-                                <p className="text-xs text-gray-400 mt-1">{item.category.category_name}</p>
+                                <p className="text-xs text-text-muted mt-1">{item.category.category_name}</p>
                               )}
                               <div className="flex items-center justify-between mt-3">
                                 {cardInfo && (
@@ -699,7 +699,7 @@ function Invoice() {
                                 )}
                                 <span className={cn(
                                   'text-sm font-semibold ml-auto',
-                                  item.amount < 0 ? 'text-green-600' : 'text-gray-900'
+                                  item.amount < 0 ? 'text-green-600' : 'text-text-primary'
                                 )}>
                                   {formatCurrency(Math.abs(item.amount))}
                                 </span>
@@ -711,10 +711,10 @@ function Invoice() {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <SquareKanban className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3" />
+                  <div className="text-center py-8 text-text-muted">
+                    <SquareKanban className="w-10 h-10 sm:w-12 sm:h-12 text-text-muted mx-auto mb-3" />
                     <p className="text-base sm:text-lg font-medium">Nenhum item na fatura</p>
-                    <p className="text-xs sm:text-sm text-gray-400">
+                    <p className="text-xs sm:text-sm text-text-muted">
                       Itens aparecerão automaticamente quando transações forem criadas
                     </p>
                   </div>
@@ -749,7 +749,7 @@ function Invoice() {
             required
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Método de Pagamento</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Método de Pagamento</label>
             <Dropdown
               options={paymentMethodOptions}
               value={paymentData.method}

@@ -10,8 +10,8 @@ export function Dividas() {
           <CreditCard className="w-6 h-6 text-orange-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dívidas</h1>
-          <p className="text-gray-600">Organize e quite suas dívidas</p>
+          <h1 className="text-2xl font-bold text-text-primary">Dívidas</h1>
+          <p className="text-text-secondary">Organize e quite suas dívidas</p>
         </div>
       </div>
 
@@ -22,10 +22,10 @@ export function Dividas() {
         <CardContent>
           <div className="text-center py-12">
             <CreditCard className="w-16 h-16 text-orange-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-text-primary mb-2">
               Módulo em Desenvolvimento
             </h3>
-            <p className="text-gray-600">
+            <p className="text-text-secondary">
               O gerenciador de dívidas será implementado em breve.
             </p>
           </div>

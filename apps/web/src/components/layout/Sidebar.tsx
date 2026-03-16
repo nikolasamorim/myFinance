@@ -40,8 +40,8 @@ function SidebarItem({ to, icon, label, isActive, isCollapsed, onClick }: Sideba
         'min-w-0 flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 overflow-hidden',
         isCollapsed ? 'justify-center' : 'space-x-3',
         isActive
-          ? 'bg-white text-gray-800 border border-gray-200 shadow-sm'
-          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+          ? 'bg-bg-page text-text-primary border border-border shadow-sm'
+          : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
       )}
       title={isCollapsed ? label : undefined}
     >
@@ -70,7 +70,7 @@ function SidebarGroup({ title, children, defaultExpanded = false, isCollapsed }:
       {!isCollapsed && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="min-w-0 flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
+          className="min-w-0 flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-text-muted uppercase tracking-wider hover:text-text-secondary transition-colors"
         >
           <span className="min-w-0 flex-1 truncate text-left">{title}</span>
           {isExpanded ? <ChevronDown className="w-4 h-4 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 flex-shrink-0" />}
@@ -112,32 +112,33 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
   const { data: unreadCount } = useUnreadNotificationCount();
 
   const managerItems = [
-    { to: '/gerenciadores/receitas', icon: <TrendingUp className="w-5 h-5 text-gray-600" />, label: 'Receitas' },
-    { to: '/gerenciadores/despesas', icon: <TrendingDown className="w-5 h-5 text-gray-600" />, label: 'Despesas' },
+    { to: '/gerenciadores/receitas', icon: <TrendingUp className="w-5 h-5 text-text-muted" />, label: 'Receitas' },
+    { to: '/gerenciadores/despesas', icon: <TrendingDown className="w-5 h-5 text-text-muted" />, label: 'Despesas' },
   ];
 
   const organizadorItems = [
-    { to: '/organizadores/contas', icon: <Wallet className="w-5 h-5 text-gray-600" />, label: 'Caixa / Conta' },
-    { to: '/organizadores/cartoes', icon: <CreditCard className="w-5 h-5 text-gray-600" />, label: 'Cartões de Crédito' },
-    { to: '/organizadores/categorias', icon: <Tag className="w-5 h-5 text-gray-600" />, label: 'Categoria' },
-    { to: '/organizadores/centros-de-custo', icon: <Target className="w-5 h-5 text-gray-600" />, label: 'Centro de Custo' },
+    { to: '/organizadores/contas', icon: <Wallet className="w-5 h-5 text-text-muted" />, label: 'Caixa / Conta' },
+    { to: '/organizadores/cartoes', icon: <CreditCard className="w-5 h-5 text-text-muted" />, label: 'Cartões de Crédito' },
+    { to: '/organizadores/categorias', icon: <Tag className="w-5 h-5 text-text-muted" />, label: 'Categoria' },
+    { to: '/organizadores/centros-de-custo', icon: <Target className="w-5 h-5 text-text-muted" />, label: 'Centro de Custo' },
   ];
 
   return (
     <div
       className={cn(
-        'min-w-0 flex flex-col h-full min-h-0 transition-all duration-300 border-gray-200',
+        'min-w-0 flex flex-col h-full min-h-0 transition-all duration-300 border-border',
         isCollapsed ? 'w-16' : 'w-64'
       )}
     >
 
       {/* Top: Logo + Workspace */}
-      <div className={cn('border-b border-gray-200 min-w-0', isCollapsed ? 'p-2' : 'p-4')}>
+      <div className={cn('border-b border-border min-w-0', isCollapsed ? 'p-2' : 'p-4')}>
         <div className={cn('min-w-0 flex items-center', isCollapsed ? 'justify-center' : 'gap-2')}>
           {!isCollapsed && (
             <>
-              <img src="/logo-black.png" width="22" height="22" alt="Logo" className="w-6 h-6 flex-shrink-0" />
-              <h1 className="min-w-0 flex-1 truncate font-serifTitle font-bold text-gray-900 leading-none">
+              <img src="/logo-black.png" width="22" height="22" alt="Logo" className="w-6 h-6 flex-shrink-0 dark:hidden" />
+              <img src="/logo-white.png" width="22" height="22" alt="Logo" className="w-6 h-6 flex-shrink-0 hidden dark:block" />
+              <h1 className="min-w-0 flex-1 truncate font-serifTitle font-bold text-text-primary leading-none">
                 Azami
               </h1>
             </>
@@ -155,7 +156,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
                   setShowNotifications(false);
                   onMobileClose?.();
                 }}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                className="p-2 text-text-muted hover:text-text-secondary transition-colors flex-shrink-0"
                 title="Fechar"
               >
                 <X className="w-5 h-5" />
@@ -181,7 +182,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
         <div className="space-y-2 min-w-0">
           <SidebarItem
             to="/dashboard"
-            icon={<LayoutDashboard className="w-5 h-5 text-gray-600" />}
+            icon={<LayoutDashboard className="w-5 h-5 text-text-muted" />}
             label="Dashboard"
             isActive={location.pathname === '/dashboard'}
             isCollapsed={isCollapsed}
@@ -190,7 +191,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
 
           <SidebarItem
             to="/invoice"
-            icon={<SquareKanban className="w-5 h-5 text-gray-600" />}
+            icon={<SquareKanban className="w-5 h-5 text-text-muted" />}
             label="Fatura"
             isActive={location.pathname === '/invoice'}
             isCollapsed={isCollapsed}
@@ -228,7 +229,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
       </nav>
 
       {/* Bottom fixed actions — notifications only */}
-      <div className={cn('border-t border-gray-200 min-w-0', isCollapsed ? 'p-2' : 'p-3')}>
+      <div className={cn('border-t border-border min-w-0', isCollapsed ? 'p-2' : 'p-3')}>
         <div className="relative min-w-0">
           <button
             onClick={(e) => {
@@ -238,7 +239,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
             className={cn(
               'w-full min-w-0 overflow-hidden flex items-center rounded-lg transition-colors',
               isCollapsed ? 'justify-center p-2' : 'justify-between px-3 py-2',
-              'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+              'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
             )}
             title="Notificações"
           >
@@ -262,7 +263,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
           {showNotifications && (
             <div
               className={cn(
-                'absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200',
+                'absolute z-50 bg-bg-page rounded-lg shadow-lg border border-border',
                 'bottom-full mb-2',
                 isCollapsed ? 'left-full ml-2 w-72' : 'left-0 right-0'
               )}
@@ -301,8 +302,8 @@ export function Sidebar(props: SidebarExternalControlProps) {
       {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-black bg-opacity-50 ignoreOverride" onClick={onMobileClose} />
-          <div className="bg-gray-100 fixed inset-y-0 left-0">
+          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onMobileClose} />
+          <div className="bg-bg-surface fixed inset-y-0 left-0">
             <SidebarContent showMobileHeader onMobileClose={onMobileClose} onAnyNavigate={onMobileClose} />
           </div>
         </div>

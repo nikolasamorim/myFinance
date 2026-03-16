@@ -20,8 +20,8 @@ export function StatsCard({ title, value, icon, trend, className }: StatsCardPro
       <CardContent className="p-3 sm:p-4 lg:p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs sm:text-xs font-medium text-gray-600">{title}</p>
-            <p className="text-lg sm:text-xl font-bold text-gray-900 mt-1">
+            <p className="text-xs sm:text-xs font-medium text-text-secondary">{title}</p>
+            <p className="text-lg sm:text-xl font-bold text-text-primary mt-1">
               {formatCurrency(value)}
             </p>
             {trend && (
@@ -33,7 +33,7 @@ export function StatsCard({ title, value, icon, trend, className }: StatsCardPro
               </p>
             )}
           </div>
-          <div className="p-2 sm:p-3 bg-gray-100 rounded-lg flex-shrink-0">
+          <div className="p-2 sm:p-3 bg-bg-elevated rounded-lg flex-shrink-0">
             {icon}
           </div>
         </div>

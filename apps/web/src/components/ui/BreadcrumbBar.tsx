@@ -23,7 +23,7 @@ export function BreadcrumbBar({ segments, onBack, className }: BreadcrumbBarProp
     <div className={cn('flex items-center gap-2 px-1 sm:px-0', className)}>
       <button
         onClick={handleBack}
-        className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all"
+        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-all"
         title="Voltar"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -35,14 +35,14 @@ export function BreadcrumbBar({ segments, onBack, className }: BreadcrumbBarProp
           return (
             <div key={index} className="flex items-center gap-1 min-w-0">
               {index > 0 && (
-                <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <ChevronRight className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
               )}
               <span
                 className={cn(
                   'text-sm truncate',
                   isLast
-                    ? 'font-semibold text-gray-900'
-                    : 'text-gray-500'
+                    ? 'font-semibold text-text-primary'
+                    : 'text-text-muted'
                 )}
               >
                 {segment}

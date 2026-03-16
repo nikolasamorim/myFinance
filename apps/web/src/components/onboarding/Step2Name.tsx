@@ -32,10 +32,10 @@ export function Step2Name() {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-text-primary">
           Como você quer chamar seu espaço financeiro?
         </h2>
-        <p className="text-gray-600">
+        <p className="text-text-secondary">
           Escolha um nome que faça sentido para você
         </p>
       </div>
@@ -50,7 +50,7 @@ export function Step2Name() {
         />
 
         <div className="space-y-3">
-          <div className="flex items-center justify-center text-sm text-gray-500">
+          <div className="flex items-center justify-center text-sm text-text-muted">
             <Lightbulb className="w-4 h-4 mr-1" />
             Sugestões
           </div>
@@ -60,7 +60,7 @@ export function Step2Name() {
               <button
                 key={suggestion}
                 onClick={() => handleSuggestion(suggestion)}
-                className="p-3 text-sm border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-gray-700"
+                className="p-3 text-sm border border-border rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-text-secondary"
               >
                 {suggestion}
               </button>

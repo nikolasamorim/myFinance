@@ -107,15 +107,15 @@ export function FiltersPanel({
         ref={panelRef}
         className={cn(
           'absolute right-0 top-2 w-80 sm:w-96',
-          'bg-white rounded-xl border border-gray-200 shadow-xl',
+          'bg-bg-page rounded-xl border border-border shadow-xl',
           'animate-in fade-in slide-in-from-top-2 duration-200'
         )}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-900">Filtros</h3>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <h3 className="text-sm font-semibold text-text-primary">Filtros</h3>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-1 text-text-muted hover:text-text-secondary rounded-lg hover:bg-bg-elevated transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -124,7 +124,7 @@ export function FiltersPanel({
         <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
           {fields.map((field) => (
             <div key={field.key}>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+              <label className="block text-xs font-medium text-text-muted mb-1.5">
                 {field.label}
               </label>
               {field.type === 'dropdown' && field.options ? (
@@ -152,7 +152,7 @@ export function FiltersPanel({
           {showCustomDates && (
             <>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                <label className="block text-xs font-medium text-text-muted mb-1.5">
                   Data Inicial
                 </label>
                 <Input
@@ -162,7 +162,7 @@ export function FiltersPanel({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                <label className="block text-xs font-medium text-text-muted mb-1.5">
                   Data Final
                 </label>
                 <Input
@@ -172,7 +172,7 @@ export function FiltersPanel({
                 />
               </div>
               {dateError && (
-                <div className="text-xs text-red-600 bg-red-50 px-2 py-1.5 rounded">
+                <div className="text-xs text-red-600 bg-red-50 dark:bg-red-950 px-2 py-1.5 rounded">
                   {dateError}
                 </div>
               )}
@@ -180,14 +180,13 @@ export function FiltersPanel({
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-border bg-bg-surface rounded-b-xl">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={handleClear}
             disabled={isDefault}
-            className="text-gray-500"
           >
             <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
             Limpar

@@ -117,7 +117,7 @@ export function TransactionModal({ isOpen, onClose, transaction }: TransactionMo
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+          <label className="block text-xs font-medium text-text-secondary mb-1">
             Tipo
           </label>
           <Dropdown

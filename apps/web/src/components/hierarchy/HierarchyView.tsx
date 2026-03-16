@@ -228,7 +228,7 @@ export function HierarchyView({
           onCreateChild={() => onCreate(node.id)}
         >
           {renderItemContent ? renderItemContent(node) : (
-            <span className="font-medium text-gray-900">{node.title}</span>
+            <span className="font-medium text-text-primary">{node.title}</span>
           )}
         </HierarchyItem>
 
@@ -284,9 +284,9 @@ export function HierarchyView({
         >
           <div className="space-y-1">
             {hierarchyTree.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                  <Plus className="w-6 h-6 text-gray-400" />
+              <div className="text-center py-8 text-text-muted">
+                <div className="w-12 h-12 bg-bg-elevated rounded-lg mx-auto mb-3 flex items-center justify-center">
+                  <Plus className="w-6 h-6 text-text-muted" />
                 </div>
                 <p className="font-medium">Nenhum item encontrado</p>
                 <p className="text-sm">Comece criando seu primeiro item</p>
@@ -299,11 +299,11 @@ export function HierarchyView({
 
         <DragOverlay>
           {activeId && draggedItem ? (
-            <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-lg">
+            <div className="bg-bg-page border border-border rounded-lg p-3 shadow-lg">
               <div className="flex items-center space-x-2">
-                <GripVertical className="w-4 h-4 text-gray-400" />
+                <GripVertical className="w-4 h-4 text-text-muted" />
                 {renderItemContent ? renderItemContent(draggedItem) : (
-                  <span className="font-medium text-gray-900">{draggedItem.title}</span>
+                  <span className="font-medium text-text-primary">{draggedItem.title}</span>
                 )}
               </div>
             </div>

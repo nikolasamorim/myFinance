@@ -10,7 +10,6 @@ interface IconPickerProps {
   className?: string;
 }
 
-// Popular icons for financial applications
 const popularIcons = [
   'Wallet', 'CreditCard', 'DollarSign', 'PiggyBank', 'Target', 'Tag',
   'Building', 'Home', 'Car', 'ShoppingCart', 'Coffee', 'Utensils',
@@ -19,7 +18,6 @@ const popularIcons = [
   'GraduationCap', 'Stethoscope', 'Wrench', 'Palette', 'Music', 'Camera'
 ];
 
-// Get all available Lucide icons
 const allIconNames = Object.keys(LucideIcons).filter(
   name => name !== 'default' && name !== 'createLucideIcon' && typeof LucideIcons[name as keyof typeof LucideIcons] === 'function'
 );
@@ -41,7 +39,7 @@ export function IconPicker({ value, onChange, label, className }: IconPickerProp
   }, []);
 
   const filteredIcons = searchTerm
-    ? allIconNames.filter(name => 
+    ? allIconNames.filter(name =>
         name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : popularIcons;
@@ -57,61 +55,59 @@ export function IconPicker({ value, onChange, label, className }: IconPickerProp
   return (
     <div className={cn('relative', className)} ref={dropdownRef}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-text-secondary mb-2">
           {label}
         </label>
       )}
-      
+
       <button
         type="button"
-        className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md shadow-sm px-3 py-2 text-left focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent"
+        className="w-full flex items-center justify-between bg-bg-page border border-border rounded-md shadow-sm px-3 py-2 text-left focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center space-x-2">
-          <div className="w-5 h-5 flex items-center justify-center">
-            {selectedIcon || <div className="w-4 h-4 bg-gray-300 rounded" />}
+          <div className="w-5 h-5 flex items-center justify-center text-text-secondary">
+            {selectedIcon || <div className="w-4 h-4 bg-bg-elevated rounded" />}
           </div>
-          <span className="text-sm text-gray-900">{value || 'Selecione um ícone'}</span>
+          <span className="text-sm text-text-primary">{value || 'Selecione um ícone'}</span>
         </div>
-        <ChevronDown className="w-4 h-4 text-gray-400" />
+        <ChevronDown className="w-4 h-4 text-text-muted" />
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 bg-white border border-gray-300 rounded-md shadow-lg w-80 max-h-96 overflow-hidden">
-          {/* Search */}
-          <div className="p-3 border-b border-gray-200">
+        <div className="absolute z-10 mt-1 bg-bg-page border border-border rounded-md shadow-lg w-80 max-h-96 overflow-hidden">
+          <div className="p-3 border-b border-border">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-4 h-4" />
               <input
                 type="text"
                 placeholder="Buscar ícones..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                className="w-full pl-10 pr-3 py-2 text-sm bg-bg-surface text-text-primary border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-accent placeholder-text-muted"
               />
             </div>
           </div>
 
-          {/* Icons Grid */}
           <div className="p-3 max-h-64 overflow-y-auto">
             {!searchTerm && (
               <div className="mb-3">
-                <p className="text-xs font-medium text-gray-700 mb-2">Ícones populares</p>
+                <p className="text-xs font-medium text-text-secondary mb-2">Ícones populares</p>
               </div>
             )}
-            
+
             <div className="grid grid-cols-6 gap-2">
               {filteredIcons.map((iconName) => {
                 const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons] as React.ComponentType<any>;
                 if (!IconComponent) return null;
-                
+
                 return (
                   <button
                     key={iconName}
                     type="button"
                     className={cn(
-                      'w-9 h-9 flex items-center justify-center rounded border-2 transition-all hover:bg-gray-50',
-                      value === iconName ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      'w-9 h-9 flex items-center justify-center rounded border-2 transition-all hover:bg-bg-elevated',
+                      value === iconName ? 'border-accent bg-bg-elevated' : 'border-border'
                     )}
                     onClick={() => {
                       onChange(iconName);
@@ -119,14 +115,14 @@ export function IconPicker({ value, onChange, label, className }: IconPickerProp
                     }}
                     title={iconName}
                   >
-                    <IconComponent className="w-4 h-4 text-gray-700" />
+                    <IconComponent className="w-4 h-4 text-text-secondary" />
                   </button>
                 );
               })}
             </div>
 
             {filteredIcons.length === 0 && (
-              <div className="text-center py-4 text-gray-500">
+              <div className="text-center py-4 text-text-muted">
                 <p className="text-sm">Nenhum ícone encontrado</p>
               </div>
             )}

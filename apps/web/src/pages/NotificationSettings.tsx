@@ -146,52 +146,52 @@ export function NotificationSettings() {
     <div className="p-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Bell className="w-6 h-6 text-gray-700" />
+        <Bell className="w-6 h-6 text-text-secondary" />
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Configurações de Notificações</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Escolha quais notificações você deseja receber.</p>
+          <h1 className="text-xl font-semibold text-text-primary">Configurações de Notificações</h1>
+          <p className="text-sm text-text-muted mt-0.5">Escolha quais notificações você deseja receber.</p>
         </div>
       </div>
 
       {/* Global preferences */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
-        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-          <h2 className="text-sm font-semibold text-gray-700">Notificações globais</h2>
+      <div className="bg-bg-page rounded-xl border border-border overflow-hidden mb-6">
+        <div className="px-4 py-3 border-b border-border bg-bg-surface">
+          <h2 className="text-sm font-semibold text-text-secondary">Notificações globais</h2>
         </div>
 
         {isLoading ? (
           <div className="p-4 space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3 animate-pulse">
-                <div className="w-5 h-5 rounded bg-gray-200" />
+                <div className="w-5 h-5 rounded bg-bg-elevated" />
                 <div className="flex-1 space-y-1.5">
-                  <div className="h-4 bg-gray-200 rounded w-1/3" />
-                  <div className="h-3 bg-gray-200 rounded w-2/3" />
+                  <div className="h-4 bg-bg-elevated rounded w-1/3" />
+                  <div className="h-3 bg-bg-elevated rounded w-2/3" />
                 </div>
-                <div className="w-10 h-5 rounded-full bg-gray-200" />
+                <div className="w-10 h-5 rounded-full bg-bg-elevated" />
               </div>
             ))}
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-border">
             {NOTIFICATION_TYPES.map(({ type, label, description, icon, hasAdvanceDays }) => (
               <div key={type} className="flex items-start gap-3 px-4 py-3">
                 <div className="flex-shrink-0 mt-0.5">{icon}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{label}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+                  <p className="text-sm font-medium text-text-primary">{label}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{description}</p>
                   {hasAdvanceDays && prefs[type].enabled && (
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs text-gray-600">Notificar com</span>
+                      <span className="text-xs text-text-secondary">Notificar com</span>
                       <input
                         type="number"
                         min={1}
                         max={30}
                         value={prefs[type].advance_days}
                         onChange={(e) => handleAdvanceDays(type, e.target.value)}
-                        className="w-14 text-xs border border-gray-200 rounded px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-14 text-xs border border-border rounded px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-accent"
                       />
-                      <span className="text-xs text-gray-600">dias de antecedência</span>
+                      <span className="text-xs text-text-secondary">dias de antecedência</span>
                     </div>
                   )}
                 </div>
@@ -200,8 +200,8 @@ export function NotificationSettings() {
                   aria-checked={prefs[type].enabled}
                   onClick={() => handleToggle(type)}
                   className={cn(
-                    'relative flex-shrink-0 w-10 h-5 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1',
-                    prefs[type].enabled ? 'bg-blue-600' : 'bg-gray-200'
+                    'relative flex-shrink-0 w-10 h-5 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1',
+                    prefs[type].enabled ? 'bg-accent' : 'bg-bg-elevated'
                   )}
                 >
                   <span
@@ -218,10 +218,10 @@ export function NotificationSettings() {
       </div>
 
       {/* Entity subscriptions */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
-        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-          <h2 className="text-sm font-semibold text-gray-700">Inscrições por entidade</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+      <div className="bg-bg-page rounded-xl border border-border overflow-hidden mb-6">
+        <div className="px-4 py-3 border-b border-border bg-bg-surface">
+          <h2 className="text-sm font-semibold text-text-secondary">Inscrições por entidade</h2>
+          <p className="text-xs text-text-muted mt-0.5">
             Notificações configuradas para lançamentos, contas, cartões ou recorrências específicos.
           </p>
         </div>
@@ -229,25 +229,25 @@ export function NotificationSettings() {
         {subsLoading ? (
           <div className="p-4 animate-pulse space-y-3">
             {[1, 2].map((i) => (
-              <div key={i} className="h-10 bg-gray-100 rounded" />
+              <div key={i} className="h-10 bg-bg-elevated rounded" />
             ))}
           </div>
         ) : subscriptions.length === 0 ? (
           <div className="px-4 py-8 text-center">
-            <p className="text-sm text-gray-500">Nenhuma inscrição configurada.</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-sm text-text-muted">Nenhuma inscrição configurada.</p>
+            <p className="text-xs text-text-muted mt-1">
               Você pode se inscrever para receber notificações de entidades específicas diretamente nas páginas de lançamentos, contas e cartões.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-border">
             {subscriptions.map((sub) => (
               <div key={sub.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-text-primary">
                     {ENTITY_TYPE_LABELS[sub.entity_type] ?? sub.entity_type}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-text-muted truncate">
                     ID: {sub.entity_id}
                   </p>
                   <div className="flex flex-wrap gap-1 mt-1">
@@ -260,7 +260,7 @@ export function NotificationSettings() {
                 </div>
                 <button
                   onClick={() => deleteSubscription.mutate(sub.id)}
-                  className="p-1.5 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                  className="p-1.5 rounded-lg hover:bg-red-100 text-text-muted hover:text-red-500 transition-colors flex-shrink-0"
                   title="Remover inscrição"
                 >
                   <Trash2 size={14} />
@@ -280,7 +280,7 @@ export function NotificationSettings() {
             'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
             saved
               ? 'bg-green-600 text-white'
-              : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+              : 'bg-accent text-white hover:bg-accent-hover disabled:opacity-50'
           )}
         >
           <Save size={14} />

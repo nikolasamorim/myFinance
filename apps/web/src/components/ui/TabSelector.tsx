@@ -17,7 +17,7 @@ interface TabSelectorProps {
 
 export function TabSelector({ tabs, activeTab, onChange, className }: TabSelectorProps) {
   return (
-    <div className={cn('flex space-x-1 bg-gray-100 p-1 rounded-lg', className)}>
+    <div className={cn('flex space-x-1 bg-bg-elevated p-1 rounded-lg', className)}>
       {tabs.map((tab) => (
         <button
           type="button"
@@ -27,9 +27,9 @@ export function TabSelector({ tabs, activeTab, onChange, className }: TabSelecto
           className={cn(
             'flex items-center space-x-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all',
             activeTab === tab.id
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
-            tab.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-gray-600'
+              ? 'bg-bg-page text-text-primary shadow-sm'
+              : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface',
+            tab.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-text-secondary'
           )}
         >
           {tab.icon && <span className="w-4 h-4">{tab.icon}</span>}

@@ -78,11 +78,11 @@ export function History() {
       case 'login':
         return 'text-purple-600 bg-purple-50';
       case 'logout':
-        return 'text-gray-600 bg-gray-50';
+        return 'text-text-secondary bg-bg-surface';
       case 'view':
         return 'text-yellow-600 bg-yellow-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-text-secondary bg-bg-surface';
     }
   };
 
@@ -95,7 +95,7 @@ export function History() {
     if (!changes || typeof changes !== 'object') return null;
     
     return Object.entries(changes).map(([field, [oldValue, newValue]]) => (
-      <div key={field} className="text-xs text-gray-600 mt-1">
+      <div key={field} className="text-xs text-text-secondary mt-1">
         <span className="font-medium">{field}:</span> {String(oldValue)} → {String(newValue)}
       </div>
     ));
@@ -111,12 +111,12 @@ export function History() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
         <div className="flex items-center space-x-2 sm:space-x-3">
-          <div className="p-1.5 sm:p-2 bg-gray-100 rounded-lg flex-shrink-0">
-            <HistoryIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+          <div className="p-1.5 sm:p-2 bg-bg-elevated rounded-lg flex-shrink-0">
+            <HistoryIcon className="w-5 h-5 sm:w-6 sm:h-6 text-text-secondary" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Histórico de Atividades</h1>
-            <p className="text-sm sm:text-base text-gray-600">Acompanhe todas as suas interações no sistema</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Histórico de Atividades</h1>
+            <p className="text-sm sm:text-base text-text-secondary">Acompanhe todas as suas interações no sistema</p>
           </div>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
@@ -138,7 +138,7 @@ export function History() {
             <CardContent className="p-3 sm:p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Ação</label>
+                  <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1">Ação</label>
                   <Dropdown
                     options={actionOptions}
                     value={filters.action}
@@ -146,7 +146,7 @@ export function History() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Entidade</label>
+                  <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1">Entidade</label>
                   <Dropdown
                     options={entityTypeOptions}
                     value={filters.entity_type}
@@ -154,7 +154,7 @@ export function History() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Data inicial</label>
+                  <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1">Data inicial</label>
                   <Input
                     type="date"
                     value={filters.date_from}
@@ -162,7 +162,7 @@ export function History() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Data final</label>
+                  <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1">Data final</label>
                   <Input
                     type="date"
                     value={filters.date_to}
@@ -170,7 +170,7 @@ export function History() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                  <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1">Buscar</label>
                   <Input
                     placeholder="Buscar na descrição..."
                     value={filters.search}
@@ -192,24 +192,24 @@ export function History() {
           <CardContent className="py-0 px-1 sm:px-6">
             {isLoading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-text-secondary" />
               </div>
             ) : (
               <div className="w-full overflow-x-auto">
                 <table className="w-full min-w-[800px]">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[140px]">Data/Hora</th>
-                      <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ação</th>
-                      <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Entidade</th>
-                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[200px]">Descrição</th>
-                      <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Usuário</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[140px]">Data/Hora</th>
+                      <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Ação</th>
+                      <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[100px]">Entidade</th>
+                      <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[200px]">Descrição</th>
+                      <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[100px]">Usuário</th>
                     </tr>
                   </thead>
                   <tbody>
                     {allLogs.map((log) => (
-                      <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600">
+                      <tr key={log.id} className="border-b border-border hover:bg-bg-surface">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-secondary">
                           {formatDateTime(log.created_at)}
                         </td>
                         <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
@@ -217,18 +217,18 @@ export function History() {
                             {getActionLabel(log.action)}
                           </span>
                         </td>
-                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-text-secondary">
                           {getEntityTypeLabel(log.entity_type)}
                         </td>
                         <td className="py-2 sm:py-3 px-2 sm:px-4">
                           <div>
-                            <p className="text-xs sm:text-sm text-gray-900">
+                            <p className="text-xs sm:text-sm text-text-primary">
                               {log.description || `${getActionLabel(log.action)} em ${getEntityTypeLabel(log.entity_type)}`}
                             </p>
                             {log.changes && formatChanges(log.changes)}
                           </div>
                         </td>
-                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                        <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-text-secondary">
                           {log.user_name || 'Sistema'}
                         </td>
                       </tr>
@@ -237,8 +237,8 @@ export function History() {
                 </table>
                 
                 {allLogs.length === 0 && (
-                  <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                    <HistoryIcon className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                  <div className="text-center py-6 sm:py-8 text-text-muted px-4">
+                    <HistoryIcon className="w-8 h-8 sm:w-12 sm:h-12 text-text-muted mx-auto mb-3 sm:mb-4" />
                     <p className="text-base sm:text-lg font-medium">Nenhuma atividade encontrada</p>
                     <p className="text-xs sm:text-sm">As atividades aparecerão aqui conforme você usar o sistema</p>
                   </div>

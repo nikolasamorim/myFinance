@@ -207,11 +207,11 @@ export function KanbanBoard({
 
       <DragOverlay>
         {activeId && draggedItem ? (
-          <div className="bg-white rounded-lg border border-gray-300 shadow-lg p-3 rotate-2">
+          <div className="bg-bg-page rounded-lg border border-border shadow-lg p-3 rotate-2">
             <div className="flex items-center space-x-2">
-              <GripVertical className="w-4 h-4 text-gray-400" />
+              <GripVertical className="w-4 h-4 text-text-muted" />
               {renderItemContent ? renderItemContent(draggedItem) : (
-                <span className="font-medium text-gray-900">{draggedItem.title}</span>
+                <span className="font-medium text-text-primary">{draggedItem.title}</span>
               )}
             </div>
           </div>

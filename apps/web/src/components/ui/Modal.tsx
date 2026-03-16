@@ -31,21 +31,21 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity ignoreOverride"
+          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
           onClick={onClose}
         />
         <div
           className={cn(
-            'relative w-full bg-white rounded-xl shadow-xl',
+            'relative w-full bg-bg-page rounded-xl shadow-xl border border-border',
             sizeClasses[size]
           )}
         >
           {title && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1 text-text-muted hover:text-text-secondary transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>

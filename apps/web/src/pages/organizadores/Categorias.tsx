@@ -155,7 +155,7 @@ export function Categorias() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-3">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 truncate">{category.category_name}</p>
+              <p className="font-medium text-text-primary truncate">{category.category_name}</p>
               {category.description && (
                 <p className="text-sm text-gray-500 mt-1 truncate">{category.description}</p>
               )}
@@ -206,7 +206,7 @@ export function Categorias() {
               <Tag className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Categorias</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Categorias</h1>
               <p className="text-sm sm:text-base text-gray-600">Organize suas transacoes por categorias</p>
             </div>
           </div>
@@ -276,7 +276,7 @@ export function Categorias() {
                             <tr key={category.category_id} className="border-b border-gray-100 hover:bg-gray-50">
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div>
-                                  <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{category.category_name}</p>
+                                  <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{category.category_name}</p>
                                 </div>
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">

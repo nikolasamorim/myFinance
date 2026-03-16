@@ -45,28 +45,28 @@ const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
 
     return (
       <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-gray-400 tracking-wider uppercase">
+        <label className="block text-xs font-medium text-text-muted tracking-wider uppercase">
           {label}
         </label>
         <div
-          className={`flex items-center gap-3 border rounded-xl px-4 py-3 bg-white transition-all duration-150 ${
+          className={`flex items-center gap-3 border rounded-xl px-4 py-3 bg-bg-page transition-all duration-150 ${
             error
               ? 'border-red-300 ring-1 ring-red-200'
-              : 'border-gray-200 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-100'
+              : 'border-border focus-within:border-accent focus-within:ring-1 focus-within:ring-accent/20'
           }`}
         >
-          <span className="text-gray-400 shrink-0 flex items-center justify-center">{icon}</span>
+          <span className="text-text-muted shrink-0 flex items-center justify-center">{icon}</span>
           <input
             ref={ref}
             {...props}
             type={inputType}
-            className="flex-1 text-sm text-gray-900 placeholder:text-gray-300 outline-none bg-transparent min-w-0"
+            className="flex-1 text-sm text-text-primary placeholder:text-text-muted outline-none bg-transparent min-w-0"
           />
           {isPassword ? (
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="text-gray-300 hover:text-gray-500 transition-colors shrink-0"
+              className="text-text-muted hover:text-text-secondary transition-colors shrink-0"
               tabIndex={-1}
               aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
             >
@@ -290,7 +290,7 @@ export function Login() {
   const signUpEmailValid = !!signUpEmailValue && !signUpForm.formState.errors.email;
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex bg-bg-page">
 
       {/* ────────────── Left Panel: Form ────────────── */}
       <div className="flex-1 lg:w-1/2 flex flex-col min-h-screen">
@@ -313,10 +313,10 @@ export function Login() {
 
             {/* Heading */}
             <div className="mb-7">
-              <h1 className="text-[1.6rem] font-bold text-gray-900 leading-tight tracking-tight">
+              <h1 className="text-[1.6rem] font-bold text-text-primary leading-tight tracking-tight">
                 {tab === 'signin' ? 'Bem-vindo de volta' : 'Criar sua conta'}
               </h1>
-              <p className="mt-1.5 text-sm text-gray-400">
+              <p className="mt-1.5 text-sm text-text-muted">
                 {tab === 'signin'
                   ? 'Entre para acessar seu painel financeiro'
                   : 'Comece a controlar suas finanças hoje'}
@@ -324,7 +324,7 @@ export function Login() {
             </div>
 
             {/* Tab toggle */}
-            <div className="flex bg-gray-100 rounded-xl p-1 mb-7">
+            <div className="flex bg-bg-elevated rounded-xl p-1 mb-7">
               {(['signin', 'signup'] as AuthTab[]).map((t) => (
                 <button
                   key={t}
@@ -332,8 +332,8 @@ export function Login() {
                   onClick={() => handleTabChange(t)}
                   className={`flex-1 text-sm font-medium py-2 px-4 rounded-lg transition-all duration-200 ${
                     tab === t
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-400 hover:text-gray-600'
+                      ? 'bg-bg-page text-text-primary shadow-sm'
+                      : 'text-text-muted hover:text-text-secondary'
                   }`}
                 >
                   {t === 'signin' ? 'Entrar' : 'Cadastrar'}
@@ -385,7 +385,7 @@ export function Login() {
                   <button
                     type="submit"
                     disabled={signInForm.formState.isSubmitting}
-                    className="w-full bg-gray-900 hover:bg-gray-700 active:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-150 text-sm shadow-sm shadow-gray-100 disabled:cursor-not-allowed"
+                    className="w-full bg-accent hover:bg-accent-hover active:bg-accent-hover disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-150 text-sm disabled:cursor-not-allowed"
                   >
                     {signInForm.formState.isSubmitting ? (
                       <span className="flex items-center justify-center gap-2">
@@ -441,7 +441,7 @@ export function Login() {
                   <button
                     type="submit"
                     disabled={signUpForm.formState.isSubmitting}
-                    className="w-full bg-gray-900 hover:bg-gray-700 active:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-150 text-sm shadow-sm shadow-gray-100 disabled:cursor-not-allowed"
+                    className="w-full bg-accent hover:bg-accent-hover active:bg-accent-hover disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-150 text-sm disabled:cursor-not-allowed"
                   >
                     {signUpForm.formState.isSubmitting ? (
                       <span className="flex items-center justify-center gap-2">
@@ -455,9 +455,9 @@ export function Login() {
 
             {/* Divider */}
             <div className="flex items-center gap-3 my-6">
-              <div className="flex-1 h-px bg-gray-100" />
-              <span className="text-xs text-gray-400 font-medium whitespace-nowrap">Ou entre com</span>
-              <div className="flex-1 h-px bg-gray-100" />
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-text-muted font-medium whitespace-nowrap">Ou entre com</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
 
             {/* Google button */}
@@ -466,7 +466,7 @@ export function Login() {
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={googleLoading}
-                className="w-14 h-14 rounded-full border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-14 h-14 rounded-full border border-border hover:bg-bg-elevated active:bg-bg-elevated flex items-center justify-center transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Entrar com Google"
               >
                 {googleLoading ? <SpinnerIcon /> : <GoogleIcon />}
@@ -476,7 +476,7 @@ export function Login() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-300 px-6 pb-6 sm:px-10 sm:pb-8">
+        <p className="text-center text-xs text-text-muted px-6 pb-6 sm:px-10 sm:pb-8">
           Seus dados são protegidos com criptografia de ponta a ponta.
         </p>
       </div>
