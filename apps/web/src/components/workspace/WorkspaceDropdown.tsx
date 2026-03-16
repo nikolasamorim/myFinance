@@ -100,7 +100,7 @@ export function WorkspaceDropdown() {
         )}
         title={isCollapsed ? currentWorkspace?.workspace_name ?? 'Workspace' : undefined}
       >
-        <span className="flex-shrink-0 w-7 h-7 bg-gray-200 rounded-md flex items-center justify-center">
+        <span className="flex-shrink-0 w-6 h-6 bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
           {getWorkspaceIcon(currentWorkspace)}
         </span>
         {!isCollapsed && (
@@ -124,7 +124,7 @@ export function WorkspaceDropdown() {
           {/* Workspace header */}
           <div className="px-3 py-2 border-b border-gray-100">
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {getWorkspaceIcon(currentWorkspace)}
               </span>
               <span className="text-sm font-semibold text-gray-900 truncate flex-1">
@@ -191,7 +191,7 @@ export function WorkspaceDropdown() {
                 onClick={() => { setCurrentWorkspace(ws); setIsOpen(false); }}
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                <span className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                <span className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {getWorkspaceIcon(ws)}
                 </span>
                 <span className="flex-1 text-left truncate">{ws.workspace_name}</span>
@@ -243,7 +243,7 @@ export function WorkspaceDropdown() {
           {/* User section */}
           <div className="px-3 py-2">
             <div className="flex items-center gap-2.5 mb-1.5">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
                 <User className="w-4 h-4 text-gray-600" />
               </div>
               <div className="min-w-0">
