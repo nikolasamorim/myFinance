@@ -24,7 +24,7 @@ export function Navbar() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 640); // sm breakpoint
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -36,15 +36,15 @@ export function Navbar() {
       if (isUrl) return <img src={workspace.workspace_icon} alt="workspace" className="w-full h-full object-cover rounded-lg" />;
       return <span className="text-lg">{workspace.workspace_icon}</span>;
     }
-    
+
     // Default icons based on workspace type
     switch (workspace.workspace_type) {
       case 'family':
-        return <Users className="w-4 h-4 text-gray-600" />;
+        return <Users className="w-4 h-4 text-text-secondary" />;
       case 'business':
-        return <Building className="w-4 h-4 text-gray-600" />;
+        return <Building className="w-4 h-4 text-text-secondary" />;
       default:
-        return <User className="w-4 h-4 text-gray-600" />;
+        return <User className="w-4 h-4 text-text-secondary" />;
     }
   };
 
@@ -70,7 +70,7 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="bg-white border-b border-gray-200 px-4 md:px-6 py-2">
+      <nav className="bg-bg-page border-b border-border px-4 md:px-6 py-2">
         <div className="flex items-center justify-between">
           {/* Left side - Logo and Workspace Selector */}
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
@@ -81,7 +81,7 @@ export function Navbar() {
             <div className="hidden lg:block">
               <SidebarToggleButton />
             </div>
-            
+
             {/* Logo */}
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               {/* Logo light */}
@@ -90,7 +90,7 @@ export function Navbar() {
                 width="20"
                 height="20"
                 alt="Logo"
-                className="sm:w-6 sm:h-6 md:w-7 md:h-7"
+                className="sm:w-6 sm:h-6 md:w-7 md:h-7 dark:hidden"
               />
 
               {/* Logo dark */}
@@ -99,17 +99,17 @@ export function Navbar() {
                 width="20"
                 height="20"
                 alt="Logo"
-                className="hidden sm:w-6 sm:h-6 md:w-7 md:h-7"
+                className="hidden dark:block sm:w-6 sm:h-6 md:w-7 md:h-7"
               />
 
-              <h1 className="font-serifTitle font-bold text-gray-900 hidden sm:block mr-3">
+              <h1 className="font-serifTitle font-bold text-text-primary hidden sm:block mr-3">
                 Azami
               </h1>
             </div>
-            
+
             {/* Workspace Selector */}
             {loading ? (
-              <div className="w-24 sm:w-32 md:w-40 lg:w-48 h-8 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />
+              <div className="w-24 sm:w-32 md:w-40 lg:w-48 h-8 bg-bg-elevated rounded-lg animate-pulse flex-shrink-0" />
             ) : (
               <div className="w-24 sm:w-32 md:w-40 lg:w-48 flex-shrink-0 min-w-0">
                 <Dropdown
@@ -129,9 +129,9 @@ export function Navbar() {
 
             {/* Notifications */}
             <div className="relative">
-              <button 
+              <button
                 onClick={handleNotificationClick}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors relative"
+                className="p-2 text-text-muted hover:text-text-secondary transition-colors relative"
                 title="Notificações"
               >
                 <Bell className="w-5 h-5" />
@@ -141,12 +141,12 @@ export function Navbar() {
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                  <div className="p-4 border-b border-gray-100">
-                    <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
+                <div className="absolute right-0 mt-2 w-80 bg-bg-page rounded-lg shadow-lg border border-border z-50">
+                  <div className="p-4 border-b border-border">
+                    <h3 className="text-sm font-semibold text-text-primary">Notificações</h3>
                   </div>
                   <div className="p-4">
-                    <p className="text-sm text-gray-500 text-center">Nenhuma notificação no momento</p>
+                    <p className="text-sm text-text-muted text-center">Nenhuma notificação no momento</p>
                   </div>
                 </div>
               )}
@@ -156,49 +156,49 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 p-1 md:p-2 text-gray-700 hover:text-gray-900 transition-colors"
+                className="flex items-center gap-2 p-1 md:p-2 text-text-secondary hover:text-text-primary transition-colors"
               >
                 {/* Avatar */}
-                <div className="w-7 h-7 md:w-8 md:h-8 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="w-7 h-7 md:w-8 md:h-8 bg-bg-elevated rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                   <User className="w-4 h-4 md:w-5 md:h-5" />
                 </div>
               </button>
 
               {/* User Dropdown Menu */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-bg-page rounded-lg shadow-lg border border-border py-1 z-50">
                   {/* Mobile-only user info */}
-                  <div className="md:hidden px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
+                  <div className="md:hidden px-4 py-3 border-b border-border">
+                    <p className="text-sm font-medium text-text-primary">{user?.name}</p>
+                    <p className="text-xs text-text-muted">{user?.email}</p>
                   </div>
-                  
-                  <button 
+
+                  <button
                     onClick={() => {
                       navigate('/settings');
                       setShowUserMenu(false);
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    className="w-full flex items-center px-4 py-2 text-sm text-text-secondary hover:bg-bg-elevated"
                   >
                     <Settings className="w-4 h-4 mr-3" />
                     Configurações
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       navigate('/history');
                       setShowUserMenu(false);
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    className="w-full flex items-center px-4 py-2 text-sm text-text-secondary hover:bg-bg-elevated"
                   >
                     <History className="w-4 h-4 mr-3" />
                     Histórico
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       toggle();
                       setShowUserMenu(false);
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    className="w-full flex items-center px-4 py-2 text-sm text-text-secondary hover:bg-bg-elevated"
                   >
                     <SunMoon className="w-4 h-4 mr-3" />
                     Alterar Tema (Beta)
@@ -208,7 +208,7 @@ export function Navbar() {
                       logout();
                       setShowUserMenu(false);
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    className="w-full flex items-center px-4 py-2 text-sm text-text-secondary hover:bg-bg-elevated"
                   >
                     <LogOut className="w-4 h-4 mr-3" />
                     Sair
@@ -228,16 +228,16 @@ export function Navbar() {
             className="fixed inset-0 bg-black bg-opacity-50 ignoreOverride"
             onClick={() => setShowMobileSidebar(false)}
           />
-          
+
           {/* Sidebar */}
           <div className="fixed inset-y-0 left-0 w-64 max-w-xs">
-            <div className="flex flex-col h-full bg-white border-r border-gray-200">
+            <div className="flex flex-col h-full bg-bg-page border-r border-border">
               {/* Mobile Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <h2 className="text-lg font-semibold text-text-primary">Menu</h2>
                 <button
                   onClick={() => setShowMobileSidebar(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="p-2 text-text-muted hover:text-text-secondary transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -250,7 +250,7 @@ export function Navbar() {
                   <Link
                     to="/dashboard"
                     onClick={() => setShowMobileSidebar(false)}
-                    className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                   >
                     <LayoutDashboard className="w-5 h-5 text-blue-600" />
                     <span>Dashboard</span>
@@ -258,7 +258,7 @@ export function Navbar() {
                   <Link
                     to="/invoice"
                     onClick={() => setShowMobileSidebar(false)}
-                    className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                   >
                     <SquareKanban className="w-5 h-5 text-purple-600" />
                     <span>Fatura</span>
@@ -267,14 +267,14 @@ export function Navbar() {
 
                 {/* Gerenciadores */}
                 <div className="space-y-2">
-                  <h3 className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <h3 className="px-3 py-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
                     Gerenciadores
                   </h3>
                   <div className="space-y-1 pl-2">
                     <Link
                       to="/gerenciadores/receitas"
                       onClick={() => setShowMobileSidebar(false)}
-                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                     >
                       <TrendingUp className="w-5 h-5 text-green-600" />
                       <span>Receitas</span>
@@ -282,7 +282,7 @@ export function Navbar() {
                     <Link
                       to="/gerenciadores/despesas"
                       onClick={() => setShowMobileSidebar(false)}
-                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                     >
                       <TrendingDown className="w-5 h-5 text-red-600" />
                       <span>Despesas</span>
@@ -290,7 +290,7 @@ export function Navbar() {
                     <Link
                       to="/gerenciadores/dividas"
                       onClick={() => setShowMobileSidebar(false)}
-                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                     >
                       <AlertTriangle className="w-5 h-5 text-orange-600" />
                       <span>Dívidas</span>
@@ -298,7 +298,7 @@ export function Navbar() {
                     <Link
                       to="/gerenciadores/investimentos"
                       onClick={() => setShowMobileSidebar(false)}
-                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                     >
                       <PiggyBank className="w-5 h-5 text-blue-600" />
                       <span>Investimentos</span>
@@ -307,14 +307,14 @@ export function Navbar() {
                 </div>
                 {/* Organizadores */}
                 <div className="space-y-2">
-                  <h3 className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <h3 className="px-3 py-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
                     Organizadores
                   </h3>
                   <div className="space-y-1 pl-2">
                     <Link
                       to="/organizadores/cartoes"
                       onClick={() => setShowMobileSidebar(false)}
-                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                     >
                       <CreditCard className="w-5 h-5 text-purple-600" />
                       <span>Cartões de Crédito</span>
@@ -322,7 +322,7 @@ export function Navbar() {
                     <Link
                       to="/organizadores/contas"
                       onClick={() => setShowMobileSidebar(false)}
-                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                     >
                       <Wallet className="w-5 h-5 text-green-600" />
                       <span>Caixa / Conta</span>
@@ -330,7 +330,7 @@ export function Navbar() {
                     <Link
                       to="/organizadores/categorias"
                       onClick={() => setShowMobileSidebar(false)}
-                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                     >
                       <Tag className="w-5 h-5 text-yellow-600" />
                       <span>Categoria</span>
@@ -338,7 +338,7 @@ export function Navbar() {
                     <Link
                       to="/organizadores/centros-de-custo"
                       onClick={() => setShowMobileSidebar(false)}
-                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 space-x-3 text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                     >
                       <Target className="w-5 h-5 text-indigo-600" />
                       <span>Centro de Custo</span>
@@ -353,8 +353,8 @@ export function Navbar() {
 
       {/* Click outside handlers */}
       {(showUserMenu || showNotifications) && (
-        <div 
-          className="fixed inset-0 z-40" 
+        <div
+          className="fixed inset-0 z-40"
           onClick={() => {
             setShowUserMenu(false);
             setShowNotifications(false);

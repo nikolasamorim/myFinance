@@ -140,7 +140,7 @@ export function Categorias() {
       case 'expense':
         return 'text-red-600 bg-red-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-text-secondary bg-bg-surface';
     }
   };
 
@@ -157,7 +157,7 @@ export function Categorias() {
             <div className="flex-1 min-w-0">
               <p className="font-medium text-text-primary truncate">{category.category_name}</p>
               {category.description && (
-                <p className="text-sm text-gray-500 mt-1 truncate">{category.description}</p>
+                <p className="text-sm text-text-muted mt-1 truncate">{category.description}</p>
               )}
             </div>
             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(category.category_type)}`}>
@@ -207,7 +207,7 @@ export function Categorias() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Categorias</h1>
-              <p className="text-sm sm:text-base text-gray-600">Organize suas transacoes por categorias</p>
+              <p className="text-sm sm:text-base text-text-secondary">Organize suas transacoes por categorias</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -263,17 +263,17 @@ export function Categorias() {
                     <div className="w-full overflow-x-auto">
                       <table className="w-full min-w-[700px]">
                         <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Nome</th>
-                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Tipo</th>
-                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Categoria Pai</th>
-                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[150px]">Descrição</th>
-                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
+                          <tr className="border-b border-border">
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[120px]">Nome</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Tipo</th>
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[100px]">Categoria Pai</th>
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[150px]">Descrição</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Ações</th>
                           </tr>
                         </thead>
                         <tbody>
                           {sortedCategories.map((category) => (
-                            <tr key={category.category_id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <tr key={category.category_id} className="border-b border-border hover:bg-bg-elevated">
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div>
                                   <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{category.category_name}</p>
@@ -284,24 +284,24 @@ export function Categorias() {
                                   {getTypeLabel(category.category_type)}
                                 </span>
                               </td>
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-secondary">
                                 {category.parent_name || '-'}
                               </td>
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-secondary">
                                 {category.description || '-'}
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div className="flex justify-center space-x-1 sm:space-x-2">
                                   <button
                                     onClick={() => handleEditCategory(category)}
-                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="p-0.5 sm:p-1 text-text-muted hover:text-text-secondary transition-colors"
                                     title="Editar"
                                   >
                                     <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                                   </button>
                                   <button
                                     onClick={() => handleDeleteCategory(category.category_id)}
-                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    className="p-0.5 sm:p-1 text-text-muted hover:text-red-600 transition-colors"
                                     title="Excluir"
                                   >
                                     <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -312,10 +312,10 @@ export function Categorias() {
                           ))}
                         </tbody>
                       </table>
-                      
+
                       {sortedCategories.length === 0 && (
-                        <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                          <Tag className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                        <div className="text-center py-6 sm:py-8 text-text-muted px-4">
+                          <Tag className="w-8 h-8 sm:w-12 sm:h-12 text-text-muted mx-auto mb-3 sm:mb-4" />
                           <p className="text-base sm:text-lg font-medium">Nenhuma categoria encontrada</p>
                           <p className="text-xs sm:text-sm">Comece criando sua primeira categoria</p>
                         </div>
@@ -455,7 +455,7 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-secondary mb-2">
               Tipo
             </label>
             <Dropdown
@@ -466,7 +466,7 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-secondary mb-2">
               Categoria pai
             </label>
             <Dropdown
@@ -491,14 +491,14 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-text-secondary mb-2">
             Descrição
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => handleInputChange('description', e.target.value)}
             placeholder="Descrição da categoria..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-border rounded-md bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-transparent"
             rows={3}
           />
         </div>

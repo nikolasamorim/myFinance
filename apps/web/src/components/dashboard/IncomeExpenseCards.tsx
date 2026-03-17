@@ -76,7 +76,7 @@ export function IncomeExpenseCards({ data }: IncomeExpenseCardsProps) {
       <Card>
         <CardContent className="p-3 sm:p-4">
           <div>
-            <p className="text-xs sm:text-xs font-medium text-gray-600 mb-2">Média Mensal</p>
+            <p className="text-xs sm:text-xs font-medium text-text-secondary mb-2">Média Mensal</p>
             <div className="space-y-1">
               <div className="flex justify-between text-xs sm:text-xs">
                 <span className="text-green-600">Receita:</span>

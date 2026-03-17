@@ -509,7 +509,7 @@ function Invoice() {
                               </p>
                             </div>
                             <div>
-                              <p className="text-[9px] text-gray-400 uppercase tracking-wide">Pago</p>
+                              <p className="text-[9px] text-text-muted uppercase tracking-wide">Pago</p>
                               <p className="text-[11px] font-medium text-green-600">
                                 {stmt ? formatCurrency(stmt.paid_amount ?? 0) : '—'}
                               </p>

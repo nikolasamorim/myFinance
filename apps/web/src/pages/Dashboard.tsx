@@ -393,7 +393,7 @@ export function Dashboard() {
       case "scheduled":
         return <Calendar className="p-1.5 rounded-lg bg-indigo-500 text-indigo-50" />;
       case "canceled":
-        return <XCircle className="p-1.5 rounded-lg bg-gray-500 text-gray-50" />;
+        return <XCircle className="p-1.5 rounded-lg bg-bg-elevated text-text-muted" />;
       default:
         return null;
     }

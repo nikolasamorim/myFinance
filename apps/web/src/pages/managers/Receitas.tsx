@@ -231,9 +231,9 @@ export function Receitas() {
       case 'scheduled':
         return 'text-violet-500 bg-violet-50 border border-violet-200';
       case 'canceled':
-        return 'text-gray-500 bg-gray-50 border border-gray-200';
+        return 'text-text-muted bg-bg-surface border border-border';
       default:
-        return 'text-gray-500 bg-gray-50 border border-gray-200';
+        return 'text-text-muted bg-bg-surface border border-border';
     }
   };
 
@@ -285,7 +285,7 @@ export function Receitas() {
       case 'scheduled':
         return <Calendar className="p-1.5 rounded-lg bg-indigo-500 text-indigo-50" />;
       case 'canceled':
-        return <XCircle className="p-1.5 rounded-lg bg-gray-500 text-gray-50" />;
+        return <XCircle className="p-1.5 rounded-lg bg-bg-elevated text-text-muted" />;
       default:
         return null;
     }
@@ -299,7 +299,7 @@ export function Receitas() {
       label: 'Recebidas',
       Icon: CheckCircle,
       cardBg: 'bg-emerald-50',
-      titleColor: 'text-gray-500',
+      titleColor: 'text-text-secondary',
       valueColor: 'text-emerald-500',
       border: 'border-emerald-200',
     },
@@ -307,7 +307,7 @@ export function Receitas() {
       label: 'Pendentes',
       Icon: Clock,
       cardBg: 'bg-amber-50',
-      titleColor: 'text-gray-500',
+      titleColor: 'text-text-secondary',
       valueColor: 'text-amber-500',
       border: 'border-amber-200',
     },
@@ -315,7 +315,7 @@ export function Receitas() {
       label: 'Abertas',
       Icon: Circle,
       cardBg: 'bg-sky-50',
-      titleColor: 'text-gray-500',
+      titleColor: 'text-text-secondary',
       valueColor: 'text-sky-500',
       border: 'border-sky-200',
     },
@@ -323,7 +323,7 @@ export function Receitas() {
       label: 'Atrasadas',
       Icon: AlertCircle,
       cardBg: 'bg-rose-50',
-      titleColor: 'text-gray-500',
+      titleColor: 'text-text-secondary',
       valueColor: 'text-rose-500',
       border: 'border-rose-200',
     },
@@ -331,17 +331,17 @@ export function Receitas() {
       label: 'Agendadas',
       Icon: Calendar,
       cardBg: 'bg-violet-50',
-      titleColor: 'text-gray-500',
+      titleColor: 'text-text-secondary',
       valueColor: 'text-violet-500',
       border: 'border-violet-200',
     },
     canceled: {
       label: 'Canceladas',
       Icon: XCircle,
-      cardBg: 'bg-gray-50',
-      titleColor: 'text-gray-500',
-      valueColor: 'text-gray-500',
-      border: 'border-gray-200',
+      cardBg: 'bg-bg-surface',
+      titleColor: 'text-text-secondary',
+      valueColor: 'text-text-muted',
+      border: 'border-border',
     },
   };
 
@@ -394,8 +394,8 @@ export function Receitas() {
               <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Receitas</h1>
-              <p className="text-sm sm:text-base text-gray-600">Controle suas entradas</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Receitas</h1>
+              <p className="text-sm sm:text-base text-text-secondary">Controle suas entradas</p>
             </div>
           </div>
           <Button onClick={handleCreateReceita} size="sm">
@@ -409,7 +409,7 @@ export function Receitas() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Recebido</p>
+                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Total Recebido</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-500 mt-1">
                     {formatCurrency(summary?.totalPaid || 0)}
                   </p>
@@ -425,7 +425,7 @@ export function Receitas() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total a Receber</p>
+                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Total a Receber</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-500 mt-1">
                     {formatCurrency(summary?.totalPending || 0)}
                   </p>
@@ -441,7 +441,7 @@ export function Receitas() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Parcelado</p>
+                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Total Parcelado</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-teal-600 mt-1">
                     {formatCurrency(summary?.totalInstallments || 0)}
                   </p>
@@ -457,7 +457,7 @@ export function Receitas() {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Media Mensal</p>
+                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Media Mensal</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-sky-500 mt-1">
                     {formatCurrency(summary?.monthlyAverage || 0)}
                   </p>
@@ -487,33 +487,33 @@ export function Receitas() {
                   {fixedIncomesThisMonth?.map((income: any) => (
                     <div
                       key={income.id}
-                      className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all"
+                      className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-border bg-bg-page hover:border-border transition-all"
                       style={{ scrollSnapAlign: 'start' }}
                     >
                       <div className="space-y-3">
                         <div>
-                          <h3 className="font-semibold text-gray-900 truncate">{income.title}</h3>
-                          <p className="text-xs text-gray-500">Receita Fixa</p>
+                          <h3 className="font-semibold text-text-primary truncate">{income.title}</h3>
+                          <p className="text-xs text-text-muted">Receita Fixa</p>
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Vencimento:</span>
-                            <span className="font-medium text-gray-900">{formatDate(income.transaction_date)}</span>
+                            <span className="text-text-secondary">Vencimento:</span>
+                            <span className="font-medium text-text-primary">{formatDate(income.transaction_date)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Valor:</span>
+                            <span className="text-text-secondary">Valor:</span>
                             <span className="font-medium text-emerald-500">{formatCurrency(Number(income.amount))}</span>
                           </div>
                           {income.category && (
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Categoria:</span>
-                              <span className="font-medium text-gray-900 truncate">{income.category}</span>
+                              <span className="text-text-secondary">Categoria:</span>
+                              <span className="font-medium text-text-primary truncate">{income.category}</span>
                             </div>
                           )}
                         </div>
 
-                        <div className="pt-2 border-t border-gray-100">
+                        <div className="pt-2 border-t border-border">
                           <div className="flex justify-between items-center mb-2">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(income.status)}`}>
                               {getStatusLabel(income.status)}
@@ -531,7 +531,7 @@ export function Receitas() {
                             )}
                             <button
                               onClick={() => handleEditReceita(income)}
-                              className="flex-1 p-1 text-xs text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                              className="flex-1 p-1 text-xs text-text-secondary hover:bg-bg-elevated rounded transition-colors"
                               title="Editar"
                             >
                               <Edit className="w-3 h-3 mx-auto" />
@@ -550,8 +550,8 @@ export function Receitas() {
                   ))}
 
                   {(!fixedIncomesThisMonth || fixedIncomesThisMonth.length === 0) && (
-                    <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
-                      <RefreshCcw className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <div className="flex-shrink-0 w-64 p-8 text-center text-text-muted">
+                      <RefreshCcw className="w-12 h-12 text-text-muted mx-auto mb-3" />
                       <p className="text-sm">Nenhuma receita fixa neste periodo</p>
                     </div>
                   )}
@@ -562,17 +562,17 @@ export function Receitas() {
             <CardContent className="p-4 pt-0 sm:px-6 sm:pt-0">
               <div className="overflow-x-auto -mx-4 px-4 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
                 <div className="flex gap-3 w-max snap-x snap-mandatory sm:grid sm:w-auto sm:snap-none sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
-                  <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
+                  <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-border bg-bg-surface text-left">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="p-1.5 rounded-lg bg-gray-500 text-white">
+                      <span className="p-1.5 rounded-lg bg-bg-elevated text-text-muted">
                         <RefreshCcw className="w-3 h-3" />
                       </span>
-                      <p className="text-xs text-gray-500">Total</p>
+                      <p className="text-xs text-text-muted">Total</p>
                     </div>
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-sm font-medium text-text-secondary">
                       {fixedIncomesThisMonth?.length || 0} {(fixedIncomesThisMonth?.length || 0) === 1 ? 'receita' : 'receitas'}
                     </p>
-                    <p className="text-lg font-semibold text-gray-900">
+                    <p className="text-lg font-semibold text-text-primary">
                       {formatCurrency(fixedIncomesThisMonth?.reduce((acc: number, e: any) => acc + Number(e.amount), 0) || 0)}
                     </p>
                   </div>
@@ -586,7 +586,7 @@ export function Receitas() {
                           <Icon className="w-3 h-3" />
                           <p className={`text-xs ${cfg.titleColor}`}>{cfg.label}</p>
                         </div>
-                        <p className="text-lg font-semibold text-gray-900">{formatCurrency(stats.total || 0)}</p>
+                        <p className="text-lg font-semibold text-text-primary">{formatCurrency(stats.total || 0)}</p>
                         <p className={`text-sm font-medium ${cfg.valueColor}`}>
                           {stats.count} {stats.count === 1 ? 'receita' : 'receitas'}
                         </p>
@@ -617,35 +617,35 @@ export function Receitas() {
                   {installmentsThisMonth?.map((inst: any) => (
                     <div
                       key={inst.id}
-                      className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all"
+                      className="flex-shrink-0 w-64 p-4 rounded-lg border-2 border-border bg-bg-page hover:border-border transition-all"
                       style={{ scrollSnapAlign: 'start' }}
                     >
                       <div className="space-y-3">
                         <div>
-                          <h3 className="font-semibold text-gray-900 truncate">{inst.title}</h3>
-                          <p className="text-xs text-gray-500">
+                          <h3 className="font-semibold text-text-primary truncate">{inst.title}</h3>
+                          <p className="text-xs text-text-muted">
                             Parcela {inst.installment_number}/{inst.installment_total}
                           </p>
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Vencimento:</span>
-                            <span className="font-medium text-gray-900">{formatDate(inst.transaction_date)}</span>
+                            <span className="text-text-secondary">Vencimento:</span>
+                            <span className="font-medium text-text-primary">{formatDate(inst.transaction_date)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Valor parcela:</span>
+                            <span className="text-text-secondary">Valor parcela:</span>
                             <span className="font-medium text-emerald-500">{formatCurrency(Number(inst.amount))}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Total:</span>
-                            <span className="font-medium text-gray-900">
+                            <span className="text-text-secondary">Total:</span>
+                            <span className="font-medium text-text-primary">
                               {formatCurrency(Number(inst.amount) * inst.installment_total)}
                             </span>
                           </div>
                         </div>
 
-                        <div className="pt-2 border-t border-gray-100">
+                        <div className="pt-2 border-t border-border">
                           <div className="flex justify-between items-center mb-2">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(inst.status)}`}>
                               {getStatusLabel(inst.status)}
@@ -663,7 +663,7 @@ export function Receitas() {
                             )}
                             <button
                               onClick={() => handleEditReceita(inst)}
-                              className="flex-1 p-1 text-xs text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                              className="flex-1 p-1 text-xs text-text-secondary hover:bg-bg-elevated rounded transition-colors"
                               title="Editar"
                             >
                               <Edit className="w-3 h-3 mx-auto" />
@@ -682,8 +682,8 @@ export function Receitas() {
                   ))}
 
                   {(!installmentsThisMonth || installmentsThisMonth.length === 0) && (
-                    <div className="flex-shrink-0 w-64 p-8 text-center text-gray-500">
-                      <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <div className="flex-shrink-0 w-64 p-8 text-center text-text-muted">
+                      <CreditCard className="w-12 h-12 text-text-muted mx-auto mb-3" />
                       <p className="text-sm">Nenhuma parcela neste periodo</p>
                     </div>
                   )}
@@ -705,13 +705,13 @@ export function Receitas() {
                 return (
                   <div className="overflow-x-auto -mx-4 px-4 sm:overflow-visible sm:mx-0 sm:px-0 scrollbar-hide" style={{ scrollBehavior: "smooth" }}>
                     <div className="flex gap-3 w-max snap-x snap-mandatory sm:grid sm:w-auto sm:snap-none sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
-                      <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-gray-300 bg-gray-50 text-left">
+                      <div className="min-w-[240px] sm:min-w-0 snap-start p-3 rounded-lg border border-border bg-bg-surface text-left">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="p-1.5 rounded-lg bg-gray-500 text-white"><CreditCard className="w-3 h-3" /></span>
-                          <p className="text-xs text-gray-500">Total</p>
+                          <span className="p-1.5 rounded-lg bg-bg-elevated text-text-muted"><CreditCard className="w-3 h-3" /></span>
+                          <p className="text-xs text-text-muted">Total</p>
                         </div>
-                        <p className="text-sm font-medium text-gray-600">{totalCount} {totalCount === 1 ? "receita" : "receitas"}</p>
-                        <p className="text-lg font-semibold text-gray-900">{formatCurrency(totalValue)}</p>
+                        <p className="text-sm font-medium text-text-secondary">{totalCount} {totalCount === 1 ? "receita" : "receitas"}</p>
+                        <p className="text-lg font-semibold text-text-primary">{formatCurrency(totalValue)}</p>
                       </div>
 
                       {Object.entries(statusConfig).map(([key, cfg]) => {
@@ -723,7 +723,7 @@ export function Receitas() {
                               <Icon className="w-3 h-3" />
                               <p className={`text-xs ${cfg.titleColor}`}>{cfg.label}</p>
                             </div>
-                            <p className="text-lg font-semibold text-gray-900">{formatCurrency(stats.total || 0)}</p>
+                            <p className="text-lg font-semibold text-text-primary">{formatCurrency(stats.total || 0)}</p>
                             <p className={`text-sm font-medium ${cfg.valueColor}`}>{stats.count} {stats.count === 1 ? "receita" : "receitas"}</p>
                           </div>
                         );
@@ -753,35 +753,35 @@ export function Receitas() {
                   <div className="max-h-[560px] overflow-y-auto">
                     <table className="w-full min-w-[980px]">
                       <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[60px]">
+                        <tr className="border-b border-border">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary w-[60px]">
                             Tipo
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 w-[70px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary w-[70px]">
                             Status
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[160px]">
                             Título
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[110px]">
                             Data
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[120px]">
                             Valor
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[160px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[160px]">
                             Conta Bancária
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[130px]">
                             C. Crédito
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[110px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[110px]">
                             Categoria
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[130px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[130px]">
                             C. Custo
                           </th>
-                          <th className="sticky top-0 z-10 bg-white shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">
+                          <th className="sticky top-0 z-10 bg-bg-page shadow-sm text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">
                             Ações
                           </th>
                         </tr>
@@ -816,30 +816,30 @@ export function Receitas() {
                           return (
                             <tr
                               key={id}
-                              className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                              className="border-b border-border hover:bg-bg-elevated cursor-pointer"
                               onClick={() => handleEditReceita(r)}
                             >
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
-                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50" title="Receita">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-bg-surface" title="Receita">
                                   {getTypeIcon('income')}
                                 </span>
                               </td>
 
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
                                 <span
-                                  className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50"
+                                  className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-bg-surface"
                                   title={getStatusLabel(status)}
                                 >
                                   {getStatusIcon(status)}
                                 </span>
                               </td>
 
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-primary">
                                 <span className="truncate block max-w-[140px] sm:max-w-none font-medium">{title}</span>
-                                {subtitle ? <span className="truncate block max-w-[140px] sm:max-w-none text-[11px] text-gray-500">{subtitle}</span> : null}
+                                {subtitle ? <span className="truncate block max-w-[140px] sm:max-w-none text-[11px] text-text-muted">{subtitle}</span> : null}
                               </td>
 
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-text-secondary">
                                 {date ? formatDate(date) : '-'}
                               </td>
 
@@ -848,7 +848,7 @@ export function Receitas() {
                               </td>
 
                               {/* Conta Bancária (mesmo renderer do Dashboard, com fallback) */}
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-900">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-primary">
                                 {accountName ? (
                                   <div className="flex items-center gap-2">
                                     <div
@@ -860,7 +860,7 @@ export function Receitas() {
                                     <span className="truncate block max-w-[140px] sm:max-w-none">{accountName}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-xs text-gray-500">-</span>
+                                  <span className="text-xs text-text-muted">-</span>
                                 )}
                               </td>
 
@@ -875,7 +875,7 @@ export function Receitas() {
                                     <span className="text-xs font-medium text-white truncate">{cardName}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-xs text-gray-500">-</span>
+                                  <span className="text-xs text-text-muted">-</span>
                                 )}
                               </td>
 
@@ -890,7 +890,7 @@ export function Receitas() {
                                     <span className="text-xs font-medium text-white truncate">{categoryName}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-xs text-gray-500">-</span>
+                                  <span className="text-xs text-text-muted">-</span>
                                 )}
                               </td>
 
@@ -905,7 +905,7 @@ export function Receitas() {
                                     <span className="text-xs font-medium text-white truncate">{costName}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-xs text-gray-500">-</span>
+                                  <span className="text-xs text-text-muted">-</span>
                                 )}
                               </td>
 
@@ -918,7 +918,7 @@ export function Receitas() {
                                         e.stopPropagation();
                                         handleMarkAsReceived(id);
                                       }}
-                                      className="p-0.5 sm:p-1 text-gray-400 hover:text-emerald-500 transition-colors"
+                                      className="p-0.5 sm:p-1 text-text-muted hover:text-emerald-500 transition-colors"
                                       title="Marcar como recebida"
                                     >
                                       <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -930,7 +930,7 @@ export function Receitas() {
                                       e.stopPropagation();
                                       handleEditReceita(r);
                                     }}
-                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="p-0.5 sm:p-1 text-text-muted hover:text-text-secondary transition-colors"
                                     title="Editar"
                                   >
                                     <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -941,7 +941,7 @@ export function Receitas() {
                                       e.stopPropagation();
                                       handleDeleteReceita(id);
                                     }}
-                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-rose-500 transition-colors"
+                                    className="p-0.5 sm:p-1 text-text-muted hover:text-rose-500 transition-colors"
                                     title="Excluir"
                                   >
                                     <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -956,8 +956,8 @@ export function Receitas() {
                   </div>
 
                   {receitas.length === 0 && (
-                    <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                      <TrendingUp className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                    <div className="text-center py-6 sm:py-8 text-text-muted px-4">
+                      <TrendingUp className="w-8 h-8 sm:w-12 sm:h-12 text-text-muted mx-auto mb-3 sm:mb-4" />
                       <p className="text-base sm:text-lg font-medium">Nenhuma receita encontrada</p>
                       <p className="text-xs sm:text-sm">Comece criando sua primeira receita</p>
                     </div>
@@ -981,13 +981,13 @@ export function Receitas() {
                 }, {} as Record<string, { count: number; total: number }>);
 
                 const chipConfig: Record<string, { label: string; border: string; text: string; bg: string }> = {
-                  __total: { label: 'Total', border: 'border-gray-300', text: 'text-gray-900', bg: 'bg-gray-50' },
+                  __total: { label: 'Total', border: 'border-border', text: 'text-text-primary', bg: 'bg-bg-surface' },
                   received: { label: 'Recebidas', border: 'border-emerald-300', text: 'text-emerald-500', bg: 'bg-emerald-50' },
                   pending: { label: 'Pendentes', border: 'border-amber-300', text: 'text-amber-500', bg: 'bg-amber-50' },
                   open: { label: 'Abertas', border: 'border-sky-300', text: 'text-sky-500', bg: 'bg-sky-50' },
                   overdue: { label: 'Atrasadas', border: 'border-rose-300', text: 'text-rose-500', bg: 'bg-rose-50' },
                   scheduled: { label: 'Agendadas', border: 'border-violet-300', text: 'text-violet-500', bg: 'bg-violet-50' },
-                  canceled: { label: 'Canceladas', border: 'border-gray-300', text: 'text-gray-500', bg: 'bg-gray-50' },
+                  canceled: { label: 'Canceladas', border: 'border-border', text: 'text-text-muted', bg: 'bg-bg-surface' },
                 };
 
                 const order = ['__total', 'received', 'pending', 'open', 'overdue', 'scheduled', 'canceled'];
@@ -1001,10 +1001,10 @@ export function Receitas() {
                       <div
                         className={`min-w-[180px] sm:min-w-0 snap-start rounded-lg border ${chipConfig.__total.border} ${chipConfig.__total.bg} px-3 py-2 flex items-center justify-between`}
                       >
-                        <span className="text-xs font-medium text-gray-600">Total</span>
+                        <span className="text-xs font-medium text-text-secondary">Total</span>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-gray-900">{formatCurrency(totalValue)}</p>
-                          <p className="text-[10px] text-gray-500">
+                          <p className="text-sm font-semibold text-text-primary">{formatCurrency(totalValue)}</p>
+                          <p className="text-[10px] text-text-muted">
                             {totalCount} {totalCount === 1 ? 'lancamento' : 'lancamentos'}
                           </p>
                         </div>
@@ -1018,10 +1018,10 @@ export function Receitas() {
                             key={key}
                             className={`min-w-[180px] sm:min-w-0 snap-start rounded-lg border ${cfg.border} ${cfg.bg} px-3 py-2 flex items-center justify-between`}
                           >
-                            <span className="text-xs font-medium text-gray-600">{cfg.label}</span>
+                            <span className="text-xs font-medium text-text-secondary">{cfg.label}</span>
                             <div className="text-right">
                               <p className={`text-sm font-semibold ${cfg.text}`}>{formatCurrency(stats.total || 0)}</p>
-                              <p className="text-[10px] text-gray-500">
+                              <p className="text-[10px] text-text-muted">
                                 {stats.count} {stats.count === 1 ? 'lancamento' : 'lancamentos'}
                               </p>
                             </div>
@@ -1191,13 +1191,13 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-500 mb-2">Tipo de receita</label>
+            <label className="block text-sm font-medium text-text-muted mb-2">Tipo de receita</label>
             <Dropdown options={repeatTypeOptions} value={formData.repeat_type} onChange={(value) => handleInputChange('repeat_type', value)} />
           </div>
 
           {formData.repeat_type === 'recorrente' && (
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-2">Intervalo de recorrencia</label>
+              <label className="block text-sm font-medium text-text-muted mb-2">Intervalo de recorrencia</label>
               <Dropdown
                 options={repeatIntervalOptions}
                 value={formData.repeat_interval}
@@ -1215,7 +1215,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
               onChange={(e) => handleInputChange('status', e.target.checked ? 'received' : 'pending')}
               className="mr-2"
             />
-            <span className="text-sm text-gray-500">Ja foi recebida?</span>
+            <span className="text-sm text-text-muted">Ja foi recebida?</span>
           </label>
 
           <label className="flex items-center">
@@ -1225,7 +1225,7 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
               onChange={(e) => handleInputChange('is_installment', e.target.checked)}
               className="mr-2"
             />
-            <span className="text-sm text-gray-500">Parcelada?</span>
+            <span className="text-sm text-text-muted">Parcelada?</span>
           </label>
         </div>
 
@@ -1243,12 +1243,12 @@ function ReceitaModal({ isOpen, onClose, receita, onSave }: ReceitaModalProps) {
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-2">Observacoes</label>
+          <label className="block text-sm font-medium text-text-muted mb-2">Observacoes</label>
           <textarea
             value={formData.notes}
             onChange={(e) => handleInputChange('notes', e.target.value)}
             placeholder="Observacoes adicionais..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-transparent"
+            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-transparent"
             rows={3}
           />
         </div>

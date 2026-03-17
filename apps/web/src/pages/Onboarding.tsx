@@ -29,7 +29,7 @@ function OnboardingContent() {
         <div className="max-w-2xl mx-auto">
           <StepIndicator currentStep={currentStep} totalSteps={6} />
           
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+          <div className="bg-bg-page rounded-2xl shadow-xl p-8 md:p-12">
             {renderStep()}
           </div>
         </div>

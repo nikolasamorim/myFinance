@@ -303,7 +303,7 @@ export function Login() {
               <path d="M9 6l2.5 1.5v3L9 12 6.5 10.5v-3L9 6z" fill="white" fillOpacity="0.55" />
             </svg>
           </div>
-          <span className="font-semibold text-gray-900 text-sm tracking-tight">myFinance</span>
+          <span className="font-semibold text-text-primary text-sm tracking-tight">myFinance</span>
         </div>
         */}
 

@@ -33,7 +33,7 @@ function getNotificationIcon(type: NotificationType) {
     case 'budget_exceeded':
       return <AlertCircle size={16} className="text-orange-500" />;
     default:
-      return <Bell size={16} className="text-gray-500" />;
+      return <Bell size={16} className="text-text-muted" />;
   }
 }
 

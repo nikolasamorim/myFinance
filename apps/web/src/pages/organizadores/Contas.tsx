@@ -134,7 +134,7 @@ export function Contas() {
       case 'bank':
         return 'text-blue-600 bg-blue-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-text-secondary bg-bg-surface';
     }
   };
 
@@ -179,7 +179,7 @@ export function Contas() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Caixa / Conta</h1>
-              <p className="text-sm sm:text-base text-gray-600">Gerencie contas bancarias e caixa</p>
+              <p className="text-sm sm:text-base text-text-secondary">Gerencie contas bancarias e caixa</p>
             </div>
           </div>
           <Button onClick={handleCreateAccount} size="sm">
@@ -203,23 +203,23 @@ export function Contas() {
                 <div className="w-full overflow-x-auto">
                   <table className="w-full min-w-[700px]">
                     <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Título</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Tipo</th>
-                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Saldo Inicial</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Centro de Custo</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[90px]">Data Abertura</th>
-                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[120px]">Título</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Tipo</th>
+                        <th className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[100px]">Saldo Inicial</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[100px]">Centro de Custo</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[90px]">Data Abertura</th>
+                        <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {sortedAccounts.map((account) => (
-                        <tr key={account.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <tr key={account.id} className="border-b border-border hover:bg-bg-elevated">
                           <td className="py-2 sm:py-3 px-2 sm:px-4">
                             <div>
                               <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{account.title}</p>
                               {account.description && (
-                                <p className="text-xs text-gray-500 truncate">{account.description}</p>
+                                <p className="text-xs text-text-muted truncate">{account.description}</p>
                               )}
                             </div>
                           </td>
@@ -231,24 +231,24 @@ export function Contas() {
                           <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm font-medium text-text-primary">
                             {formatCurrency(Number(account.initial_balance))}
                           </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-text-secondary">
                             {account.cost_center_name || '-'}
                           </td>
-                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                          <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-text-secondary">
                             {formatDate(account.opened_at)}
                           </td>
                           <td className="py-2 sm:py-3 px-2 sm:px-4">
                             <div className="flex justify-center space-x-1 sm:space-x-2">
                               <button
                                 onClick={() => handleEditAccount(account)}
-                                className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                className="p-0.5 sm:p-1 text-text-muted hover:text-text-secondary transition-colors"
                                 title="Editar"
                               >
                                 <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                               </button>
                               <button
                                 onClick={() => handleDeleteAccount(account.id)}
-                                className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                className="p-0.5 sm:p-1 text-text-muted hover:text-red-600 transition-colors"
                                 title="Excluir"
                               >
                                 <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -261,8 +261,8 @@ export function Contas() {
                   </table>
                   
                   {accounts.length === 0 && (
-                    <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                      <Wallet className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                    <div className="text-center py-6 sm:py-8 text-text-muted px-4">
+                      <Wallet className="w-8 h-8 sm:w-12 sm:h-12 text-text-muted mx-auto mb-3 sm:mb-4" />
                       <p className="text-base sm:text-lg font-medium">Nenhuma conta encontrada</p>
                       <p className="text-xs sm:text-sm">Comece criando sua primeira conta</p>
                     </div>
@@ -384,7 +384,7 @@ function AccountModal({ isOpen, onClose, account, onSave }: AccountModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-secondary mb-2">
               Tipo de conta
             </label>
             <Dropdown
@@ -432,14 +432,14 @@ function AccountModal({ isOpen, onClose, account, onSave }: AccountModalProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-text-secondary mb-2">
             Descrição
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => handleInputChange('description', e.target.value)}
             placeholder="Descrição adicional da conta..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-border rounded-md bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent"
             rows={3}
           />
         </div>

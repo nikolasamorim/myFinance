@@ -3,7 +3,7 @@ import { Users, Building, User } from 'lucide-react';
 import type { Workspace } from '../types';
 
 export function getWorkspaceIcon(workspace: Workspace | null | undefined): React.ReactNode {
-  if (!workspace) return <User className="w-4 h-4 text-gray-600" />;
+  if (!workspace) return <User className="w-4 h-4 text-text-secondary" />;
   if (workspace.workspace_icon) {
     const isUrl = workspace.workspace_icon.startsWith('http') || workspace.workspace_icon.startsWith('/');
     if (isUrl) return <img src={workspace.workspace_icon} alt="workspace" className="w-full h-full object-cover" />;
@@ -12,10 +12,10 @@ export function getWorkspaceIcon(workspace: Workspace | null | undefined): React
 
   switch (workspace.workspace_type) {
     case 'family':
-      return <Users className="w-4 h-4 text-gray-600" />;
+      return <Users className="w-4 h-4 text-text-secondary" />;
     case 'business':
-      return <Building className="w-4 h-4 text-gray-600" />;
+      return <Building className="w-4 h-4 text-text-secondary" />;
     default:
-      return <User className="w-4 h-4 text-gray-600" />;
+      return <User className="w-4 h-4 text-text-secondary" />;
   }
 }

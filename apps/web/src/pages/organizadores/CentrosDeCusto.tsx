@@ -158,7 +158,7 @@ export function CentrosDeCusto() {
       case 'inactive':
         return 'text-red-600 bg-red-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-text-secondary bg-bg-surface';
     }
   };
 
@@ -180,7 +180,7 @@ export function CentrosDeCusto() {
       case 'expense':
         return 'text-red-600 bg-red-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-text-secondary bg-bg-surface';
     }
   };
 
@@ -205,16 +205,16 @@ export function CentrosDeCusto() {
                 </span>
               </div>
               {costCenter.description && (
-                <p className="text-sm text-gray-500 mt-1 truncate">{costCenter.description}</p>
+                <p className="text-sm text-text-muted mt-1 truncate">{costCenter.description}</p>
               )}
               <div className="flex items-center space-x-2 mt-1">
                 {costCenter.code && (
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                  <span className="text-xs text-text-muted bg-bg-elevated px-2 py-0.5 rounded">
                     Código: {costCenter.code}
                   </span>
                 )}
                 {costCenter.accounting_code && (
-                  <span className="text-xs text-gray-500 bg-blue-100 px-2 py-0.5 rounded">
+                  <span className="text-xs text-text-muted bg-blue-100 px-2 py-0.5 rounded">
                     Contábil: {costCenter.accounting_code}
                   </span>
                 )}
@@ -264,7 +264,7 @@ export function CentrosDeCusto() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Centro de Custo</h1>
-              <p className="text-sm sm:text-base text-gray-600">Organize custos por centros de responsabilidade</p>
+              <p className="text-sm sm:text-base text-text-secondary">Organize custos por centros de responsabilidade</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -322,20 +322,20 @@ export function CentrosDeCusto() {
                     <div className="w-full overflow-x-auto">
                       <table className="w-full min-w-[900px]">
                         <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[120px]">Nome</th>
-                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Tipo</th>
-                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Código</th>
-                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Código Contábil</th>
-                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Status</th>
-                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[100px]">Centro Pai</th>
-                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[150px]">Descrição</th>
-                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-gray-600 min-w-[80px]">Ações</th>
+                          <tr className="border-b border-border">
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[120px]">Nome</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Tipo</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Código</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[100px]">Código Contábil</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Status</th>
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[100px]">Centro Pai</th>
+                            <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[150px]">Descrição</th>
+                            <th className="text-center py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium text-text-secondary min-w-[80px]">Ações</th>
                           </tr>
                         </thead>
                         <tbody>
                           {sortedCostCenters.map((costCenter) => (
-                            <tr key={costCenter.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <tr key={costCenter.id} className="border-b border-border hover:bg-bg-elevated">
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div>
                                   <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{costCenter.title}</p>
@@ -346,10 +346,10 @@ export function CentrosDeCusto() {
                                   {getTypeLabel(costCenter.type)}
                                 </span>
                               </td>
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-text-secondary">
                                 {costCenter.code || '-'}
                               </td>
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-gray-600">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm text-text-secondary">
                                 {costCenter.accounting_code || '-'}
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
@@ -357,24 +357,24 @@ export function CentrosDeCusto() {
                                   {getStatusLabel(costCenter.status)}
                                 </span>
                               </td>
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-secondary">
                                 {costCenter.parent_name || '-'}
                               </td>
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-600">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-secondary">
                                 {costCenter.description || '-'}
                               </td>
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 <div className="flex justify-center space-x-1 sm:space-x-2">
                                   <button
                                     onClick={() => handleEditCostCenter(costCenter)}
-                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="p-0.5 sm:p-1 text-text-muted hover:text-text-secondary transition-colors"
                                     title="Editar"
                                   >
                                     <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                                   </button>
                                   <button
                                     onClick={() => handleDeleteCostCenter(costCenter.id)}
-                                    className="p-0.5 sm:p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                    className="p-0.5 sm:p-1 text-text-muted hover:text-red-600 transition-colors"
                                     title="Excluir"
                                   >
                                     <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -385,10 +385,10 @@ export function CentrosDeCusto() {
                           ))}
                         </tbody>
                       </table>
-                      
+
                       {sortedCostCenters.length === 0 && (
-                        <div className="text-center py-6 sm:py-8 text-gray-500 px-4">
-                          <Target className="w-8 h-8 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                        <div className="text-center py-6 sm:py-8 text-text-muted px-4">
+                          <Target className="w-8 h-8 sm:w-12 sm:h-12 text-text-muted mx-auto mb-3 sm:mb-4" />
                           <p className="text-base sm:text-lg font-medium">Nenhum centro de custo encontrado</p>
                           <p className="text-xs sm:text-sm">Comece criando seu primeiro centro de custo</p>
                         </div>
@@ -543,7 +543,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-secondary mb-2">
               Tipo
             </label>
             <Dropdown
@@ -554,7 +554,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-secondary mb-2">
               Status
             </label>
             <Dropdown
@@ -579,7 +579,7 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
           />
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-secondary mb-2">
               Centro de custo pai
             </label>
             <Dropdown
@@ -604,14 +604,14 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-text-secondary mb-2">
             Descrição
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => handleInputChange('description', e.target.value)}
             placeholder="Descrição do centro de custo..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-border rounded-md bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
             rows={3}
           />
         </div>
