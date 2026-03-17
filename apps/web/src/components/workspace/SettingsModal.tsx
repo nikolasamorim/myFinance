@@ -338,7 +338,7 @@ export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: Set
   const renderContent = () => {
     switch (activeSection) {
       case 'conta':
-        return <div className="-mx-4 sm:-mx-6 -my-4"><Settings /></div>;
+        return <Settings />;
       case 'workspace':
         return <WorkspaceSection />;
       case 'membros':
@@ -348,7 +348,7 @@ export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: Set
       case 'administradores':
         return <StubSection title="Administradores" description="Gerencie os administradores do workspace." />;
       case 'notificacoes':
-        return <div className="-mx-4 sm:-mx-6 -my-4"><NotificationSettings /></div>;
+        return <NotificationSettings />;
       case 'integracoes':
         return <StubSection title="Integrações" description="Conecte o workspace com ferramentas externas." />;
     }

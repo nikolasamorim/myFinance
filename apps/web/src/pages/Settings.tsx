@@ -113,18 +113,14 @@ export function Settings() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-bg-elevated rounded w-64 mb-8"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <div className="h-64 bg-bg-elevated rounded-xl"></div>
-                <div className="h-96 bg-bg-elevated rounded-xl"></div>
-              </div>
-              <div className="h-64 bg-bg-elevated rounded-xl"></div>
-            </div>
+      <div className="animate-pulse">
+        <div className="h-8 bg-bg-elevated rounded w-64 mb-8"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <div className="h-64 bg-bg-elevated rounded-xl"></div>
+            <div className="h-96 bg-bg-elevated rounded-xl"></div>
           </div>
+          <div className="h-64 bg-bg-elevated rounded-xl"></div>
         </div>
       </div>
     );
@@ -547,7 +543,7 @@ export function Settings() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Configurações da Conta</h1>
           <p className="text-text-secondary mt-1 text-sm">Gerencie suas informações pessoais e configurações de segurança</p>
