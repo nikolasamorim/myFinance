@@ -26,10 +26,11 @@ import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
 import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
 import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
-import { FiltersPanel } from '../../components/ui/FiltersPanel';
 import { SortPanel } from '../../components/ui/SortPanel';
-import type { FilterField } from '../../components/ui/FiltersPanel';
 import type { SortOption } from '../../components/ui/SortPanel';
+import { AdvancedFilterModal } from '../../components/filters/AdvancedFilterModal';
+import type { AdvancedFilters } from '../../types/filters';
+import { DEFAULT_ADVANCED_FILTERS, countActiveFilters } from '../../types/filters';
 import { useReceitas } from '../../hooks/useReceitas';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import type { ReceitaData } from '../../services/receita.service';
@@ -37,16 +38,6 @@ import { AdvancedTransactionModal } from '../../components/transactions/Advanced
 import { useAdvancedTransactions } from '../../hooks/useAdvancedTransactions';
 import type { AdvancedTransactionData } from '../../types';
 
-interface ReceitaFilters {
-  status: string;
-  type: string;
-  installments: string;
-  period: string;
-  category: string;
-  search: string;
-  date_start?: string;
-  date_end?: string;
-}
 
 interface ReceitaFormData {
   title: string;
@@ -62,38 +53,6 @@ interface ReceitaFormData {
   notes: string;
 }
 
-const DEFAULT_FILTERS: ReceitaFilters = {
-  status: 'all',
-  type: 'all',
-  installments: 'all',
-  period: 'current_month',
-  category: 'all',
-  search: '',
-};
-
-const statusOptions = [
-  { value: 'all', label: 'Todos' },
-  { value: 'pending', label: 'A receber' },
-  { value: 'received', label: 'Recebidas' },
-];
-
-const typeOptions = [
-  { value: 'all', label: 'Todos' },
-  { value: 'avulsa', label: 'Avulsa' },
-  { value: 'fixa', label: 'Fixa' },
-  { value: 'recorrente', label: 'Recorrente' },
-];
-
-const installmentOptions = [
-  { value: 'all', label: 'Todas' },
-  { value: 'installments', label: 'Somente parceladas' },
-];
-
-const periodOptions = [
-  { value: 'current_month', label: 'Mes atual' },
-  { value: 'last_month', label: 'Ultimo mes' },
-  { value: 'custom', label: 'Personalizado' },
-];
 
 const repeatIntervalOptions = [
   { value: 'monthly', label: 'Mensal' },
@@ -107,13 +66,6 @@ const repeatTypeOptions = [
   { value: 'recorrente', label: 'Recorrente' },
 ];
 
-const filterFields: FilterField[] = [
-  { key: 'status', label: 'Status', type: 'dropdown', options: statusOptions },
-  { key: 'type', label: 'Tipo', type: 'dropdown', options: typeOptions },
-  { key: 'installments', label: 'Parceladas', type: 'dropdown', options: installmentOptions },
-  { key: 'period', label: 'Periodo', type: 'dropdown', options: periodOptions },
-  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar por titulo...' },
-];
 
 const sortOptions: SortOption[] = [
   { value: 'date_desc', label: 'Data (mais recente)' },
@@ -148,7 +100,7 @@ function DynamicLucideIcon({
 
 export function Receitas() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<ReceitaFilters>({ ...DEFAULT_FILTERS });
+  const [filters, setFilters] = useState<AdvancedFilters>({ ...DEFAULT_ADVANCED_FILTERS });
   const [sortBy, setSortBy] = useState<string>('date_desc');
   const [showModal, setShowModal] = useState(false);
   const [editingReceita, setEditingReceita] = useState<any>(null);
@@ -169,7 +121,7 @@ export function Receitas() {
     fixedIncomesThisMonth,
   } = useReceitas(filters);
 
-  const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+  const activeFilterCount = countActiveFilters(filters);
 
   const sortedReceitas = [...receitas].sort((a, b) => {
     switch (sortBy) {
@@ -186,8 +138,8 @@ export function Receitas() {
     }
   });
 
-  const handleApplyFilters = (newFilters: Record<string, string>) => {
-    setFilters(newFilters as unknown as ReceitaFilters);
+  const handleApplyFilters = (newFilters: AdvancedFilters) => {
+    setFilters(newFilters);
   };
 
   const handleApplySort = (newSort: string) => {
@@ -364,19 +316,11 @@ export function Receitas() {
           <BreadcrumbBar segments={['Gerenciadores', 'Receitas']} onBack={() => navigate('/dashboard')} />
           <div className="relative">
             <VisualizationToolbar
-              onFilter={() => setShowFilters((prev) => !prev)}
+              onFilter={() => setShowFilters(true)}
               onSort={() => setShowSort((prev) => !prev)}
               onShare={() => {}}
               onSettings={() => {}}
-              activeFilter={hasActiveFilters}
-            />
-            <FiltersPanel
-              isOpen={showFilters}
-              onClose={() => setShowFilters(false)}
-              fields={filterFields}
-              currentFilters={filters as unknown as Record<string, string>}
-              defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
-              onApply={handleApplyFilters}
+              activeFilterCount={activeFilterCount}
             />
             <SortPanel
               isOpen={showSort}
@@ -1062,6 +1006,13 @@ export function Receitas() {
           });
           setIsAdvancedModalOpen(false);
         }}
+      />
+      <AdvancedFilterModal
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        mode="income"
+        appliedFilters={filters}
+        onApply={handleApplyFilters}
       />
     </>
   );

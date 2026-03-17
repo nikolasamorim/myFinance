@@ -7,6 +7,7 @@ interface VisualizationToolbarProps {
   onSettings?: () => void;
   onShare?: () => void;
   activeFilter?: boolean;
+  activeFilterCount?: number;
   className?: string;
 }
 
@@ -45,8 +46,10 @@ export function VisualizationToolbar({
   onSettings,
   onShare,
   activeFilter,
+  activeFilterCount,
   className,
 }: VisualizationToolbarProps) {
+  const filterActive = activeFilterCount != null ? activeFilterCount > 0 : !!activeFilter;
   return (
     <div className={cn('flex items-center gap-0.5', className)}>
       {onSort && (
@@ -57,12 +60,19 @@ export function VisualizationToolbar({
         />
       )}
       {onFilter && (
-        <ToolbarButton
-          onClick={onFilter}
-          icon={<Filter className="w-4 h-4" />}
-          title="Filtrar"
-          active={activeFilter}
-        />
+        <div className="relative">
+          <ToolbarButton
+            onClick={onFilter}
+            icon={<Filter className="w-4 h-4" />}
+            title="Filtrar"
+            active={filterActive}
+          />
+          {activeFilterCount != null && activeFilterCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-emerald-500 text-white text-[10px] font-bold leading-none pointer-events-none">
+              {activeFilterCount}
+            </span>
+          )}
+        </div>
       )}
       {onShare && (
         <ToolbarButton

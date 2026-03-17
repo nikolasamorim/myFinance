@@ -24,10 +24,11 @@ import { Dropdown } from '../../components/ui/Dropdown';
 import { Modal } from '../../components/ui/Modal';
 import { BreadcrumbBar } from '../../components/ui/BreadcrumbBar';
 import { VisualizationToolbar } from '../../components/ui/VisualizationToolbar';
-import { FiltersPanel } from '../../components/ui/FiltersPanel';
 import { SortPanel } from '../../components/ui/SortPanel';
-import type { FilterField } from '../../components/ui/FiltersPanel';
 import type { SortOption } from '../../components/ui/SortPanel';
+import { AdvancedFilterModal } from '../../components/filters/AdvancedFilterModal';
+import type { AdvancedFilters } from '../../types/filters';
+import { DEFAULT_ADVANCED_FILTERS, countActiveFilters } from '../../types/filters';
 import { useDespesas } from '../../hooks/useDespesas';
 import { formatCurrency, formatDate, cn } from '../../lib/utils';
 import type { DespesaData } from '../../services/despesa.service';
@@ -35,16 +36,6 @@ import { AdvancedTransactionModal } from '../../components/transactions/Advanced
 import { useAdvancedTransactions } from '../../hooks/useAdvancedTransactions';
 import type { AdvancedTransactionData } from '../../types';
 
-interface DespesaFilters {
-  status: string;
-  type: string;
-  installments: string;
-  period: string;
-  category: string;
-  search: string;
-  date_start?: string;
-  date_end?: string;
-}
 
 interface DespesaFormData {
   title: string;
@@ -98,22 +89,6 @@ const repeatTypeOptions = [
   { value: 'recorrente', label: 'Recorrente' },
 ];
 
-const DEFAULT_FILTERS: DespesaFilters = {
-  status: 'all',
-  type: 'all',
-  installments: 'all',
-  period: 'current_month',
-  category: 'all',
-  search: '',
-};
-
-const filterFields: FilterField[] = [
-  { key: 'status', label: 'Status', type: 'dropdown', options: statusOptions },
-  { key: 'type', label: 'Tipo', type: 'dropdown', options: typeOptions },
-  { key: 'installments', label: 'Parceladas', type: 'dropdown', options: installmentOptions },
-  { key: 'period', label: 'Periodo', type: 'dropdown', options: periodOptions },
-  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar por titulo...' },
-];
 
 const sortOptions: SortOption[] = [
   { value: 'date_desc', label: 'Data (mais recente)' },
@@ -124,7 +99,7 @@ const sortOptions: SortOption[] = [
 
 export function Despesas() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<DespesaFilters>({ ...DEFAULT_FILTERS });
+  const [filters, setFilters] = useState<AdvancedFilters>({ ...DEFAULT_ADVANCED_FILTERS });
   const [sortBy, setSortBy] = useState<string>('date_desc');
   const [showModal, setShowModal] = useState(false);
   const [editingDespesa, setEditingDespesa] = useState<any>(null);
@@ -150,7 +125,7 @@ export function Despesas() {
     navigate(`/invoice?cardId=${cardId}&period=${period}`);
   };
 
-  const hasActiveFilters = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
+  const activeFilterCount = countActiveFilters(filters);
 
   const sortedDespesas = [...despesas].sort((a, b) => {
     switch (sortBy) {
@@ -167,8 +142,8 @@ export function Despesas() {
     }
   });
 
-  const handleApplyFilters = (newFilters: Record<string, string>) => {
-    setFilters(newFilters as unknown as DespesaFilters);
+  const handleApplyFilters = (newFilters: AdvancedFilters) => {
+    setFilters(newFilters);
   };
 
   const handleApplySort = (newSort: string) => {
@@ -335,19 +310,11 @@ export function Despesas() {
           <BreadcrumbBar segments={['Gerenciadores', 'Despesas']} onBack={() => navigate('/dashboard')} />
           <div className="relative">
             <VisualizationToolbar
-              onFilter={() => setShowFilters((prev) => !prev)}
+              onFilter={() => setShowFilters(true)}
               onSort={() => setShowSort((prev) => !prev)}
               onShare={() => {}}
               onSettings={() => {}}
-              activeFilter={hasActiveFilters}
-            />
-            <FiltersPanel
-              isOpen={showFilters}
-              onClose={() => setShowFilters(false)}
-              fields={filterFields}
-              currentFilters={filters as unknown as Record<string, string>}
-              defaultFilters={DEFAULT_FILTERS as unknown as Record<string, string>}
-              onApply={handleApplyFilters}
+              activeFilterCount={activeFilterCount}
             />
             <SortPanel
               isOpen={showSort}
@@ -1096,6 +1063,13 @@ export function Despesas() {
           });
           setIsAdvancedModalOpen(false);
         }}
+      />
+      <AdvancedFilterModal
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        mode="expense"
+        appliedFilters={filters}
+        onApply={handleApplyFilters}
       />
     </>
   );

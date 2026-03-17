@@ -10,10 +10,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { BreadcrumbBar } from '../components/ui/BreadcrumbBar';
 import { VisualizationToolbar } from '../components/ui/VisualizationToolbar';
-import { FiltersPanel } from '../components/ui/FiltersPanel';
 import { SortPanel } from '../components/ui/SortPanel';
-import type { FilterField } from '../components/ui/FiltersPanel';
 import type { SortOption } from '../components/ui/SortPanel';
+import { DashboardFilterModal } from '../components/filters/DashboardFilterModal';
+import type { DashboardAdvancedFilters } from '../types/dashboardFilters';
+import { DEFAULT_DASHBOARD_ADVANCED_FILTERS, countActiveDashboardFilters } from '../types/dashboardFilters';
 import { TransactionTypeSelector } from '../components/ui/TransactionTypeSelector';
 import { TransactionModal } from '../components/transactions/TransactionModal';
 import { AdvancedTransactionModal } from '../components/transactions/AdvancedTransactionModal';
@@ -25,25 +26,11 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { cn } from '../lib/utils';
 import type { Transaction, AdvancedTransactionData } from '../types';
-
-const DEFAULT_DASHBOARD_FILTERS = {
-  period: 'current_month',
-  category: 'all',
-  search: '',
-};
-
-const dashboardPeriodOptions = [
-  { value: 'current_month', label: 'Mes atual' },
-  { value: 'last_month', label: 'Ultimo mes' },
-  { value: 'current_year', label: 'Ano atual' },
-  { value: 'custom', label: 'Personalizado' },
-  { value: 'all', label: 'Tudo' },
-];
-
-const dashboardFilterFields: FilterField[] = [
-  { key: 'period', label: 'Periodo', type: 'dropdown', options: dashboardPeriodOptions },
-  { key: 'search', label: 'Buscar', type: 'text', placeholder: 'Buscar transacoes...' },
-];
+import { DashboardKpiCards } from '../components/dashboard/DashboardKpiCards';
+import { DashboardFluxoPeriodo } from '../components/dashboard/DashboardFluxoPeriodo';
+import { DashboardDistribuicao } from '../components/dashboard/DashboardDistribuicao';
+import { DashboardContasCartoes } from '../components/dashboard/DashboardContasCartoes';
+import type { DashboardTransaction } from '../lib/dashboardUtils';
 
 const dashboardSortOptions: SortOption[] = [
   { value: 'date_desc', label: 'Data (mais recente)' },
@@ -51,14 +38,6 @@ const dashboardSortOptions: SortOption[] = [
   { value: 'amount_desc', label: 'Valor (maior primeiro)' },
   { value: 'amount_asc', label: 'Valor (menor primeiro)' },
 ];
-
-interface DashboardFilters {
-  period: 'current_month' | 'last_month' | 'current_year' | 'custom' | 'all';
-  category: string;
-  search: string;
-  startDate?: string;
-  endDate?: string;
-}
 
 interface MonthlyData {
   month: string;        // yyyy-MM
@@ -82,28 +61,35 @@ export function Dashboard() {
   const [isAdvancedModalOpen, setIsAdvancedModalOpen] = useState(false);
   const [selectedTransactionType, setSelectedTransactionType] = useState<'income' | 'expense' | 'debt' | 'investment'>('expense');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [sortBy, setSortBy] = useState<string>('date_desc');
-  const [filters, setFilters] = useState<DashboardFilters>({
-    period: 'current_month',
-    category: 'all',
-    search: '',
+  const [appliedFilters, setAppliedFilters] = useState<DashboardAdvancedFilters>({
+    ...DEFAULT_DASHBOARD_ADVANCED_FILTERS,
   });
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+
+  // Convert advanced filters to the shape useDashboardData expects
+  const legacyFilters = {
+    period: appliedFilters.period,
+    category: 'all',
+    search: appliedFilters.search,
+    startDate: appliedFilters.date_start,
+    endDate: appliedFilters.date_end,
+  };
 
   // Dados principais (respeitam os filtros para cards de resumo/tabela)
   const {
     data: dashboardData,
     isLoading
-  } = useDashboardData(currentWorkspace?.workspace_id, filters);
+  } = useDashboardData(currentWorkspace?.workspace_id, legacyFilters);
 
   const recentTransactions = dashboardData?.recentTransactions ?? [];
 
   // Dados "ALL" só para o carrossel de meses (ignora período do filtro)
   const {
     data: dashboardAllData
-  } = useDashboardData(currentWorkspace?.workspace_id, { ...filters, period: 'all' });
+  } = useDashboardData(currentWorkspace?.workspace_id, { ...legacyFilters, period: 'all' });
 
   // Helpers de período selecionado (apenas para estilização/seleção do carrossel)
   const getPeriodRange = React.useCallback(() => {
@@ -114,25 +100,24 @@ export function Dashboard() {
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     const endOfYear = new Date(now.getFullYear(), 11, 31);
 
-    switch (filters.period) {
+    switch (appliedFilters.period) {
       case 'current_month':
         return { start: startOfCurrentMonth, end: new Date(now.getFullYear(), now.getMonth() + 1, 0) };
       case 'last_month':
         return { start: startOfLastMonth, end: endOfLastMonth };
       case 'current_year':
+      case 'year':
         return { start: startOfYear, end: endOfYear };
       case 'custom': {
-        // Se vierem no filtro, usa; senão, não seleciona nada especificamente
-        if (filters.startDate && filters.endDate) {
-          return { start: new Date(filters.startDate), end: new Date(filters.endDate) };
+        if (appliedFilters.date_start && appliedFilters.date_end) {
+          return { start: new Date(appliedFilters.date_start), end: new Date(appliedFilters.date_end) };
         }
         return null;
       }
-      case 'all':
       default:
-        return null; // "all" => não destacar por período
+        return null;
     }
-  }, [filters]);
+  }, [appliedFilters]);
 
   const isMonthSelected = React.useCallback((date: Date) => {
     const range = getPeriodRange();
@@ -208,7 +193,7 @@ export function Dashboard() {
     }
   }, [dashboardAllData, monthlyData]);
 
-  const hasActiveFilters = filters.period !== 'current_month' || filters.category !== 'all' || filters.search !== '';
+  const activeFilterCount = countActiveDashboardFilters(appliedFilters);
 
   const sortedTransactions = useMemo(() => {
     if (!recentTransactions) return [];
@@ -228,17 +213,8 @@ export function Dashboard() {
     });
   }, [recentTransactions, sortBy]);
 
-  const handleApplyFilters = (newFilters: Record<string, string>) => {
-    const updated: DashboardFilters = {
-      period: (newFilters.period || 'current_month') as DashboardFilters['period'],
-      category: newFilters.category || 'all',
-      search: newFilters.search || '',
-    };
-    if (newFilters.period === 'custom') {
-      updated.startDate = newFilters.date_start || '';
-      updated.endDate = newFilters.date_end || '';
-    }
-    setFilters(updated);
+  const handleApplyFilters = (newFilters: DashboardAdvancedFilters) => {
+    setAppliedFilters(newFilters);
   };
 
   const handleApplySort = (newSort: string) => {
@@ -267,11 +243,11 @@ export function Dashboard() {
       endDateStr
     });
 
-    setFilters(prev => ({
+    setAppliedFilters(prev => ({
       ...prev,
       period: 'custom',
-      startDate: startDateStr,
-      endDate: endDateStr,
+      date_start: startDateStr,
+      date_end: endDateStr,
     }));
 
     // Clear selected month after applying
@@ -348,13 +324,6 @@ export function Dashboard() {
     }
   };
 
-  const filtersForPanel: Record<string, string> = {
-    period: filters.period,
-    search: filters.search,
-    ...(filters.startDate ? { date_start: filters.startDate } : {}),
-    ...(filters.endDate ? { date_end: filters.endDate } : {}),
-  };
-
   if (workspaceLoading || isLoading) {
     return (
       <div className="min-h-screen bg-bg-surface flex items-center justify-center">
@@ -406,19 +375,15 @@ export function Dashboard() {
           <BreadcrumbBar segments={['Dashboard']} onBack={() => navigate(-1)} />
           <div className="relative">
             <VisualizationToolbar
-              onFilter={() => setShowFilters(prev => !prev)}
+              onFilter={() => setShowFilterModal(true)}
               onSort={() => setShowSort(prev => !prev)}
-              onShare={() => { }}
-              onSettings={() => { }}
-              activeFilter={hasActiveFilters}
+              activeFilterCount={activeFilterCount}
             />
-            <FiltersPanel
-              isOpen={showFilters}
-              onClose={() => setShowFilters(false)}
-              fields={dashboardFilterFields}
-              currentFilters={filtersForPanel}
-              defaultFilters={DEFAULT_DASHBOARD_FILTERS as unknown as Record<string, string>}
-              onApply={handleApplyFilters}
+            <DashboardFilterModal
+              isOpen={showFilterModal}
+              onClose={() => setShowFilterModal(false)}
+              appliedFilters={appliedFilters}
+              onApply={(f) => { handleApplyFilters(f); setShowFilterModal(false); }}
             />
             <SortPanel
               isOpen={showSort}
@@ -448,106 +413,9 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Summary Cards – usam "summary" (pagos e não pagos) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 px-1 sm:px-0">
-          <Card>
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Saldo</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-text-primary mt-1">
-                    {
-                      // Saldo considerando SOMENTE lançamentos pagos/recebidos no período filtrado:
-                      // (receitas pagas - despesas pagas)
-                      formatCurrency(dashboardData?.summary?.balancePaid ?? 0)
-                    }
-                  </p>
-                </div>
-                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
-                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Receitas</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mt-1">
-                    {
-                      // Total de RECEITAS PAGAS no período filtrado
-                      formatCurrency(dashboardData?.summary?.income?.paid ?? 0)
-                    }
-                  </p>
-                  <p className="text-xs sm:text-sm font-medium text-green-400 mt-1">
-                    {
-                      // Total de RECEITAS NÃO PAGAS (pendentes/agendadas/abertas) no período filtrado
-                      formatCurrency(dashboardData?.summary?.income?.unpaid ?? 0)
-                    }{" "}
-                    (Não pago)
-                  </p>
-                </div>
-                <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
-                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Despesas</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mt-1">
-                    {
-                      // Total de DESPESAS PAGAS no período filtrado
-                      formatCurrency(dashboardData?.summary?.expenses?.paid ?? 0)
-                    }
-                  </p>
-                  <p className="text-xs sm:text-sm font-medium text-red-400 mt-1">
-                    {
-                      // Total de DESPESAS NÃO PAGAS (pendentes/agendadas/abertas) no período filtrado
-                      formatCurrency(dashboardData?.summary?.expenses?.unpaid ?? 0)
-                    }{" "}
-                    (Não pago)
-                  </p>
-                </div>
-                <div className="p-2 sm:p-3 bg-red-100 dark:bg-red-900/20 rounded-lg flex-shrink-0">
-                  <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-text-secondary">Total Investido</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 mt-1">
-                    {
-                      // Total de INVESTIMENTOS PAGOS no período filtrado
-                      // Obs.: o serviço detecta automaticamente se você usa 'investment' ou 'debt' como tipo.
-                      formatCurrency(dashboardData?.summary?.invested?.paid ?? 0)
-                    }
-                  </p>
-                  <p className="text-xs sm:text-sm font-medium text-blue-400 mt-1">
-                    {
-                      // Total de INVESTIMENTOS NÃO PAGOS no período filtrado
-                      formatCurrency(dashboardData?.summary?.invested?.unpaid ?? 0)
-                    }{" "}
-                    (Não pago)
-                  </p>
-                </div>
-                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
-                  <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Summary Cards */}
+        <div className="px-1 sm:px-0">
+          <DashboardKpiCards summary={dashboardData?.summary} />
         </div>
 
         {/* Monthly Carousel */}
@@ -667,10 +535,23 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Visualizations Area
+        {/* Cash Flow */}
         <div className="px-1 sm:px-0">
-          <MonthlyChart data={dashboardData?.monthlyComparison || []} />
-        </div> */}
+          <DashboardFluxoPeriodo
+            summary={dashboardData?.summary}
+            transactions={recentTransactions as DashboardTransaction[]}
+          />
+        </div>
+
+        {/* Distribution */}
+        <div className="px-1 sm:px-0">
+          <DashboardDistribuicao transactions={recentTransactions as DashboardTransaction[]} />
+        </div>
+
+        {/* Accounts & Cards */}
+        <div className="px-1 sm:px-0">
+          <DashboardContasCartoes transactions={recentTransactions as DashboardTransaction[]} />
+        </div>
 
         {/* Recent Transactions */}
         <div className="px-1 sm:px-0">
