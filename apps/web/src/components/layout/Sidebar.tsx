@@ -66,11 +66,11 @@ function SidebarGroup({ title, children, defaultExpanded = false, isCollapsed }:
   const shouldShowContent = isCollapsed || isExpanded;
 
   return (
-    <div className="space-y-2 min-w-0">
+    <div className="min-w-0">
       {!isCollapsed && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="min-w-0 flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-text-muted uppercase tracking-wider hover:text-text-secondary transition-colors"
+          className="min-w-0 flex items-center justify-between w-full px-3 py-3 text-[11px] font-semibold text-text-muted uppercase tracking-wider hover:text-text-secondary transition-colors"
         >
           <span className="min-w-0 flex-1 truncate text-left">{title}</span>
           {isExpanded ? <ChevronDown className="w-4 h-4 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 flex-shrink-0" />}
@@ -78,7 +78,7 @@ function SidebarGroup({ title, children, defaultExpanded = false, isCollapsed }:
       )}
 
       {shouldShowContent && (
-        <div className={cn('space-y-1 transition-all duration-200 min-w-0', isCollapsed ? 'pl-0' : 'pl-2')}>
+        <div className={cn('transition-all duration-200 min-w-0', isCollapsed ? 'pl-0' : 'pl-2')}>
           {children}
         </div>
       )}
@@ -174,12 +174,12 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
       {/* Navigation */}
       <nav
         className={cn(
-          'min-w-0 min-h-0 flex-1 space-y-5 overflow-y-auto',
+          'min-w-0 min-h-0 flex-1 space-y-3 overflow-y-auto',
           isCollapsed ? 'p-2' : 'p-4'
         )}
         onClick={() => setShowNotifications(false)}
       >
-        <div className="space-y-2 min-w-0">
+        <div className="min-w-0">
           <SidebarItem
             to="/dashboard"
             icon={<LayoutDashboard className="w-5 h-5 text-text-muted" />}
@@ -199,7 +199,7 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
           />
         </div>
 
-        <SidebarGroup title="Gerenciadores" isCollapsed={isCollapsed}>
+        <SidebarGroup title="Gerenciadores" isCollapsed={isCollapsed} defaultExpanded={true}>
           {managerItems.map((item) => (
             <SidebarItem
               key={item.to}
