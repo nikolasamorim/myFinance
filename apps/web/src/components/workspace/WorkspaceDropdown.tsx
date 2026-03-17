@@ -122,7 +122,7 @@ export function WorkspaceDropdown() {
           {/* Workspace header */}
           <div className="px-3 pt-3 pb-1 border-b border-border">
             <div className="flex items-center gap-2.5 mb-3">
-              <span className="w-9 h-9 bg-bg-elevated rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <span className="w-7 h-7 bg-bg-elevated rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {getWorkspaceIcon(currentWorkspace)}
               </span>
               <div className="min-w-0">
