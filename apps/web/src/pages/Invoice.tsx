@@ -315,10 +315,10 @@ function Invoice() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'text-blue-600 bg-blue-50';
+      case 'open': return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400';
       case 'closed': return 'text-text-secondary bg-bg-surface';
-      case 'paid_partial': return 'text-yellow-600 bg-yellow-50';
-      case 'paid_full': return 'text-green-600 bg-green-50';
+      case 'paid_partial': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'paid_full': return 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400';
       default: return 'text-text-secondary bg-bg-surface';
     }
   };
@@ -335,12 +335,12 @@ function Invoice() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'purchase': return 'text-red-600 bg-red-50';
-      case 'installment': return 'text-purple-600 bg-purple-50';
-      case 'refund': return 'text-green-600 bg-green-50';
-      case 'payment': return 'text-blue-600 bg-blue-50';
-      case 'adjustment': return 'text-orange-600 bg-orange-50';
-      case 'carry_forward': return 'text-amber-600 bg-amber-50';
+      case 'purchase': return 'text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400';
+      case 'installment': return 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400';
+      case 'refund': return 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400';
+      case 'payment': return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'adjustment': return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400';
+      case 'carry_forward': return 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400';
       default: return 'text-text-secondary bg-bg-surface';
     }
   };
@@ -450,7 +450,7 @@ function Invoice() {
                         className={cn(
                           'flex-shrink-0 w-60 rounded-2xl border p-4 cursor-pointer transition-all duration-200',
                           isSelected
-                            ? 'border-purple-400 bg-purple-50 shadow-sm'
+                            ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20 shadow-sm'
                             : 'border-border bg-bg-page hover:border-border'
                         )}
                       >

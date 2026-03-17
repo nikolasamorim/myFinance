@@ -69,7 +69,7 @@ function NotificationRow({
     <div
       className={cn(
         'flex gap-4 p-4 border-b border-border last:border-0 hover:bg-bg-surface transition-colors',
-        !notification.is_read && 'bg-blue-50/30'
+        !notification.is_read && 'bg-blue-50/30 dark:bg-blue-900/10'
       )}
     >
       <div className="flex-shrink-0 mt-0.5">
@@ -93,7 +93,7 @@ function NotificationRow({
         {!notification.is_read && (
           <button
             onClick={() => onMarkRead(notification.id)}
-            className="p-1.5 rounded-lg hover:bg-green-100 text-text-muted hover:text-green-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/20 text-text-muted hover:text-green-600 dark:hover:text-green-400 transition-colors"
             title="Marcar como lida"
           >
             <Check size={14} />
@@ -102,7 +102,7 @@ function NotificationRow({
         {notification.entity_id && (
           <button
             onClick={handleNavigate}
-            className="p-1.5 rounded-lg hover:bg-blue-100 text-text-muted hover:text-blue-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/20 text-text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             title="Ver detalhes"
           >
             <ArrowRight size={14} />
@@ -110,7 +110,7 @@ function NotificationRow({
         )}
         <button
           onClick={() => onDismiss(notification.id)}
-          className="p-1.5 rounded-lg hover:bg-red-100 text-text-muted hover:text-red-500 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 text-text-muted hover:text-red-500 dark:hover:text-red-400 transition-colors"
           title="Dispensar"
         >
           <X size={14} />
@@ -206,7 +206,7 @@ export function Notifications() {
           <select
             value={typeFilter}
             onChange={handleTypeFilter}
-            className="text-sm border border-border rounded-lg px-2 py-1.5 text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+            className="text-sm border border-border rounded-lg px-2 py-1.5 text-text-secondary bg-bg-page focus:outline-none focus:ring-2 focus:ring-accent"
           >
             <option value="">Todos os tipos</option>
             {Object.entries(TYPE_LABELS).map(([key, label]) => (

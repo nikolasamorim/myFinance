@@ -221,15 +221,15 @@ export function Receitas() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'received':
-        return 'text-emerald-500 bg-emerald-50 border border-emerald-200';
+        return 'text-emerald-500 bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400';
       case 'pending':
-        return 'text-amber-500 bg-amber-50 border border-amber-200';
+        return 'text-amber-500 bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400';
       case 'open':
-        return 'text-sky-500 bg-sky-50 border border-sky-200';
+        return 'text-sky-500 bg-sky-50 border border-sky-200 dark:bg-sky-900/20 dark:border-sky-800 dark:text-sky-400';
       case 'overdue':
-        return 'text-rose-500 bg-rose-50 border border-rose-200';
+        return 'text-rose-500 bg-rose-50 border border-rose-200 dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-400';
       case 'scheduled':
-        return 'text-violet-500 bg-violet-50 border border-violet-200';
+        return 'text-violet-500 bg-violet-50 border border-violet-200 dark:bg-violet-900/20 dark:border-violet-800 dark:text-violet-400';
       case 'canceled':
         return 'text-text-muted bg-bg-surface border border-border';
       default:
@@ -259,13 +259,13 @@ export function Receitas() {
   function getTypeIcon(type: string) {
     switch (type) {
       case 'income':
-        return <TrendingUp className="p-1.5 rounded-lg bg-green-100 text-green-600" />;
+        return <TrendingUp className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400" />;
       case 'expense':
-        return <TrendingDown className="p-1.5 rounded-lg bg-red-100 text-red-600" />;
+        return <TrendingDown className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400" />;
       case 'debt':
-        return <AlertTriangle className="p-1.5 rounded-lg bg-orange-100 text-orange-600" />;
+        return <AlertTriangle className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400" />;
       case 'investment':
-        return <Landmark className="p-1.5 rounded-lg bg-blue-100 text-blue-600" />;
+        return <Landmark className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" />;
       default:
         return null;
     }
@@ -298,42 +298,42 @@ export function Receitas() {
     received: {
       label: 'Recebidas',
       Icon: CheckCircle,
-      cardBg: 'bg-emerald-50',
+      cardBg: 'bg-emerald-50 dark:bg-emerald-900/20',
       titleColor: 'text-text-secondary',
-      valueColor: 'text-emerald-500',
-      border: 'border-emerald-200',
+      valueColor: 'text-emerald-500 dark:text-emerald-400',
+      border: 'border-emerald-200 dark:border-emerald-800',
     },
     pending: {
       label: 'Pendentes',
       Icon: Clock,
-      cardBg: 'bg-amber-50',
+      cardBg: 'bg-amber-50 dark:bg-amber-900/20',
       titleColor: 'text-text-secondary',
-      valueColor: 'text-amber-500',
-      border: 'border-amber-200',
+      valueColor: 'text-amber-500 dark:text-amber-400',
+      border: 'border-amber-200 dark:border-amber-800',
     },
     open: {
       label: 'Abertas',
       Icon: Circle,
-      cardBg: 'bg-sky-50',
+      cardBg: 'bg-sky-50 dark:bg-sky-900/20',
       titleColor: 'text-text-secondary',
-      valueColor: 'text-sky-500',
-      border: 'border-sky-200',
+      valueColor: 'text-sky-500 dark:text-sky-400',
+      border: 'border-sky-200 dark:border-sky-800',
     },
     overdue: {
       label: 'Atrasadas',
       Icon: AlertCircle,
-      cardBg: 'bg-rose-50',
+      cardBg: 'bg-rose-50 dark:bg-rose-900/20',
       titleColor: 'text-text-secondary',
-      valueColor: 'text-rose-500',
-      border: 'border-rose-200',
+      valueColor: 'text-rose-500 dark:text-rose-400',
+      border: 'border-rose-200 dark:border-rose-800',
     },
     scheduled: {
       label: 'Agendadas',
       Icon: Calendar,
-      cardBg: 'bg-violet-50',
+      cardBg: 'bg-violet-50 dark:bg-violet-900/20',
       titleColor: 'text-text-secondary',
-      valueColor: 'text-violet-500',
-      border: 'border-violet-200',
+      valueColor: 'text-violet-500 dark:text-violet-400',
+      border: 'border-violet-200 dark:border-violet-800',
     },
     canceled: {
       label: 'Canceladas',
@@ -390,8 +390,8 @@ export function Receitas() {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-emerald-100 rounded-lg flex-shrink-0">
-              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
+            <div className="p-1.5 sm:p-2 bg-emerald-100 dark:bg-emerald-900/20 rounded-lg flex-shrink-0">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Receitas</h1>
@@ -414,8 +414,8 @@ export function Receitas() {
                     {formatCurrency(summary?.totalPaid || 0)}
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-emerald-100 rounded-lg">
-                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-emerald-500" />
+                <div className="p-2 sm:p-3 bg-emerald-100 dark:bg-emerald-900/20 rounded-lg">
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-emerald-500 dark:text-emerald-400" />
                 </div>
               </div>
             </CardContent>
@@ -430,8 +430,8 @@ export function Receitas() {
                     {formatCurrency(summary?.totalPending || 0)}
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-amber-100 rounded-lg">
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-amber-500" />
+                <div className="p-2 sm:p-3 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-amber-500 dark:text-amber-400" />
                 </div>
               </div>
             </CardContent>
@@ -446,8 +446,8 @@ export function Receitas() {
                     {formatCurrency(summary?.totalInstallments || 0)}
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-teal-100 rounded-lg">
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-teal-600" />
+                <div className="p-2 sm:p-3 bg-teal-100 dark:bg-teal-900/20 rounded-lg">
+                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-teal-600 dark:text-teal-400" />
                 </div>
               </div>
             </CardContent>
@@ -462,8 +462,8 @@ export function Receitas() {
                     {formatCurrency(summary?.monthlyAverage || 0)}
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-sky-100 rounded-lg">
-                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-sky-500" />
+                <div className="p-2 sm:p-3 bg-sky-100 dark:bg-sky-900/20 rounded-lg">
+                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-sky-500 dark:text-sky-400" />
                 </div>
               </div>
             </CardContent>
@@ -843,7 +843,7 @@ export function Receitas() {
                                 {date ? formatDate(date) : '-'}
                               </td>
 
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium text-text-primary">
                                 {formatCurrency(Number(amount))}
                               </td>
 
@@ -982,11 +982,11 @@ export function Receitas() {
 
                 const chipConfig: Record<string, { label: string; border: string; text: string; bg: string }> = {
                   __total: { label: 'Total', border: 'border-border', text: 'text-text-primary', bg: 'bg-bg-surface' },
-                  received: { label: 'Recebidas', border: 'border-emerald-300', text: 'text-emerald-500', bg: 'bg-emerald-50' },
-                  pending: { label: 'Pendentes', border: 'border-amber-300', text: 'text-amber-500', bg: 'bg-amber-50' },
-                  open: { label: 'Abertas', border: 'border-sky-300', text: 'text-sky-500', bg: 'bg-sky-50' },
-                  overdue: { label: 'Atrasadas', border: 'border-rose-300', text: 'text-rose-500', bg: 'bg-rose-50' },
-                  scheduled: { label: 'Agendadas', border: 'border-violet-300', text: 'text-violet-500', bg: 'bg-violet-50' },
+                  received: { label: 'Recebidas', border: 'border-emerald-300 dark:border-emerald-800', text: 'text-emerald-500 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+                  pending: { label: 'Pendentes', border: 'border-amber-300 dark:border-amber-800', text: 'text-amber-500 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+                  open: { label: 'Abertas', border: 'border-sky-300 dark:border-sky-800', text: 'text-sky-500 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-900/20' },
+                  overdue: { label: 'Atrasadas', border: 'border-rose-300 dark:border-rose-800', text: 'text-rose-500 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+                  scheduled: { label: 'Agendadas', border: 'border-violet-300 dark:border-violet-800', text: 'text-violet-500 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/20' },
                   canceled: { label: 'Canceladas', border: 'border-border', text: 'text-text-muted', bg: 'bg-bg-surface' },
                 };
 

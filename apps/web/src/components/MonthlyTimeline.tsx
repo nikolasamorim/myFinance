@@ -76,9 +76,9 @@ export function MonthlyTimeline({
   };
 
   const statusColor = (s?: string) => {
-    if (s === 'open') return 'text-blue-600 bg-blue-50';
+    if (s === 'open') return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20';
     if (s === 'closed') return 'text-text-secondary bg-bg-surface';
-    if (s === 'paid') return 'text-green-600 bg-green-50';
+    if (s === 'paid') return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
     return 'text-text-muted bg-bg-surface';
   };
 
@@ -136,8 +136,8 @@ export function MonthlyTimeline({
                     isSelected
                       ? 'text-accent'
                       : isCurrent
-                      ? 'text-accent/70'
-                      : 'text-text-muted group-hover:text-text-secondary'
+                      ? 'text-accent opacity-80'
+                      : 'text-text-secondary group-hover:text-text-primary'
                   )}
                 >
                   {month.monthName}
@@ -147,7 +147,7 @@ export function MonthlyTimeline({
                 <span
                   className={cn(
                     'text-xs leading-none transition-colors',
-                    isSelected ? 'text-accent font-medium' : 'text-text-muted/60 group-hover:text-text-muted'
+                    isSelected ? 'text-accent font-medium' : 'text-text-muted group-hover:text-text-secondary'
                   )}
                 >
                   {month.totalAmount > 0

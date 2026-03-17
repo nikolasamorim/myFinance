@@ -301,9 +301,9 @@ export function Dashboard() {
     switch (status) {
       case 'paid':
       case 'received':
-        return 'text-green-600 bg-green-50';
+        return 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400';
       case 'pending':
-        return 'text-yellow-600 bg-yellow-50';
+        return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-400';
       default:
         return 'text-text-secondary bg-bg-surface';
     }
@@ -325,11 +325,11 @@ export function Dashboard() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'income':
-        return 'text-green-600 bg-green-50';
+        return 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400';
       case 'expense':
-        return 'text-red-600 bg-red-50';
+        return 'text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400';
       case 'debt':
-        return 'text-orange-600 bg-orange-50';
+        return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400';
       default:
         return 'text-text-secondary bg-bg-surface';
     }
@@ -366,13 +366,13 @@ export function Dashboard() {
   function getTypeIcon(type: string) {
     switch (type) {
       case "income":
-        return <TrendingUp className="p-1.5 rounded-lg bg-green-100 text-green-600" />;
+        return <TrendingUp className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400" />;
       case "expense":
-        return <TrendingDown className="p-1.5 rounded-lg bg-red-100 text-red-600" />;
+        return <TrendingDown className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400" />;
       case "debt":
-        return <AlertTriangle className="p-1.5 rounded-lg bg-orange-100 text-orange-600" />;
+        return <AlertTriangle className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400" />;
       case "investment":
-        return <Landmark className="p-1.5 rounded-lg bg-blue-100 text-blue-600" />;
+        return <Landmark className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" />;
       default:
         return null;
     }
@@ -432,7 +432,7 @@ export function Dashboard() {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
+            <div className="p-1.5 sm:p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
               <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
             </div>
             <div>
@@ -463,7 +463,7 @@ export function Dashboard() {
                     }
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
+                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
                   <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
                 </div>
               </div>
@@ -489,7 +489,7 @@ export function Dashboard() {
                     (Não pago)
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-green-100 rounded-lg flex-shrink-0">
+                <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
                   <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
                 </div>
               </div>
@@ -515,7 +515,7 @@ export function Dashboard() {
                     (Não pago)
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-red-100 rounded-lg flex-shrink-0">
+                <div className="p-2 sm:p-3 bg-red-100 dark:bg-red-900/20 rounded-lg flex-shrink-0">
                   <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-red-600" />
                 </div>
               </div>
@@ -542,7 +542,7 @@ export function Dashboard() {
                     (Não pago)
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
+                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
                   <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
                 </div>
               </div>
@@ -595,10 +595,10 @@ export function Dashboard() {
                         className={cn(
                           'flex-shrink-0 w-64 p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-md',
                           isUserSelected
-                            ? 'bg-accent/5 border-accent ring-2 ring-accent/40 shadow-lg transform scale-105'
+                            ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-500 dark:border-blue-400 shadow-lg shadow-blue-500/20 dark:shadow-blue-400/20 transform scale-105'
                             : isHighlighted
-                              ? 'bg-accent/5 border-accent/30 ring-2 ring-accent/50'
-                              : 'border-border bg-bg-page hover:border-border hover:scale-102'
+                              ? 'bg-blue-50/40 dark:bg-blue-950/20 border-blue-400/50 dark:border-blue-500/50'
+                              : 'border-border bg-bg-page dark:bg-bg-surface hover:border-border hover:scale-102'
                         )}
                         style={{ scrollSnapAlign: 'start' }}
                         title={isUserSelected ? 'Click Apply Filter to apply' : month.isSelected ? 'Selected by period filter' : 'Click to select month'}
@@ -622,26 +622,26 @@ export function Dashboard() {
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-text-secondary">Receita:</span>
-                            <span className="font-medium text-green-600">
+                            <span className="font-medium text-green-600 dark:text-green-400">
                               {formatCurrency(month.income)}
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-text-secondary">Despesa:</span>
-                            <span className="font-medium text-red-600">
+                            <span className="font-medium text-red-600 dark:text-red-400">
                               {formatCurrency(month.expense)}
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-text-secondary">Investimento:</span>
-                            <span className="font-medium text-blue-600">
+                            <span className="font-medium text-blue-600 dark:text-blue-400">
                               {formatCurrency(month.debtReceived)}
                             </span>
                           </div>
-                          <hr className="my-2" />
+                          <hr className="my-2 border-border" />
                           <div className="flex justify-between text-sm font-semibold">
                             <span className="text-text-primary">Saldo:</span>
-                            <span className={cn('font-bold', positiveBalance ? 'text-green-600' : 'text-red-600')}>
+                            <span className={cn('font-bold', positiveBalance ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>
                               {formatCurrency(month.income - month.expense)}
                             </span>
                           </div>
@@ -659,7 +659,7 @@ export function Dashboard() {
                     onClick={handleApplyMonthFilter}
                     className="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
                   >
-                    Apply Filter
+                    Aplicar Filtro
                   </Button>
                 </div>
               )}
@@ -757,7 +757,7 @@ export function Dashboard() {
                               {formatDate(transaction.transaction_date)}
                             </td>
 
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium">
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium text-text-primary">
                               {formatCurrency(Number(transaction.transaction_amount))}
                             </td>
 

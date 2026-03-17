@@ -203,10 +203,10 @@ export function Despesas() {
   function getTypeIcon(type: string) {
     switch (type) {
       case 'income':
-        return <TrendingUp className="p-1.5 rounded-lg bg-green-100 text-green-600" />;
+        return <TrendingUp className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400" />;
       case 'expense':
       default:
-        return <TrendingDown className="p-1.5 rounded-lg bg-red-100 text-red-600" />;
+        return <TrendingDown className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400" />;
     }
   }
 
@@ -243,15 +243,15 @@ export function Despesas() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
-        return 'text-green-600 bg-green-50 border border-green-200';
+        return 'text-green-600 bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400';
       case 'pending':
-        return 'text-yellow-600 bg-yellow-50 border border-yellow-200';
+        return 'text-yellow-600 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-400';
       case 'open':
-        return 'text-blue-600 bg-blue-50 border border-blue-200';
+        return 'text-blue-600 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400';
       case 'overdue':
-        return 'text-red-600 bg-red-50 border border-red-200';
+        return 'text-red-600 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400';
       case 'scheduled':
-        return 'text-purple-600 bg-purple-50 border border-purple-200';
+        return 'text-purple-600 bg-purple-50 border border-purple-200 dark:bg-purple-900/20 dark:border-purple-800 dark:text-purple-400';
       case 'canceled':
         return 'text-text-secondary bg-bg-surface border border-border';
       default:
@@ -289,11 +289,11 @@ export function Despesas() {
       border: string;
     }
   > = {
-    paid: { label: 'Pagas', Icon: CheckCircle, cardBg: 'bg-green-50', titleColor: 'text-text-secondary', valueColor: 'text-green-600', border: 'border-green-200' },
-    pending: { label: 'Pendentes', Icon: Clock, cardBg: 'bg-yellow-50', titleColor: 'text-text-secondary', valueColor: 'text-yellow-600', border: 'border-yellow-200' },
-    open: { label: 'Abertas', Icon: Circle, cardBg: 'bg-blue-50', titleColor: 'text-text-secondary', valueColor: 'text-blue-600', border: 'border-blue-200' },
-    overdue: { label: 'Vencidas', Icon: AlertCircle, cardBg: 'bg-red-50', titleColor: 'text-text-secondary', valueColor: 'text-red-600', border: 'border-red-200' },
-    scheduled: { label: 'Agendadas', Icon: Calendar, cardBg: 'bg-purple-50', titleColor: 'text-text-secondary', valueColor: 'text-purple-600', border: 'border-purple-200' },
+    paid: { label: 'Pagas', Icon: CheckCircle, cardBg: 'bg-green-50 dark:bg-green-900/20', titleColor: 'text-text-secondary', valueColor: 'text-green-600 dark:text-green-400', border: 'border-green-200 dark:border-green-800' },
+    pending: { label: 'Pendentes', Icon: Clock, cardBg: 'bg-yellow-50 dark:bg-yellow-900/20', titleColor: 'text-text-secondary', valueColor: 'text-yellow-600 dark:text-yellow-400', border: 'border-yellow-200 dark:border-yellow-800' },
+    open: { label: 'Abertas', Icon: Circle, cardBg: 'bg-blue-50 dark:bg-blue-900/20', titleColor: 'text-text-secondary', valueColor: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
+    overdue: { label: 'Vencidas', Icon: AlertCircle, cardBg: 'bg-red-50 dark:bg-red-900/20', titleColor: 'text-text-secondary', valueColor: 'text-red-600 dark:text-red-400', border: 'border-red-200 dark:border-red-800' },
+    scheduled: { label: 'Agendadas', Icon: Calendar, cardBg: 'bg-purple-50 dark:bg-purple-900/20', titleColor: 'text-text-secondary', valueColor: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800' },
     canceled: { label: 'Canceladas', Icon: XCircle, cardBg: 'bg-bg-surface', titleColor: 'text-text-secondary', valueColor: 'text-text-secondary', border: 'border-border' },
   };
 
@@ -361,8 +361,8 @@ export function Despesas() {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg flex-shrink-0">
-              <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
+            <div className="p-1.5 sm:p-2 bg-red-100 dark:bg-red-900/20 rounded-lg flex-shrink-0">
+              <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Despesas</h1>
@@ -384,8 +384,8 @@ export function Despesas() {
                   <p className="text-xs sm:text-sm font-medium text-text-secondary">Total Pago</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 mt-1">{formatCurrency(summary?.totalPaid || 0)}</p>
                 </div>
-                <div className="p-2 sm:p-3 bg-red-100 rounded-lg flex-shrink-0">
-                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-red-600" />
+                <div className="p-2 sm:p-3 bg-red-100 dark:bg-red-900/20 rounded-lg flex-shrink-0">
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-red-600 dark:text-red-400" />
                 </div>
               </div>
             </CardContent>
@@ -398,8 +398,8 @@ export function Despesas() {
                   <p className="text-xs sm:text-sm font-medium text-text-secondary">Total Pendente</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-600 mt-1">{formatCurrency(summary?.totalPending || 0)}</p>
                 </div>
-                <div className="p-2 sm:p-3 bg-yellow-100 rounded-lg flex-shrink-0">
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-yellow-600" />
+                <div className="p-2 sm:p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex-shrink-0">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
             </CardContent>
@@ -412,8 +412,8 @@ export function Despesas() {
                   <p className="text-xs sm:text-sm font-medium text-text-secondary">Total Parcelado</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-600 mt-1">{formatCurrency(summary?.totalInstallments || 0)}</p>
                 </div>
-                <div className="p-2 sm:p-3 bg-purple-100 rounded-lg flex-shrink-0">
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
+                <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex-shrink-0">
+                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
             </CardContent>
@@ -426,8 +426,8 @@ export function Despesas() {
                   <p className="text-xs sm:text-sm font-medium text-text-secondary">Média Mensal</p>
                   <p className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600 mt-1">{formatCurrency(summary?.monthlyAverage || 0)}</p>
                 </div>
-                <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
-                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
+                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
+                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </CardContent>
@@ -670,11 +670,11 @@ export function Despesas() {
                     Icon: React.ComponentType<any>;
                   }
                 > = {
-                  paid:      { label: "Pagas",     cardBg: "bg-green-50",  titleColor: "text-text-secondary", valueColor: "text-green-700",  border: "border-green-200",  Icon: CheckCircle },
-                  pending:   { label: "Pendentes", cardBg: "bg-yellow-50", titleColor: "text-text-secondary", valueColor: "text-yellow-700", border: "border-yellow-200", Icon: Clock },
-                  open:      { label: "Abertas",   cardBg: "bg-blue-50",   titleColor: "text-text-secondary", valueColor: "text-blue-700",   border: "border-blue-200",   Icon: Circle },
-                  overdue:   { label: "Vencidas",  cardBg: "bg-red-50",    titleColor: "text-text-secondary", valueColor: "text-red-700",    border: "border-red-200",    Icon: AlertCircle },
-                  scheduled: { label: "Agendadas", cardBg: "bg-purple-50", titleColor: "text-text-secondary", valueColor: "text-purple-700", border: "border-purple-200", Icon: Calendar },
+                  paid:      { label: "Pagas",     cardBg: "bg-green-50 dark:bg-green-900/20",  titleColor: "text-text-secondary", valueColor: "text-green-700 dark:text-green-400",  border: "border-green-200 dark:border-green-800",  Icon: CheckCircle },
+                  pending:   { label: "Pendentes", cardBg: "bg-yellow-50 dark:bg-yellow-900/20", titleColor: "text-text-secondary", valueColor: "text-yellow-700 dark:text-yellow-400", border: "border-yellow-200 dark:border-yellow-800", Icon: Clock },
+                  open:      { label: "Abertas",   cardBg: "bg-blue-50 dark:bg-blue-900/20",   titleColor: "text-text-secondary", valueColor: "text-blue-700 dark:text-blue-400",   border: "border-blue-200 dark:border-blue-800",   Icon: Circle },
+                  overdue:   { label: "Vencidas",  cardBg: "bg-red-50 dark:bg-red-900/20",    titleColor: "text-text-secondary", valueColor: "text-red-700 dark:text-red-400",    border: "border-red-200 dark:border-red-800",    Icon: AlertCircle },
+                  scheduled: { label: "Agendadas", cardBg: "bg-purple-50 dark:bg-purple-900/20", titleColor: "text-text-secondary", valueColor: "text-purple-700 dark:text-purple-400", border: "border-purple-200 dark:border-purple-800", Icon: Calendar },
                   canceled:  { label: "Canceladas",cardBg: "bg-bg-surface",   titleColor: "text-text-secondary", valueColor: "text-text-secondary",   border: "border-border",   Icon: XCircle },
                 };
 
@@ -838,7 +838,7 @@ export function Despesas() {
                                 {formatDate(despesa.transaction_date)}
                               </td>
 
-                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium">
+                              <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-right font-medium text-text-primary">
                                 {formatCurrency(Number(despesa.amount))}
                               </td>
 
@@ -990,11 +990,11 @@ export function Despesas() {
                   { label: string; border: string; text: string; bg: string }
                 > = {
                   __total:   { label: "Total",     border: "border-border",  text: "text-text-primary",  bg: "bg-bg-surface" },
-                  paid:      { label: "Pagas",     border: "border-green-300", text: "text-green-700", bg: "bg-green-50" },
-                  pending:   { label: "Pendentes", border: "border-yellow-300",text: "text-yellow-700",bg: "bg-yellow-50" },
-                  open:      { label: "Abertas",   border: "border-blue-300",  text: "text-blue-700",  bg: "bg-blue-50" },
-                  overdue:   { label: "Vencidas",  border: "border-red-300",   text: "text-red-700",   bg: "bg-red-50" },
-                  scheduled: { label: "Agendadas", border: "border-purple-300",text: "text-purple-700",bg: "bg-purple-50" },
+                  paid:      { label: "Pagas",     border: "border-green-300 dark:border-green-800", text: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/20" },
+                  pending:   { label: "Pendentes", border: "border-yellow-300 dark:border-yellow-800",text: "text-yellow-700 dark:text-yellow-400",bg: "bg-yellow-50 dark:bg-yellow-900/20" },
+                  open:      { label: "Abertas",   border: "border-blue-300 dark:border-blue-800",  text: "text-blue-700 dark:text-blue-400",  bg: "bg-blue-50 dark:bg-blue-900/20" },
+                  overdue:   { label: "Vencidas",  border: "border-red-300 dark:border-red-800",   text: "text-red-700 dark:text-red-400",   bg: "bg-red-50 dark:bg-red-900/20" },
+                  scheduled: { label: "Agendadas", border: "border-purple-300 dark:border-purple-800",text: "text-purple-700 dark:text-purple-400",bg: "bg-purple-50 dark:bg-purple-900/20" },
                   canceled:  { label: "Canceladas",border: "border-border",  text: "text-text-secondary",  bg: "bg-bg-surface" },
                 };
 

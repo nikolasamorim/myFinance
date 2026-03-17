@@ -89,12 +89,12 @@ function MonthlyChartGraph({ data }: { data: MonthlyData[] }) {
       {data.map((month, index) => (
         <div key={index} className="space-y-2">
           <div className="flex justify-between text-sm font-medium">
-            <span className="capitalize">{month.month}</span>
+            <span className="capitalize text-text-primary">{month.month}</span>
             <div className="flex space-x-4">
-              <span className="text-green-600">
+              <span className="text-green-600 dark:text-green-400">
                 {formatCurrency(month.income)}
               </span>
-              <span className="text-red-600">
+              <span className="text-red-600 dark:text-red-400">
                 {formatCurrency(month.expenses)}
               </span>
             </div>
@@ -118,11 +118,11 @@ function MonthlyChartGraph({ data }: { data: MonthlyData[] }) {
       <div className="flex justify-center space-x-6 mt-6 text-sm">
         <div className="flex items-center">
           <div className="w-3 h-3 bg-green-200 rounded-full mr-2" />
-          <span>Receitas</span>
+          <span className="text-text-secondary">Receitas</span>
         </div>
         <div className="flex items-center">
           <div className="w-3 h-3 bg-red-200 rounded-full mr-2" />
-          <span>Despesas</span>
+          <span className="text-text-secondary">Despesas</span>
         </div>
       </div>
     </div>

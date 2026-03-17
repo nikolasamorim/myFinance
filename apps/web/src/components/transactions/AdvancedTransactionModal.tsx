@@ -665,7 +665,7 @@ export function AdvancedTransactionModal({
                       onChange={handleCurrencyChange}
                       placeholder="R$ 0,00"
                       className={cn(
-                        'block w-full px-3 py-2 text-sm border border-border rounded-md shadow-sm placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent',
+                        'block w-full px-3 py-2 text-sm border border-border rounded-md shadow-sm bg-bg-page text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent',
                         errors.amount && 'border-red-300 focus:ring-red-500'
                       )}
                       required
@@ -825,7 +825,7 @@ export function AdvancedTransactionModal({
                             max={totalInstallments}
                             value={currentInstallmentNumber}
                             onChange={(e) => setCurrentInstallmentNumber(Number(e.target.value))}
-                            className="w-16 px-2 py-1 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent"
+                            className="w-16 px-2 py-1 text-sm border border-border rounded bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
                           />
                           <span className="text-sm text-text-secondary">/</span>
                           <input
@@ -834,7 +834,7 @@ export function AdvancedTransactionModal({
                             max="99"
                             value={totalInstallments}
                             onChange={(e) => setTotalInstallments(Number(e.target.value))}
-                            className="w-16 px-2 py-1 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent"
+                            className="w-16 px-2 py-1 text-sm border border-border rounded bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
                           />
                         </div>
                       </div>
@@ -921,7 +921,7 @@ export function AdvancedTransactionModal({
                                   type="date"
                                   value={installment.date}
                                   onChange={(e) => updateInstallment(installment.id, 'date', e.target.value)}
-                                  className="text-xs border border-border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-accent"
+                                  className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
                                 />
                               </td>
                               <td className="py-2 px-3">
@@ -929,14 +929,14 @@ export function AdvancedTransactionModal({
                                   type="month"
                                   value={installment.competence}
                                   onChange={(e) => updateInstallment(installment.id, 'competence', e.target.value)}
-                                  className="text-xs border border-border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-accent"
+                                  className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
                                 />
                               </td>
                               <td className="py-2 px-3">
                                 <select
                                   value={installment.cost_center_id}
                                   onChange={(e) => updateInstallment(installment.id, 'cost_center_id', e.target.value)}
-                                  className="text-xs border border-border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-accent"
+                                  className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
                                 >
                                   <option value="">Nenhum</option>
                                   {costCenters.map(center => (
@@ -952,7 +952,7 @@ export function AdvancedTransactionModal({
                                   step="0.01"
                                   value={installment.amount}
                                   onChange={(e) => updateInstallment(installment.id, 'amount', Number(e.target.value))}
-                                  className="text-xs border border-border rounded px-2 py-1 w-full text-right focus:outline-none focus:ring-1 focus:ring-accent"
+                                  className="text-xs border border-border rounded px-2 py-1 w-full text-right bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
                                 />
                               </td>
                               <td className="py-2 px-3">
@@ -997,8 +997,8 @@ export function AdvancedTransactionModal({
                   </div>
 
                   {!installmentsValid && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                      <p className="text-sm text-yellow-800">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-300">
                         <strong>Atenção:</strong> A soma das parcelas ({formatCurrency(installmentsTotal)}) 
                         não confere com o valor principal ({formatCurrency(mainAmount || 0)}). 
                         Ajuste os valores antes de salvar.
@@ -1102,35 +1102,35 @@ export function AdvancedTransactionModal({
               </div>
 
               {/* Recurrence Preview */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-3 flex items-center">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-3 flex items-center">
                   <Clock className="w-4 h-4 mr-2" />
                   Prévia da Recorrência
                 </h4>
                 
                 <div className="space-y-2">
-                  <p className="text-sm text-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-300">
                     <strong>Tipo:</strong> {recurrenceTypeOptions.find(t => t.value === recurrenceData.recurrence_type)?.label}
                   </p>
-                  <p className="text-sm text-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-300">
                     <strong>Início:</strong> {new Date(recurrenceData.start_date).toLocaleDateString('pt-BR')}
                   </p>
                   {recurrenceData.end_date && (
-                    <p className="text-sm text-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
                       <strong>Fim:</strong> {new Date(recurrenceData.end_date).toLocaleDateString('pt-BR')}
                     </p>
                   )}
                   {recurrenceData.repeat_count && (
-                    <p className="text-sm text-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
                       <strong>Repetições:</strong> {recurrenceData.repeat_count}x
                     </p>
                   )}
                   
                   <div className="mt-3">
-                    <p className="text-sm font-medium text-blue-900 mb-2">Próximas ocorrências:</p>
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Próximas ocorrências:</p>
                     <div className="flex flex-wrap gap-2">
                       {generateRecurrencePreview().map((date, index) => (
-                        <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                        <span key={index} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs rounded">
                           {date}
                         </span>
                       ))}
