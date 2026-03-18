@@ -1,9 +1,11 @@
+import React from 'react';
+import * as Lucide from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Activity } from 'lucide-react';
 import type { DashboardTransaction } from '../../lib/dashboardUtils';
-import { getNextDueDate } from '../../lib/dashboardUtils';
+import { getNextDueDate, groupByCategory } from '../../lib/dashboardUtils';
 
 interface Summary {
   balancePaid: number;
@@ -35,6 +37,9 @@ export function DashboardFluxoPeriodo({ summary, transactions }: DashboardFluxoP
 
   const nextIncomeDate = getNextDueDate(transactions, 'income');
   const nextExpenseDate = getNextDueDate(transactions, 'expense');
+
+  const expenseCategories = groupByCategory(transactions, 'expense').slice(0, 5);
+  const incomeCategories = groupByCategory(transactions, 'income').slice(0, 5);
 
   return (
     <Card>
@@ -149,6 +154,69 @@ export function DashboardFluxoPeriodo({ summary, transactions }: DashboardFluxoP
             <p className="text-xs text-text-secondary mt-1">Se tudo for liquidado</p>
           </div>
         </div>
+
+        {/* Category breakdown */}
+        {(expenseCategories.length > 0 || incomeCategories.length > 0) && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-border">
+            {expenseCategories.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-2">
+                  Despesas por categoria
+                </p>
+                <ul className="space-y-2">
+                  {expenseCategories.map((item) => (
+                    <li key={item.name} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded p-1 text-white"
+                          style={{ backgroundColor: item.color }}
+                        >
+                          {item.icon && (() => {
+                            const DI = Lucide[item.icon as keyof typeof Lucide] as React.ComponentType<{ className?: string }>;
+                            return DI ? <DI className="w-3 h-3" /> : null;
+                          })()}
+                        </div>
+                        <span className="text-xs text-text-primary truncate">{item.name}</span>
+                      </div>
+                      <span className="text-xs font-medium text-text-primary flex-shrink-0">
+                        {formatCurrency(item.value)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {incomeCategories.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-2">
+                  Receitas por categoria
+                </p>
+                <ul className="space-y-2">
+                  {incomeCategories.map((item) => (
+                    <li key={item.name} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded p-1 text-white"
+                          style={{ backgroundColor: item.color }}
+                        >
+                          {item.icon && (() => {
+                            const DI = Lucide[item.icon as keyof typeof Lucide] as React.ComponentType<{ className?: string }>;
+                            return DI ? <DI className="w-3 h-3" /> : null;
+                          })()}
+                        </div>
+                        <span className="text-xs text-text-primary truncate">{item.name}</span>
+                      </div>
+                      <span className="text-xs font-medium text-text-primary flex-shrink-0">
+                        {formatCurrency(item.value)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

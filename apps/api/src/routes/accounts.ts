@@ -15,7 +15,7 @@ router.get('/', h(async (req, res, next) => {
 
         let query = req.supabase
             .from('accounts')
-            .select('id, workspace_id, title, type, initial_balance, opened_at, cost_center_id, color, icon, description, created_at, updated_at')
+            .select('id, workspace_id, title, type, initial_balance, opened_at, cost_center_id, color, icon, description, parent_id, created_at, updated_at')
             .eq('workspace_id', wid)
             .order('created_at', { ascending: false });
 
@@ -32,14 +32,14 @@ router.get('/', h(async (req, res, next) => {
 router.post('/', h(async (req, res, next) => {
     try {
         const { wid } = req.params;
-        const { title, type, initial_balance, opened_at, cost_center_id, color, icon, description } = req.body;
+        const { title, type, initial_balance, opened_at, cost_center_id, color, icon, description, parent_id } = req.body;
         if (!title || !type) {
             res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'title e type são obrigatórios.' } });
             return;
         }
         const { data, error } = await req.supabase
             .from('accounts')
-            .insert([{ workspace_id: wid, title, type, initial_balance, opened_at, cost_center_id, color, icon, description }])
+            .insert([{ workspace_id: wid, title, type, initial_balance, opened_at, cost_center_id, color, icon, description, parent_id: parent_id || null }])
             .select().single();
         if (error) throw error;
         res.status(201).json(data);

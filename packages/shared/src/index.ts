@@ -66,6 +66,7 @@ export interface Account {
   accounting_code: string | null;
   cost_center_id: string | null;
   cancel_days: number | null;
+  parent_id: string | null;
   created_at: string | null;
   updated_at: string | null;
 }

@@ -5,10 +5,16 @@ import type { Transaction } from '../types';
 export interface DashboardTransaction extends Transaction {
   transaction_account: string | null;
   transaction_account_color: string | null;
+  transaction_account_icon: string | null;
   transaction_category_name: string | null;
   transaction_category_color: string | null;
+  transaction_category_icon: string | null;
   transaction_card_name: string | null;
+  transaction_card_color: string | null;
+  transaction_card_icon: string | null;
   transaction_cost_center_name: string | null;
+  transaction_cost_center_color: string | null;
+  transaction_cost_center_icon: string | null;
   accounts?: { id: string; title: string; color: string | null; icon: string | null } | null;
   categories?: { category_id: string; category_name: string; color: string | null; icon: string | null } | null;
   credit_cards?: { credit_card_id: string; credit_card_name: string; color: string | null; icon: string | null } | null;
@@ -19,6 +25,7 @@ export interface GroupedItem {
   name: string;
   value: number;
   color: string;
+  icon: string | null;
   pct: number;
 }
 
@@ -44,22 +51,23 @@ export function groupByCategory(
   transactions: DashboardTransaction[],
   type: 'income' | 'expense'
 ): GroupedItem[] {
-  const map = new Map<string, { value: number; color: string }>();
+  const map = new Map<string, { value: number; color: string; icon: string | null }>();
 
   for (const t of transactions) {
     if (t.transaction_type !== type) continue;
     const name = t.transaction_category_name ?? 'Sem categoria';
     const color = t.transaction_category_color ?? t.categories?.color ?? FALLBACK_COLOR;
+    const icon = t.transaction_category_icon ?? t.categories?.icon ?? null;
     const existing = map.get(name);
     if (existing) {
       existing.value += Number(t.transaction_amount);
     } else {
-      map.set(name, { value: Number(t.transaction_amount), color });
+      map.set(name, { value: Number(t.transaction_amount), color, icon });
     }
   }
 
   const items = Array.from(map.entries())
-    .map(([name, { value, color }]) => ({ name, value, color, pct: 0 }))
+    .map(([name, { value, color, icon }]) => ({ name, value, color, icon, pct: 0 }))
     .sort((a, b) => b.value - a.value);
 
   const maxValue = items[0]?.value ?? 1;
@@ -70,22 +78,23 @@ export function groupByCostCenter(
   transactions: DashboardTransaction[],
   type: 'income' | 'expense'
 ): GroupedItem[] {
-  const map = new Map<string, { value: number; color: string }>();
+  const map = new Map<string, { value: number; color: string; icon: string | null }>();
 
   for (const t of transactions) {
     if (t.transaction_type !== type) continue;
     const name = t.transaction_cost_center_name ?? 'Sem centro';
     const color = t.cost_centers?.color ?? FALLBACK_COLOR;
+    const icon = t.cost_centers?.icon ?? null;
     const existing = map.get(name);
     if (existing) {
       existing.value += Number(t.transaction_amount);
     } else {
-      map.set(name, { value: Number(t.transaction_amount), color });
+      map.set(name, { value: Number(t.transaction_amount), color, icon });
     }
   }
 
   const items = Array.from(map.entries())
-    .map(([name, { value, color }]) => ({ name, value, color, pct: 0 }))
+    .map(([name, { value, color, icon }]) => ({ name, value, color, icon, pct: 0 }))
     .sort((a, b) => b.value - a.value);
 
   const maxValue = items[0]?.value ?? 1;

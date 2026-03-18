@@ -50,10 +50,16 @@ router.get('/', h(async (req, res, next) => {
             ...t,
             transaction_account: t.accounts?.title ?? null,
             transaction_account_color: t.accounts?.color ?? null,
+            transaction_account_icon: t.accounts?.icon ?? null,
             transaction_category_name: t.categories?.category_name ?? null,
             transaction_category_color: t.categories?.color ?? null,
+            transaction_category_icon: t.categories?.icon ?? null,
             transaction_card_name: t.credit_cards?.credit_card_name ?? null,
+            transaction_card_color: t.credit_cards?.color ?? null,
+            transaction_card_icon: t.credit_cards?.icon ?? null,
             transaction_cost_center_name: t.cost_centers?.cost_center_name ?? null,
+            transaction_cost_center_color: t.cost_centers?.color ?? null,
+            transaction_cost_center_icon: t.cost_centers?.icon ?? null,
         }));
 
         const paid = all.filter(isPaid);

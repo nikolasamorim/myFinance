@@ -14,6 +14,7 @@ export interface AccountData {
   color?: string;
   icon?: string;
   description?: string;
+  parent_id?: string | null;
 }
 
 export const accountService = {

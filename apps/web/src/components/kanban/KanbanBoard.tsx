@@ -173,6 +173,7 @@ export function KanbanBoard({
   };
 
   const getItemsForColumn = (columnType?: string) => {
+    if (columnType === undefined) return items;
     return items.filter(item => item.type === columnType);
   };
 

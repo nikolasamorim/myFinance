@@ -1,5 +1,6 @@
 import { apiClient } from '../lib/apiClient';
-import type { Transaction, MonthlyData } from '../types';
+import type { MonthlyData } from '../types';
+import type { DashboardTransaction } from '../lib/dashboardUtils';
 
 interface DashboardFilters {
   period: string;
@@ -28,7 +29,7 @@ interface DashboardData {
   summary: Summary;
   monthlyBreakdown: Record<string, { income: number; expense: number; debtIn: number; debtOut: number }>;
   monthlyComparison: MonthlyData[];
-  recentTransactions: Transaction[];
+  recentTransactions: DashboardTransaction[];
 }
 
 export const dashboardService = {

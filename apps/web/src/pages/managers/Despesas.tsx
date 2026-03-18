@@ -811,15 +811,16 @@ export function Despesas() {
 
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-primary">
                                 {bankName ? (
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex items-center justify-center text-white p-1.5 rounded-lg" style={{ backgroundColor: bankColor || 'unset' }}>
-                                      {(() => {
-                                        const iconKey = (bankIcon || '') as keyof typeof Lucide;
-                                        const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
-                                        return DynamicIcon ? <DynamicIcon className="w-3 h-3" /> : null;
-                                      })()}
-                                    </div>
-                                    <span className="truncate block max-w-[140px] sm:max-w-none">{bankName}</span>
+                                  <div
+                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5 text-white"
+                                    style={{ backgroundColor: bankColor || '#6b7280' }}
+                                  >
+                                    {(() => {
+                                      const iconKey = (bankIcon || '') as keyof typeof Lucide;
+                                      const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                      return DynamicIcon ? <DynamicIcon className="w-3 h-3" /> : null;
+                                    })()}
+                                    <span className="text-xs font-medium truncate">{bankName}</span>
                                   </div>
                                 ) : (
                                   <span className="text-xs text-text-muted">-</span>
@@ -834,7 +835,7 @@ export function Despesas() {
                                       handleGoToInvoice(despesa.transaction_card_id, despesa.transaction_date);
                                     }}
                                     className="inline-flex items-center px-2 py-1 rounded-full gap-1.5 hover:opacity-80 transition-opacity cursor-pointer shadow-sm group"
-                                    style={{ backgroundColor: despesa.card_color || '#E5E7EB' }}
+                                    style={{ backgroundColor: despesa.card_color || '#6b7280' }}
                                     title="Ver na Fatura"
                                   >
                                     {(() => {
@@ -852,7 +853,7 @@ export function Despesas() {
 
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 {despesa.category_name ? (
-                                  <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.category_color || '#E5E7EB' }}>
+                                  <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.category_color || '#6b7280' }}>
                                     {(() => {
                                       const iconKey = (despesa.category_icon || '') as keyof typeof Lucide;
                                       const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
@@ -867,7 +868,7 @@ export function Despesas() {
 
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 {despesa.cost_center_name ? (
-                                  <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.cost_center_color || '#E5E7EB' }}>
+                                  <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: despesa.cost_center_color || '#6b7280' }}>
                                     {(() => {
                                       const iconKey = (despesa.cost_center_icon || '') as keyof typeof Lucide;
                                       const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;

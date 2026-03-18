@@ -642,11 +642,27 @@ export function Dashboard() {
                               {formatCurrency(Number(transaction.transaction_amount))}
                             </td>
 
-                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-primary"> <div className="flex items-center gap-2"> {/* Quadrado com cor e ícone Lucide centralizado */} <div className="flex items-center justify-center text-white p-1.5 rounded-lg" /* tamanho consistente por linha */ style={{ backgroundColor: transaction.transaction_account_color || 'unset' }} > {(() => { const iconKey = (transaction.transaction_account_icon || '') as keyof typeof Lucide; const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>; return DynamicIcon ? (<DynamicIcon className="w-3 h-3" />) : null; })()} </div> {/* Nome da conta */} <span className="truncate block max-w-[140px] sm:max-w-none"> {transaction.transaction_account} </span> </div> </td>
+                            <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-primary">
+                              {transaction.transaction_account ? (
+                                <div
+                                  className="inline-flex items-center px-2 py-1 rounded-full gap-1.5 text-white"
+                                  style={{ backgroundColor: transaction.transaction_account_color || '#6b7280' }}
+                                >
+                                  {(() => {
+                                    const iconKey = (transaction.transaction_account_icon || '') as keyof typeof Lucide;
+                                    const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
+                                    return DynamicIcon ? <DynamicIcon className="w-3 h-3" /> : null;
+                                  })()}
+                                  <span className="text-xs font-medium truncate">{transaction.transaction_account}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-text-muted">-</span>
+                              )}
+                            </td>
 
                             <td className="py-2 sm:py-3 px-2 sm:px-4">
                               {transaction.transaction_card_name ? (
-                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: transaction.transaction_card_color || '#E5E7EB' }}>
+                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: transaction.transaction_card_color || '#6b7280' }}>
                                   {(() => {
                                     const iconKey = (transaction.transaction_card_icon || '') as keyof typeof Lucide;
                                     const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
@@ -663,7 +679,7 @@ export function Dashboard() {
 
                             <td className="py-2 sm:py-3 px-2 sm:px-4">
                               {transaction.transaction_category_name ? (
-                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: transaction.transaction_category_color || '#E5E7EB' }}>
+                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: transaction.transaction_category_color || '#6b7280' }}>
                                   {(() => {
                                     const iconKey = (transaction.transaction_category_icon || '') as keyof typeof Lucide;
                                     const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;
@@ -680,7 +696,7 @@ export function Dashboard() {
 
                             <td className="py-2 sm:py-3 px-2 sm:px-4">
                               {transaction.transaction_cost_center_name ? (
-                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: transaction.transaction_cost_center_color || '#E5E7EB' }}>
+                                <div className="inline-flex items-center px-2 py-1 rounded-full gap-1.5" style={{ backgroundColor: transaction.transaction_cost_center_color || '#6b7280' }}>
                                   {(() => {
                                     const iconKey = (transaction.transaction_cost_center_icon || '') as keyof typeof Lucide;
                                     const DynamicIcon = Lucide[iconKey] as React.ComponentType<{ className?: string }>;

@@ -791,17 +791,15 @@ export function Receitas() {
                                 {formatCurrency(Number(amount))}
                               </td>
 
-                              {/* Conta Bancária (mesmo renderer do Dashboard, com fallback) */}
+                              {/* Conta Bancária */}
                               <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-text-primary">
                                 {accountName ? (
-                                  <div className="flex items-center gap-2">
-                                    <div
-                                      className="flex items-center justify-center text-white p-1.5 rounded-lg"
-                                      style={{ backgroundColor: accountColor || 'unset' }}
-                                    >
-                                      <DynamicLucideIcon iconKey={accountIcon} className="w-3 h-3" />
-                                    </div>
-                                    <span className="truncate block max-w-[140px] sm:max-w-none">{accountName}</span>
+                                  <div
+                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5 text-white"
+                                    style={{ backgroundColor: accountColor || '#6b7280' }}
+                                  >
+                                    <DynamicLucideIcon iconKey={accountIcon} className="w-3 h-3" />
+                                    <span className="text-xs font-medium truncate">{accountName}</span>
                                   </div>
                                 ) : (
                                   <span className="text-xs text-text-muted">-</span>
@@ -812,11 +810,11 @@ export function Receitas() {
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 {cardName ? (
                                   <div
-                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5"
-                                    style={{ backgroundColor: cardColor || '#E5E7EB' }}
+                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5 text-white"
+                                    style={{ backgroundColor: cardColor || '#6b7280' }}
                                   >
                                     <DynamicLucideIcon iconKey={cardIcon} className="w-3 h-3" />
-                                    <span className="text-xs font-medium text-white truncate">{cardName}</span>
+                                    <span className="text-xs font-medium truncate">{cardName}</span>
                                   </div>
                                 ) : (
                                   <span className="text-xs text-text-muted">-</span>
@@ -827,11 +825,11 @@ export function Receitas() {
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 {categoryName ? (
                                   <div
-                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5"
-                                    style={{ backgroundColor: categoryColor || '#E5E7EB' }}
+                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5 text-white"
+                                    style={{ backgroundColor: categoryColor || '#6b7280' }}
                                   >
                                     <DynamicLucideIcon iconKey={categoryIcon} className="w-3 h-3" />
-                                    <span className="text-xs font-medium text-white truncate">{categoryName}</span>
+                                    <span className="text-xs font-medium truncate">{categoryName}</span>
                                   </div>
                                 ) : (
                                   <span className="text-xs text-text-muted">-</span>
@@ -842,11 +840,11 @@ export function Receitas() {
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
                                 {costName ? (
                                   <div
-                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5"
-                                    style={{ backgroundColor: costColor || '#E5E7EB' }}
+                                    className="inline-flex items-center px-2 py-1 rounded-full gap-1.5 text-white"
+                                    style={{ backgroundColor: costColor || '#6b7280' }}
                                   >
                                     <DynamicLucideIcon iconKey={costIcon} className="w-3 h-3" />
-                                    <span className="text-xs font-medium text-white truncate">{costName}</span>
+                                    <span className="text-xs font-medium truncate">{costName}</span>
                                   </div>
                                 ) : (
                                   <span className="text-xs text-text-muted">-</span>

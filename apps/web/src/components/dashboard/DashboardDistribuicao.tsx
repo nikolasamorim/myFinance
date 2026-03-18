@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import * as Lucide from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatCurrency } from '../../lib/utils';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
@@ -27,10 +28,15 @@ function GroupedList({ items, emptyMessage }: { items: GroupedItem[]; emptyMessa
         <li key={item.name} className="space-y-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <span
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              <div
+                className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded p-0.5 text-white"
                 style={{ backgroundColor: item.color }}
-              />
+              >
+                {item.icon && (() => {
+                  const DI = Lucide[item.icon as keyof typeof Lucide] as React.ComponentType<{ className?: string }>;
+                  return DI ? <DI className="w-3 h-3" /> : null;
+                })()}
+              </div>
               <span className="text-xs text-text-primary truncate">{item.name}</span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">

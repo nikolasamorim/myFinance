@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Tag, Plus, Edit, Trash2, Table, TreePine } from 'lucide-react';
+import * as Lucide from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -30,6 +31,8 @@ interface CategoryFormData {
   type: 'income' | 'expense';
   parent_id: string;
   description: string;
+  color?: string;
+  icon?: string;
 }
 
 const DEFAULT_FILTERS: CategoryFilters = {
@@ -154,6 +157,17 @@ export function Categorias() {
       <div className="flex items-center justify-between w-full">
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-3">
+            {(category.color || category.icon) && (
+              <div
+                className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg p-1 text-white"
+                style={{ backgroundColor: category.color || '#6b7280' }}
+              >
+                {category.icon && (() => {
+                  const DI = Lucide[category.icon as keyof typeof Lucide] as React.ComponentType<{ className?: string }>;
+                  return DI ? <DI className="w-4 h-4" /> : null;
+                })()}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-text-primary truncate">{category.category_name}</p>
               {category.description && (
@@ -243,8 +257,8 @@ export function Categorias() {
                     ...cat,
                   }))}
                   columns={[
-                    { id: 'expense', title: 'Categorias de Despesa', type: 'expense' },
                     { id: 'income', title: 'Categorias de Receita', type: 'income' },
+                    { id: 'expense', title: 'Categorias de Despesa', type: 'expense' },
                   ]}
                   onEdit={handleEditCategory}
                   onDelete={(id) => handleDeleteCategory(id)}
@@ -275,7 +289,18 @@ export function Categorias() {
                           {sortedCategories.map((category) => (
                             <tr key={category.category_id} className="border-b border-border hover:bg-bg-elevated">
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
-                                <div>
+                                <div className="flex items-center gap-2">
+                                  {(category.color || category.icon) && (
+                                    <div
+                                      className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded p-1 text-white"
+                                      style={{ backgroundColor: category.color || '#6b7280' }}
+                                    >
+                                      {category.icon && (() => {
+                                        const DI = Lucide[category.icon as keyof typeof Lucide] as React.ComponentType<{ className?: string }>;
+                                        return DI ? <DI className="w-3 h-3" /> : null;
+                                      })()}
+                                    </div>
+                                  )}
                                   <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{category.category_name}</p>
                                 </div>
                               </td>
@@ -376,6 +401,8 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
         type: category.category_type || 'expense',
         parent_id: category.parent_id || '',
         description: category.description || '',
+        color: category.color || '',
+        icon: category.icon || '',
       });
     } else if (parentCategoryId) {
       // Determine type from parent or use default
@@ -408,6 +435,8 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
         type: formData.type,
         parent_id: formData.parent_id || null,
         description: formData.description,
+        color: formData.color || undefined,
+        icon: formData.icon || undefined,
       };
       await onSave(categoryData);
     } catch (error) {
@@ -479,13 +508,13 @@ function CategoryModal({ isOpen, onClose, category, parentCategoryId, categories
 
           <ColorPicker
             label="Cor da categoria"
-            value={formData.color}
+            value={formData.color ?? ''}
             onChange={(value) => handleInputChange('color', value)}
           />
 
           <IconPicker
             label="Ícone da categoria"
-            value={formData.icon}
+            value={formData.icon ?? ''}
             onChange={(value) => handleInputChange('icon', value)}
           />
         </div>

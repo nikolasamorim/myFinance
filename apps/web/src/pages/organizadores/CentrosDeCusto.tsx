@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Target, Plus, Edit, Trash2, Table, TreePine } from 'lucide-react';
+import * as Lucide from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -34,6 +35,8 @@ interface CostCenterFormData {
   accounting_code: string;
   status: 'active' | 'inactive';
   description: string;
+  color?: string;
+  icon?: string;
 }
 
 const DEFAULT_FILTERS: CostCenterFilters = {
@@ -194,12 +197,20 @@ export function CentrosDeCusto() {
       <div className="flex items-center justify-between w-full">
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-3">
+            {(costCenter.color || costCenter.icon) && (
+              <div
+                className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg p-1 text-white"
+                style={{ backgroundColor: costCenter.color || '#6b7280' }}
+              >
+                {costCenter.icon && (() => {
+                  const DI = Lucide[costCenter.icon as keyof typeof Lucide] as React.ComponentType<{ className?: string }>;
+                  return DI ? <DI className="w-4 h-4" /> : null;
+                })()}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-text-primary truncate">{costCenter.title}</p>
               <div className="flex items-center space-x-2 mt-1">
-                <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getTypeColor(costCenter.type)}`}>
-                  {getTypeLabel(costCenter.type)}
-                </span>
                 <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(costCenter.status)}`}>
                   {getStatusLabel(costCenter.status)}
                 </span>
@@ -337,7 +348,18 @@ export function CentrosDeCusto() {
                           {sortedCostCenters.map((costCenter) => (
                             <tr key={costCenter.id} className="border-b border-border hover:bg-bg-elevated">
                               <td className="py-2 sm:py-3 px-2 sm:px-4">
-                                <div>
+                                <div className="flex items-center gap-2">
+                                  {(costCenter.color || costCenter.icon) && (
+                                    <div
+                                      className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded p-1 text-white"
+                                      style={{ backgroundColor: costCenter.color || '#6b7280' }}
+                                    >
+                                      {costCenter.icon && (() => {
+                                        const DI = Lucide[costCenter.icon as keyof typeof Lucide] as React.ComponentType<{ className?: string }>;
+                                        return DI ? <DI className="w-3 h-3" /> : null;
+                                      })()}
+                                    </div>
+                                  )}
                                   <p className="text-xs sm:text-sm font-medium text-text-primary truncate">{costCenter.title}</p>
                                 </div>
                               </td>
@@ -455,6 +477,8 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
         accounting_code: costCenter.accounting_code || '',
         status: costCenter.status || 'active',
         description: costCenter.description || '',
+        color: costCenter.color || '',
+        icon: costCenter.icon || '',
       });
     } else if (parentCostCenterId) {
       setFormData({
@@ -492,6 +516,8 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
         accounting_code: formData.accounting_code,
         status: formData.status,
         description: formData.description,
+        color: formData.color || undefined,
+        icon: formData.icon || undefined,
       };
       await onSave(costCenterData);
     } catch (error) {
@@ -510,10 +536,6 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
     { value: 'inactive', label: 'Inativo' },
   ];
 
-  const typeFormOptions = [
-    { value: 'revenue', label: 'Receita' },
-    { value: 'expense', label: 'Despesa' },
-  ];
 
   // Filter parent cost centers and exclude current cost center
   const parentOptions = [
@@ -539,17 +561,6 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
               onChange={(e) => handleInputChange('title', e.target.value)}
               placeholder="Ex: Departamento de Vendas, Filial São Paulo"
               required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
-              Tipo
-            </label>
-            <Dropdown
-              options={typeFormOptions}
-              value={formData.type}
-              onChange={(value) => handleInputChange('type', value)}
             />
           </div>
 
@@ -592,13 +603,13 @@ function CostCenterModal({ isOpen, onClose, costCenter, parentCostCenterId, cost
 
           <ColorPicker
             label="Cor do centro de custo"
-            value={formData.color}
+            value={formData.color ?? ''}
             onChange={(value) => handleInputChange('color', value)}
           />
 
           <IconPicker
             label="Ícone do centro de custo"
-            value={formData.icon}
+            value={formData.icon ?? ''}
             onChange={(value) => handleInputChange('icon', value)}
           />
         </div>
