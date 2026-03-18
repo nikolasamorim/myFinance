@@ -110,6 +110,10 @@ export function AdvancedTransactionModal({
   // Estado local de edições por linha na tabela de gerenciamento de parcelas
   const [rowEdits, setRowEdits] = useState<Record<string, Partial<Transaction>>>({});
   const [markingAllPaid, setMarkingAllPaid] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
+  const [bulkEditData, setBulkEditData] = useState<Record<string, string>>({});
+  const [applyingBulkEdit, setApplyingBulkEdit] = useState(false);
 
   // Hooks para gerenciamento de parcelas existentes
   const { data: installmentGroupData } = useInstallmentGroup(installmentGroupId);
@@ -311,6 +315,7 @@ export function AdvancedTransactionModal({
   // Handle tab change - NO VALIDATION, NO API CALLS
   const handleTabChange = (newTab: string) => {
     if (isEditing && !hasInstallmentGroup) return;
+    if (newTab !== activeTab) setSelectedRows(new Set());
     setActiveTab(newTab);
   };
 
@@ -328,6 +333,10 @@ export function AdvancedTransactionModal({
   const saveRow = async (tx: Transaction) => {
     const edits = rowEdits[tx.transaction_id];
     if (!edits || Object.keys(edits).length === 0) return;
+    if (edits.transaction_amount !== undefined && Number(edits.transaction_amount) <= 0) {
+      alert('O valor da parcela deve ser maior que zero.');
+      return;
+    }
     await updateTransaction.mutateAsync({ id: tx.transaction_id, updates: edits });
     setRowEdits(prev => { const next = { ...prev }; delete next[tx.transaction_id]; return next; });
   };
@@ -339,6 +348,14 @@ export function AdvancedTransactionModal({
   };
 
   const deleteInstallmentTx = async (tx: Transaction) => {
+    if (tx.transaction_status === 'paid' || tx.transaction_status === 'received') {
+      alert('Não é possível excluir uma parcela já paga.');
+      return;
+    }
+    if (installmentTransactions.length === 1) {
+      alert('Não é possível excluir a última parcela do grupo. O grupo ficaria sem parcelas.');
+      return;
+    }
     if (!window.confirm(`Excluir parcela ${tx.installment_number}/${tx.installment_total}? Esta ação não pode ser desfeita.`)) return;
     await deleteTransaction.mutateAsync(tx.transaction_id);
   };
@@ -348,6 +365,7 @@ export function AdvancedTransactionModal({
       tx => tx.transaction_status !== 'paid' && tx.transaction_status !== 'received'
     );
     if (pending.length === 0) return;
+    if (!window.confirm(`Marcar ${pending.length} parcela(s) pendente(s) como pagas? Esta ação pode ser revertida individualmente.`)) return;
     setMarkingAllPaid(true);
     try {
       await Promise.all(pending.map(tx => {
@@ -356,6 +374,81 @@ export function AdvancedTransactionModal({
       }));
     } finally {
       setMarkingAllPaid(false);
+    }
+  };
+
+  const toggleRowSelection = (txId: string) => {
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(txId)) next.delete(txId);
+      else next.add(txId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedRows.size === installmentTransactions.length && installmentTransactions.length > 0) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(installmentTransactions.map(t => t.transaction_id)));
+    }
+  };
+
+  const deleteSelected = async () => {
+    const selectedTxs = installmentTransactions.filter(tx => selectedRows.has(tx.transaction_id));
+    const paidSelected = selectedTxs.filter(tx => tx.transaction_status === 'paid' || tx.transaction_status === 'received');
+    if (paidSelected.length > 0) {
+      alert(`Não é possível excluir ${paidSelected.length} parcela(s) já paga(s). Desmarque-as e tente novamente.`);
+      return;
+    }
+    if (installmentTransactions.length - selectedRows.size === 0) {
+      alert('Não é possível excluir todas as parcelas do grupo. Pelo menos uma deve ser mantida.');
+      return;
+    }
+    if (!window.confirm(`Excluir ${selectedRows.size} parcela(s) selecionada(s)? Esta ação não pode ser desfeita.`)) return;
+    await Promise.all(Array.from(selectedRows).map(id => deleteTransaction.mutateAsync(id)));
+    setSelectedRows(new Set());
+  };
+
+  const markSelectedAsPaid = async () => {
+    const selectedTxs = installmentTransactions.filter(tx => selectedRows.has(tx.transaction_id));
+    const pending = selectedTxs.filter(tx => tx.transaction_status !== 'paid' && tx.transaction_status !== 'received');
+    if (pending.length === 0) {
+      alert('Todas as parcelas selecionadas já estão pagas.');
+      return;
+    }
+    if (!window.confirm(`Marcar ${pending.length} parcela(s) selecionada(s) como pagas?`)) return;
+    await Promise.all(pending.map(tx => {
+      const newStatus = tx.transaction_type === 'income' ? 'received' : 'paid';
+      return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: newStatus } });
+    }));
+    setSelectedRows(new Set());
+  };
+
+  const applyBulkEdit = async () => {
+    if (selectedRows.size === 0) return;
+    const updates: Record<string, string | null> = {};
+    for (const [key, value] of Object.entries(bulkEditData)) {
+      if (value === '') continue;
+      updates[key] = value === '__clear__' ? null : value;
+    }
+    if (Object.keys(updates).length === 0) {
+      alert('Selecione pelo menos um campo para alterar.');
+      return;
+    }
+    if (!window.confirm(`Aplicar alterações em ${selectedRows.size} parcela(s)?`)) return;
+    setApplyingBulkEdit(true);
+    try {
+      await Promise.all(
+        Array.from(selectedRows).map(id =>
+          updateTransaction.mutateAsync({ id, updates: updates as Partial<Transaction> })
+        )
+      );
+      setShowBulkEditModal(false);
+      setSelectedRows(new Set());
+      setBulkEditData({});
+    } finally {
+      setApplyingBulkEdit(false);
     }
   };
 
@@ -575,6 +668,9 @@ export function AdvancedTransactionModal({
     setIsSaving(false);
     setCurrentInstallmentNumber(1);
     setTotalInstallments(12);
+    setSelectedRows(new Set());
+    setShowBulkEditModal(false);
+    setBulkEditData({});
     setRecurrenceData({
       enabled: false,
       start_date: new Date().toISOString().split('T')[0],
@@ -614,6 +710,12 @@ export function AdvancedTransactionModal({
       icon: <Target className="w-4 h-4" />,
     }))
   ];
+
+  const installmentsTotalAmount = installmentTransactions.reduce((s, t) => s + Number(t.transaction_amount), 0);
+  const sumMismatch = !!installmentGroupData?.total_value &&
+    Math.abs(installmentsTotalAmount - installmentGroupData.total_value) > 0.01;
+  const allRowsSelected = selectedRows.size === installmentTransactions.length && installmentTransactions.length > 0;
+  const someRowsSelected = selectedRows.size > 0 && !allRowsSelected;
 
   const tabs = [
     { id: 'data', label: 'Dados', icon: <Calendar className="w-4 h-4" /> },
@@ -924,7 +1026,7 @@ export function AdvancedTransactionModal({
           {activeTab === 'installments' && hasInstallmentGroup && (
             <div className="space-y-4">
               {/* Header do grupo */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                   <h3 className="text-lg font-semibold text-text-primary">
                     {installmentGroupData?.description ?? transaction?.transaction_description ?? 'Parcelas'}
@@ -935,8 +1037,7 @@ export function AdvancedTransactionModal({
                       : `${installmentTransactions.length} parcelas`}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  {/* Badge progresso */}
+                <div className="flex items-center gap-3 flex-wrap">
                   {installmentTransactions.length > 0 && (() => {
                     const paid = installmentTransactions.filter(t => t.transaction_status === 'paid' || t.transaction_status === 'received').length;
                     return (
@@ -958,6 +1059,55 @@ export function AdvancedTransactionModal({
                 </div>
               </div>
 
+              {/* Toolbar de seleção */}
+              {selectedRows.size > 0 && (
+                <div className="flex items-center justify-between bg-accent/10 border border-accent/20 rounded-lg px-3 py-2 flex-wrap gap-2">
+                  <span className="text-sm font-medium text-text-primary">
+                    {selectedRows.size} parcela{selectedRows.size > 1 ? 's' : ''} selecionada{selectedRows.size > 1 ? 's' : ''}
+                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={markSelectedAsPaid}
+                      disabled={updateTransaction.isPending}
+                    >
+                      <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                      Marcar como pagas
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setBulkEditData({}); setShowBulkEditModal(true); }}
+                    >
+                      <Edit className="w-3.5 h-3.5 mr-1.5" />
+                      Editar em massa
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={deleteSelected}
+                      disabled={deleteTransaction.isPending}
+                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      Excluir selecionadas
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRows(new Set())}
+                      className="p-1 rounded text-text-muted hover:text-text-primary transition-colors"
+                      title="Limpar seleção"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Tabela */}
               {loadingInstallments ? (
                 <div className="text-center py-8 text-text-muted text-sm">Carregando parcelas...</div>
@@ -967,6 +1117,15 @@ export function AdvancedTransactionModal({
                     <table className="w-full">
                       <thead className="bg-bg-surface sticky top-0">
                         <tr>
+                          <th className="py-2 px-3 w-8">
+                            <input
+                              type="checkbox"
+                              checked={allRowsSelected}
+                              ref={(el: HTMLInputElement | null) => { if (el) el.indeterminate = someRowsSelected; }}
+                              onChange={toggleSelectAll}
+                              className="h-3.5 w-3.5 rounded border-border text-accent focus:ring-accent cursor-pointer"
+                            />
+                          </th>
                           <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">#</th>
                           <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">Vencimento</th>
                           <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">Competência</th>
@@ -981,25 +1140,51 @@ export function AdvancedTransactionModal({
                           const badge = getInstallmentStatusBadge(tx);
                           const dirty = isRowDirty(tx.transaction_id);
                           const isPaid = tx.transaction_status === 'paid' || tx.transaction_status === 'received';
+                          const isSelected = selectedRows.has(tx.transaction_id);
+                          const txDate = String(getRowValue(tx.transaction_id, 'transaction_date', tx.transaction_date));
+                          const isOverdue = !isPaid && txDate < new Date().toISOString().split('T')[0];
                           return (
-                            <tr key={tx.transaction_id} className="border-t border-border hover:bg-bg-surface/50">
+                            <tr
+                              key={tx.transaction_id}
+                              className={cn('border-t border-border hover:bg-bg-surface/50', isSelected && 'bg-accent/5')}
+                            >
+                              <td className="py-2 px-3">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleRowSelection(tx.transaction_id)}
+                                  className="h-3.5 w-3.5 rounded border-border text-accent focus:ring-accent cursor-pointer"
+                                />
+                              </td>
                               <td className="py-2 px-3 text-sm text-text-primary whitespace-nowrap">
                                 {tx.installment_number}/{tx.installment_total}
                               </td>
                               <td className="py-2 px-3">
                                 <input
                                   type="date"
-                                  value={String(getRowValue(tx.transaction_id, 'transaction_date', tx.transaction_date))}
+                                  value={txDate}
                                   onChange={e => setRowField(tx.transaction_id, 'transaction_date', e.target.value)}
-                                  className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                                  disabled={isPaid}
+                                  title={isPaid ? 'Parcela paga — edição bloqueada' : undefined}
+                                  className={cn(
+                                    'text-xs border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent',
+                                    isOverdue ? 'border-red-400 focus:ring-red-500' : 'border-border',
+                                    isPaid && 'opacity-50 cursor-not-allowed'
+                                  )}
                                 />
+                                {isOverdue && <p className="text-xs text-red-500 mt-0.5">Vencida</p>}
                               </td>
                               <td className="py-2 px-3">
                                 <input
                                   type="month"
                                   value={String(getRowValue(tx.transaction_id, 'transaction_competence_date', tx.transaction_competence_date ?? tx.transaction_date.slice(0, 7)))}
                                   onChange={e => setRowField(tx.transaction_id, 'transaction_competence_date', e.target.value)}
-                                  className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                                  disabled={isPaid}
+                                  title={isPaid ? 'Parcela paga — edição bloqueada' : undefined}
+                                  className={cn(
+                                    'text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent',
+                                    isPaid && 'opacity-50 cursor-not-allowed'
+                                  )}
                                 />
                               </td>
                               <td className="py-2 px-3">
@@ -1021,7 +1206,12 @@ export function AdvancedTransactionModal({
                                   min="0.01"
                                   value={Number(getRowValue(tx.transaction_id, 'transaction_amount', tx.transaction_amount))}
                                   onChange={e => setRowField(tx.transaction_id, 'transaction_amount', Number(e.target.value))}
-                                  className="text-xs border border-border rounded px-2 py-1 w-24 text-right bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                                  disabled={isPaid}
+                                  title={isPaid ? 'Parcela paga — edição bloqueada' : undefined}
+                                  className={cn(
+                                    'text-xs border border-border rounded px-2 py-1 w-24 text-right bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent',
+                                    isPaid && 'opacity-50 cursor-not-allowed'
+                                  )}
                                 />
                               </td>
                               <td className="py-2 px-3 text-center">
@@ -1034,11 +1224,11 @@ export function AdvancedTransactionModal({
                                   <button
                                     type="button"
                                     onClick={() => saveRow(tx)}
-                                    disabled={!dirty || updateTransaction.isPending}
-                                    title="Salvar alterações"
+                                    disabled={!dirty || isPaid || updateTransaction.isPending}
+                                    title={isPaid ? 'Parcela paga — edição bloqueada' : 'Salvar alterações'}
                                     className={cn(
                                       'p-1 rounded transition-colors',
-                                      dirty
+                                      dirty && !isPaid
                                         ? 'text-accent hover:text-accent-hover'
                                         : 'text-text-muted cursor-not-allowed opacity-40'
                                     )}
@@ -1060,9 +1250,18 @@ export function AdvancedTransactionModal({
                                   <button
                                     type="button"
                                     onClick={() => deleteInstallmentTx(tx)}
-                                    disabled={deleteTransaction.isPending}
-                                    title="Excluir parcela"
-                                    className="p-1 rounded text-text-muted hover:text-red-600 transition-colors"
+                                    disabled={deleteTransaction.isPending || isPaid || installmentTransactions.length === 1}
+                                    title={
+                                      isPaid ? 'Não é possível excluir parcela paga' :
+                                      installmentTransactions.length === 1 ? 'Não é possível excluir a última parcela' :
+                                      'Excluir parcela'
+                                    }
+                                    className={cn(
+                                      'p-1 rounded transition-colors',
+                                      isPaid || installmentTransactions.length === 1
+                                        ? 'text-text-muted opacity-40 cursor-not-allowed'
+                                        : 'text-text-muted hover:text-red-600'
+                                    )}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -1077,10 +1276,20 @@ export function AdvancedTransactionModal({
 
                   {/* Totalizador */}
                   {installmentTransactions.length > 0 && (
-                    <div className="bg-bg-surface border-t border-border px-3 py-2 flex justify-between items-center">
-                      <span className="text-sm font-medium text-text-primary">Total das parcelas:</span>
-                      <span className="text-sm font-bold text-text-primary">
-                        {formatCurrency(installmentTransactions.reduce((s, t) => s + Number(t.transaction_amount), 0))}
+                    <div className={cn(
+                      'border-t border-border px-3 py-2 flex justify-between items-center gap-2 flex-wrap',
+                      sumMismatch ? 'bg-red-50 dark:bg-red-900/10' : 'bg-bg-surface'
+                    )}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-text-primary">Total das parcelas:</span>
+                        {sumMismatch && (
+                          <span className="text-xs text-red-600 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
+                            Diverge do total do grupo ({formatCurrency(installmentGroupData!.total_value)})
+                          </span>
+                        )}
+                      </div>
+                      <span className={cn('text-sm font-bold', sumMismatch ? 'text-red-600' : 'text-text-primary')}>
+                        {formatCurrency(installmentsTotalAmount)}
                       </span>
                     </div>
                   )}
@@ -1413,6 +1622,96 @@ export function AdvancedTransactionModal({
           </div>
         </div>
       </form>
+
+      {/* Modal de edição em massa */}
+      <Modal
+        isOpen={showBulkEditModal}
+        onClose={() => { setShowBulkEditModal(false); setBulkEditData({}); }}
+        title={`Editar em massa — ${selectedRows.size} parcela${selectedRows.size > 1 ? 's' : ''}`}
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Os campos preenchidos abaixo serão aplicados a todas as parcelas selecionadas. Campos com "— não alterar —" serão ignorados. Datas e valores só podem ser alterados individualmente.
+          </p>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Centro de Custo</label>
+            <select
+              value={bulkEditData.transaction_cost_center_id ?? ''}
+              onChange={e => setBulkEditData(prev => ({ ...prev, transaction_cost_center_id: e.target.value }))}
+              className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              <option value="">— não alterar —</option>
+              <option value="__clear__">Nenhum (remover)</option>
+              {costCenters.map(c => (
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Categoria</label>
+            <select
+              value={bulkEditData.transaction_category_id ?? ''}
+              onChange={e => setBulkEditData(prev => ({ ...prev, transaction_category_id: e.target.value }))}
+              className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              <option value="">— não alterar —</option>
+              <option value="__clear__">Nenhuma (remover)</option>
+              {categories.map(c => (
+                <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Conta Bancária / Caixa</label>
+            <select
+              value={bulkEditData.transaction_bank_id ?? ''}
+              onChange={e => setBulkEditData(prev => ({ ...prev, transaction_bank_id: e.target.value }))}
+              className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              <option value="">— não alterar —</option>
+              {accounts.map(a => (
+                <option key={a.id} value={a.id}>{a.title}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Método de Pagamento</label>
+            <select
+              value={bulkEditData.transaction_payment_method ?? ''}
+              onChange={e => setBulkEditData(prev => ({ ...prev, transaction_payment_method: e.target.value }))}
+              className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              <option value="">— não alterar —</option>
+              {paymentMethodOptions.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => { setShowBulkEditModal(false); setBulkEditData({}); }}
+              disabled={applyingBulkEdit}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              loading={applyingBulkEdit}
+              onClick={applyBulkEdit}
+            >
+              Aplicar em {selectedRows.size} parcela{selectedRows.size > 1 ? 's' : ''}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </Modal>
   );
 }
