@@ -158,13 +158,13 @@ export function DashboardFluxoPeriodo({ summary, transactions }: DashboardFluxoP
         {/* Category breakdown */}
         {(expenseCategories.length > 0 || incomeCategories.length > 0) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-border">
-            {expenseCategories.length > 0 && (
+            {incomeCategories.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-2">
-                  Despesas por categoria
+                <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-2">
+                  Receitas por categoria
                 </p>
                 <ul className="space-y-2">
-                  {expenseCategories.map((item) => (
+                  {incomeCategories.map((item) => (
                     <li key={item.name} className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div
@@ -187,13 +187,13 @@ export function DashboardFluxoPeriodo({ summary, transactions }: DashboardFluxoP
               </div>
             )}
 
-            {incomeCategories.length > 0 && (
+            {expenseCategories.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-2">
-                  Receitas por categoria
+                <p className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-2">
+                  Despesas por categoria
                 </p>
                 <ul className="space-y-2">
-                  {incomeCategories.map((item) => (
+                  {expenseCategories.map((item) => (
                     <li key={item.name} className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div
