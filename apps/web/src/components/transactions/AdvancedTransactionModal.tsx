@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, CreditCard as Edit, Trash2, Plus, AlertCircle, Repeat, Clock } from 'lucide-react';
+import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, CreditCard as Edit, Trash2, Plus, AlertCircle, Repeat, Clock, CheckCircle, CheckCheck, Save } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,6 +13,8 @@ import { useAccounts } from '../../hooks/useAccounts';
 import { useCreditCards } from '../../hooks/useCreditCards';
 import { useCategories } from '../../hooks/useCategories';
 import { useCostCenters } from '../../hooks/useCostCenters';
+import { useInstallmentGroup, useInstallmentsByGroup } from '../../hooks/useInstallments';
+import { useUpdateTransaction, useDeleteTransaction } from '../../hooks/useTransactions';
 import { formatCurrency, formatDate, cn } from '../../lib/utils';
 import type { AdvancedTransactionData, InstallmentData, RecurrenceData, Transaction } from '../../types';
 
@@ -96,6 +98,8 @@ export function AdvancedTransactionModal({
 }: AdvancedTransactionModalProps) {
   const { currentWorkspace } = useWorkspace();
   const isEditing = !!transaction;
+  const hasInstallmentGroup = isEditing && !!transaction?.installment_group_id;
+  const installmentGroupId = transaction?.installment_group_id ?? null;
   const [activeTab, setActiveTab] = useState('data');
   const [installments, setInstallments] = useState<InstallmentData[]>([]);
   const [installmentsGenerated, setInstallmentsGenerated] = useState(false);
@@ -103,6 +107,15 @@ export function AdvancedTransactionModal({
   const [isSaving, setIsSaving] = useState(false);
   const [currentInstallmentNumber, setCurrentInstallmentNumber] = useState(1);
   const [totalInstallments, setTotalInstallments] = useState(12);
+  // Estado local de edições por linha na tabela de gerenciamento de parcelas
+  const [rowEdits, setRowEdits] = useState<Record<string, Partial<Transaction>>>({});
+  const [markingAllPaid, setMarkingAllPaid] = useState(false);
+
+  // Hooks para gerenciamento de parcelas existentes
+  const { data: installmentGroupData } = useInstallmentGroup(installmentGroupId);
+  const { data: installmentTransactions = [], isLoading: loadingInstallments } = useInstallmentsByGroup(installmentGroupId || '');
+  const updateTransaction = useUpdateTransaction();
+  const deleteTransaction = useDeleteTransaction();
   
   const [recurrenceData, setRecurrenceData] = useState<RecurrenceData>({
     enabled: false,
@@ -297,8 +310,61 @@ export function AdvancedTransactionModal({
 
   // Handle tab change - NO VALIDATION, NO API CALLS
   const handleTabChange = (newTab: string) => {
-    if (isEditing) return;
+    if (isEditing && !hasInstallmentGroup) return;
     setActiveTab(newTab);
+  };
+
+  // Gerenciamento de edição inline por linha
+  const getRowValue = <K extends keyof Transaction>(txId: string, field: K, original: Transaction[K]): Transaction[K] => {
+    return (rowEdits[txId]?.[field] as Transaction[K]) ?? original;
+  };
+
+  const setRowField = (txId: string, field: keyof Transaction, value: unknown) => {
+    setRowEdits(prev => ({ ...prev, [txId]: { ...prev[txId], [field]: value } }));
+  };
+
+  const isRowDirty = (txId: string) => txId in rowEdits && Object.keys(rowEdits[txId]).length > 0;
+
+  const saveRow = async (tx: Transaction) => {
+    const edits = rowEdits[tx.transaction_id];
+    if (!edits || Object.keys(edits).length === 0) return;
+    await updateTransaction.mutateAsync({ id: tx.transaction_id, updates: edits });
+    setRowEdits(prev => { const next = { ...prev }; delete next[tx.transaction_id]; return next; });
+  };
+
+  const togglePaid = async (tx: Transaction) => {
+    const isPaid = tx.transaction_status === 'paid' || tx.transaction_status === 'received';
+    const newStatus = isPaid ? 'pending' : (tx.transaction_type === 'income' ? 'received' : 'paid');
+    await updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: newStatus } });
+  };
+
+  const deleteInstallmentTx = async (tx: Transaction) => {
+    if (!window.confirm(`Excluir parcela ${tx.installment_number}/${tx.installment_total}? Esta ação não pode ser desfeita.`)) return;
+    await deleteTransaction.mutateAsync(tx.transaction_id);
+  };
+
+  const markAllPending = async () => {
+    const pending = installmentTransactions.filter(
+      tx => tx.transaction_status !== 'paid' && tx.transaction_status !== 'received'
+    );
+    if (pending.length === 0) return;
+    setMarkingAllPaid(true);
+    try {
+      await Promise.all(pending.map(tx => {
+        const newStatus = tx.transaction_type === 'income' ? 'received' : 'paid';
+        return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: newStatus } });
+      }));
+    } finally {
+      setMarkingAllPaid(false);
+    }
+  };
+
+  const getInstallmentStatusBadge = (tx: Transaction) => {
+    const isPaid = tx.transaction_status === 'paid' || tx.transaction_status === 'received';
+    if (isPaid) return { label: tx.transaction_type === 'income' ? 'Recebida' : 'Paga', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+    const isOverdue = new Date(tx.transaction_date) < new Date(new Date().toISOString().split('T')[0]);
+    if (isOverdue) return { label: 'Vencida', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
+    return { label: 'Pendente', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' };
   };
 
   // Handle currency input with real-time formatting
@@ -551,18 +617,18 @@ export function AdvancedTransactionModal({
 
   const tabs = [
     { id: 'data', label: 'Dados', icon: <Calendar className="w-4 h-4" /> },
-    { 
-      id: 'installments', 
-      label: 'Parcelas', 
+    {
+      id: 'installments',
+      label: 'Parcelas',
       icon: <CreditCard className="w-4 h-4" />,
-      disabled: !isInstallment 
+      disabled: hasInstallmentGroup ? false : !isInstallment,
     },
-    { 
-      id: 'recurrence', 
-      label: 'Recorrência', 
+    ...(!isEditing ? [{
+      id: 'recurrence',
+      label: 'Recorrência',
       icon: <Repeat className="w-4 h-4" />,
-      disabled: !isRecurring 
-    },
+      disabled: !isRecurring,
+    }] : []),
   ];
 
   const getTransactionTypeLabel = () => {
@@ -602,7 +668,7 @@ export function AdvancedTransactionModal({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
         {/* Tab Navigation */}
-        {!isEditing && (
+        {(!isEditing || hasInstallmentGroup) && (
           <TabSelector
             tabs={tabs}
             activeTab={activeTab}
@@ -854,6 +920,176 @@ export function AdvancedTransactionModal({
             </div>
           )}
 
+          {/* Modo gerenciamento: parcelas existentes */}
+          {activeTab === 'installments' && hasInstallmentGroup && (
+            <div className="space-y-4">
+              {/* Header do grupo */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-text-primary">
+                    {installmentGroupData?.description ?? transaction?.transaction_description ?? 'Parcelas'}
+                  </h3>
+                  <p className="text-sm text-text-secondary mt-0.5">
+                    {installmentGroupData
+                      ? `${installmentGroupData.installment_count} parcelas · Total: ${formatCurrency(installmentGroupData.total_value)}`
+                      : `${installmentTransactions.length} parcelas`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Badge progresso */}
+                  {installmentTransactions.length > 0 && (() => {
+                    const paid = installmentTransactions.filter(t => t.transaction_status === 'paid' || t.transaction_status === 'received').length;
+                    return (
+                      <span className="text-xs px-2 py-1 rounded-full bg-bg-surface text-text-secondary">
+                        {paid}/{installmentTransactions.length} pagas
+                      </span>
+                    );
+                  })()}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={markAllPending}
+                    disabled={markingAllPaid || installmentTransactions.every(t => t.transaction_status === 'paid' || t.transaction_status === 'received')}
+                  >
+                    <CheckCheck className="w-3.5 h-3.5 mr-1.5" />
+                    Marcar pendentes como pagas
+                  </Button>
+                </div>
+              </div>
+
+              {/* Tabela */}
+              {loadingInstallments ? (
+                <div className="text-center py-8 text-text-muted text-sm">Carregando parcelas...</div>
+              ) : (
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <div className="max-h-96 overflow-y-auto">
+                    <table className="w-full">
+                      <thead className="bg-bg-surface sticky top-0">
+                        <tr>
+                          <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">#</th>
+                          <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">Vencimento</th>
+                          <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">Competência</th>
+                          <th className="text-left py-2 px-3 text-xs font-medium text-text-secondary">Centro de Custo</th>
+                          <th className="text-right py-2 px-3 text-xs font-medium text-text-secondary">Valor</th>
+                          <th className="text-center py-2 px-3 text-xs font-medium text-text-secondary">Status</th>
+                          <th className="text-center py-2 px-3 text-xs font-medium text-text-secondary">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {installmentTransactions.map((tx) => {
+                          const badge = getInstallmentStatusBadge(tx);
+                          const dirty = isRowDirty(tx.transaction_id);
+                          const isPaid = tx.transaction_status === 'paid' || tx.transaction_status === 'received';
+                          return (
+                            <tr key={tx.transaction_id} className="border-t border-border hover:bg-bg-surface/50">
+                              <td className="py-2 px-3 text-sm text-text-primary whitespace-nowrap">
+                                {tx.installment_number}/{tx.installment_total}
+                              </td>
+                              <td className="py-2 px-3">
+                                <input
+                                  type="date"
+                                  value={String(getRowValue(tx.transaction_id, 'transaction_date', tx.transaction_date))}
+                                  onChange={e => setRowField(tx.transaction_id, 'transaction_date', e.target.value)}
+                                  className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                                />
+                              </td>
+                              <td className="py-2 px-3">
+                                <input
+                                  type="month"
+                                  value={String(getRowValue(tx.transaction_id, 'transaction_competence_date', tx.transaction_competence_date ?? tx.transaction_date.slice(0, 7)))}
+                                  onChange={e => setRowField(tx.transaction_id, 'transaction_competence_date', e.target.value)}
+                                  className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                                />
+                              </td>
+                              <td className="py-2 px-3">
+                                <select
+                                  value={String(getRowValue(tx.transaction_id, 'transaction_cost_center_id', tx.transaction_cost_center_id) ?? '')}
+                                  onChange={e => setRowField(tx.transaction_id, 'transaction_cost_center_id', e.target.value || null)}
+                                  className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                                >
+                                  <option value="">Nenhum</option>
+                                  {costCenters.map(c => (
+                                    <option key={c.id} value={c.id}>{c.title}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="py-2 px-3">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0.01"
+                                  value={Number(getRowValue(tx.transaction_id, 'transaction_amount', tx.transaction_amount))}
+                                  onChange={e => setRowField(tx.transaction_id, 'transaction_amount', Number(e.target.value))}
+                                  className="text-xs border border-border rounded px-2 py-1 w-24 text-right bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                                />
+                              </td>
+                              <td className="py-2 px-3 text-center">
+                                <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', badge.className)}>
+                                  {badge.label}
+                                </span>
+                              </td>
+                              <td className="py-2 px-3">
+                                <div className="flex items-center justify-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => saveRow(tx)}
+                                    disabled={!dirty || updateTransaction.isPending}
+                                    title="Salvar alterações"
+                                    className={cn(
+                                      'p-1 rounded transition-colors',
+                                      dirty
+                                        ? 'text-accent hover:text-accent-hover'
+                                        : 'text-text-muted cursor-not-allowed opacity-40'
+                                    )}
+                                  >
+                                    <Save className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => togglePaid(tx)}
+                                    disabled={updateTransaction.isPending}
+                                    title={isPaid ? 'Marcar como pendente' : 'Marcar como paga'}
+                                    className={cn(
+                                      'p-1 rounded transition-colors',
+                                      isPaid ? 'text-green-600 hover:text-green-700' : 'text-text-muted hover:text-green-600'
+                                    )}
+                                  >
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteInstallmentTx(tx)}
+                                    disabled={deleteTransaction.isPending}
+                                    title="Excluir parcela"
+                                    className="p-1 rounded text-text-muted hover:text-red-600 transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Totalizador */}
+                  {installmentTransactions.length > 0 && (
+                    <div className="bg-bg-surface border-t border-border px-3 py-2 flex justify-between items-center">
+                      <span className="text-sm font-medium text-text-primary">Total das parcelas:</span>
+                      <span className="text-sm font-bold text-text-primary">
+                        {formatCurrency(installmentTransactions.reduce((s, t) => s + Number(t.transaction_amount), 0))}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Modo criação: gerar parcelas novas */}
           {activeTab === 'installments' && !isEditing && isInstallment && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">

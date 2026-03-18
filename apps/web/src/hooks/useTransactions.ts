@@ -31,6 +31,8 @@ export function useCreateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['receitas-summary', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['installments-by-group'] });
+      queryClient.invalidateQueries({ queryKey: ['installment-group'] });
     },
   });
 }
@@ -50,6 +52,8 @@ export function useUpdateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['receitas-summary', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['installments-by-group'] });
+      queryClient.invalidateQueries({ queryKey: ['installment-group'] });
     },
   });
 }
@@ -68,6 +72,8 @@ export function useDeleteTransaction() {
       queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['receitas-summary', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['installments-by-group'] });
+      queryClient.invalidateQueries({ queryKey: ['installment-group'] });
     },
   });
 }

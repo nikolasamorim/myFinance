@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { installmentService } from '../services/installment.service';
 import type { InstallmentGroupData } from '../services/installment.service';
+import { advancedTransactionService } from '../services/advancedTransaction.service';
 import { useWorkspace } from '../context/WorkspaceContext';
 
 export function useInstallmentGroups() {
@@ -64,6 +65,16 @@ export function useInstallmentsByGroup(groupId: string) {
     queryFn: () => installmentService.getInstallmentsByGroup(groupId),
     enabled: !!groupId,
     staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useInstallmentGroup(groupId?: string | null) {
+  return useQuery({
+    queryKey: ['installment-group', groupId],
+    queryFn: () => advancedTransactionService.getInstallmentGroup(groupId!),
+    enabled: !!groupId,
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
 }
