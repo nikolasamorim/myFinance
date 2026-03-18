@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, CreditCard as Edit, Trash2, Plus, AlertCircle, Repeat, Clock, CheckCircle, CheckCheck, Save } from 'lucide-react';
+import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, CreditCard as Edit, Trash2, Plus, AlertCircle, Repeat, Clock, CheckCircle, CheckCheck, Save, PauseCircle, PlayCircle, XCircle, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,6 +15,8 @@ import { useCategories } from '../../hooks/useCategories';
 import { useCostCenters } from '../../hooks/useCostCenters';
 import { useInstallmentGroup, useInstallmentsByGroup } from '../../hooks/useInstallments';
 import { useUpdateTransaction, useDeleteTransaction } from '../../hooks/useTransactions';
+import { useRecurrenceRule, useTransactionsByRecurrenceRule } from '../../hooks/useRecurrence';
+import type { RecurrenceRuleData } from '../../services/recurrence.service';
 import { formatCurrency, formatDate, cn } from '../../lib/utils';
 import type { AdvancedTransactionData, InstallmentData, RecurrenceData, Transaction } from '../../types';
 
@@ -100,6 +102,8 @@ export function AdvancedTransactionModal({
   const isEditing = !!transaction;
   const hasInstallmentGroup = isEditing && !!transaction?.installment_group_id;
   const installmentGroupId = transaction?.installment_group_id ?? null;
+  const hasRecurrenceRule = isEditing && !!transaction?.parent_recurrence_rule_id;
+  const recurrenceRuleId = transaction?.parent_recurrence_rule_id ?? null;
   const [activeTab, setActiveTab] = useState('data');
   const [installments, setInstallments] = useState<InstallmentData[]>([]);
   const [installmentsGenerated, setInstallmentsGenerated] = useState(false);
@@ -114,12 +118,20 @@ export function AdvancedTransactionModal({
   const [showBulkEditModal, setShowBulkEditModal] = useState(false);
   const [bulkEditData, setBulkEditData] = useState<Record<string, string>>({});
   const [applyingBulkEdit, setApplyingBulkEdit] = useState(false);
+  // Estado para configuração da regra de recorrência
+  const [ruleEdits, setRuleEdits] = useState<Partial<RecurrenceRuleData>>({});
+  const [savingRule, setSavingRule] = useState(false);
+  const [ruleConfigExpanded, setRuleConfigExpanded] = useState(true);
 
   // Hooks para gerenciamento de parcelas existentes
   const { data: installmentGroupData } = useInstallmentGroup(installmentGroupId);
   const { data: installmentTransactions = [], isLoading: loadingInstallments } = useInstallmentsByGroup(installmentGroupId || '');
   const updateTransaction = useUpdateTransaction();
   const deleteTransaction = useDeleteTransaction();
+  // Hooks para gerenciamento de lançamentos recorrentes
+  const { query: recurrenceRuleQuery, update: updateRule, pause: pauseRule, resume: resumeRule, cancel: cancelRule } = useRecurrenceRule(recurrenceRuleId);
+  const recurrenceRuleData = recurrenceRuleQuery.data;
+  const { data: recurrenceTransactions = [], isLoading: loadingRecurrences } = useTransactionsByRecurrenceRule(recurrenceRuleId);
   
   const [recurrenceData, setRecurrenceData] = useState<RecurrenceData>({
     enabled: false,
@@ -314,8 +326,11 @@ export function AdvancedTransactionModal({
 
   // Handle tab change - NO VALIDATION, NO API CALLS
   const handleTabChange = (newTab: string) => {
-    if (isEditing && !hasInstallmentGroup) return;
-    if (newTab !== activeTab) setSelectedRows(new Set());
+    if (isEditing && !hasInstallmentGroup && !hasRecurrenceRule) return;
+    if (newTab !== activeTab) {
+      setSelectedRows(new Set());
+      setRowEdits({});
+    }
     setActiveTab(newTab);
   };
 
@@ -334,11 +349,19 @@ export function AdvancedTransactionModal({
     const edits = rowEdits[tx.transaction_id];
     if (!edits || Object.keys(edits).length === 0) return;
     if (edits.transaction_amount !== undefined && Number(edits.transaction_amount) <= 0) {
-      alert('O valor da parcela deve ser maior que zero.');
+      alert('O valor deve ser maior que zero.');
       return;
     }
     await updateTransaction.mutateAsync({ id: tx.transaction_id, updates: edits });
     setRowEdits(prev => { const next = { ...prev }; delete next[tx.transaction_id]; return next; });
+  };
+
+  // Permite salvar linha paga apenas quando o único campo editado é o centro de custo
+  const isSavableEvenWhenPaid = (txId: string) => {
+    const edits = rowEdits[txId];
+    if (!edits) return false;
+    const editFields = Object.keys(edits);
+    return editFields.length > 0 && editFields.every(k => k === 'transaction_cost_center_id');
   };
 
   const togglePaid = async (tx: Transaction) => {
@@ -377,6 +400,11 @@ export function AdvancedTransactionModal({
     }
   };
 
+  // Lista ativa baseada no tab atual — compartilhada entre installments e recurrence
+  const managedTxs: Transaction[] = hasRecurrenceRule && activeTab === 'recurrence'
+    ? recurrenceTransactions
+    : installmentTransactions;
+
   const toggleRowSelection = (txId: string) => {
     setSelectedRows(prev => {
       const next = new Set(prev);
@@ -387,37 +415,37 @@ export function AdvancedTransactionModal({
   };
 
   const toggleSelectAll = () => {
-    if (selectedRows.size === installmentTransactions.length && installmentTransactions.length > 0) {
+    if (selectedRows.size === managedTxs.length && managedTxs.length > 0) {
       setSelectedRows(new Set());
     } else {
-      setSelectedRows(new Set(installmentTransactions.map(t => t.transaction_id)));
+      setSelectedRows(new Set(managedTxs.map(t => t.transaction_id)));
     }
   };
 
   const deleteSelected = async () => {
-    const selectedTxs = installmentTransactions.filter(tx => selectedRows.has(tx.transaction_id));
+    const selectedTxs = managedTxs.filter(tx => selectedRows.has(tx.transaction_id));
     const paidSelected = selectedTxs.filter(tx => tx.transaction_status === 'paid' || tx.transaction_status === 'received');
     if (paidSelected.length > 0) {
-      alert(`Não é possível excluir ${paidSelected.length} parcela(s) já paga(s). Desmarque-as e tente novamente.`);
+      alert(`Não é possível excluir ${paidSelected.length} lançamento(s) já pago(s). Desmarque-os e tente novamente.`);
       return;
     }
-    if (installmentTransactions.length - selectedRows.size === 0) {
-      alert('Não é possível excluir todas as parcelas do grupo. Pelo menos uma deve ser mantida.');
+    if (managedTxs.length - selectedRows.size === 0) {
+      alert('Não é possível excluir todos os lançamentos. Pelo menos um deve ser mantido.');
       return;
     }
-    if (!window.confirm(`Excluir ${selectedRows.size} parcela(s) selecionada(s)? Esta ação não pode ser desfeita.`)) return;
+    if (!window.confirm(`Excluir ${selectedRows.size} lançamento(s) selecionado(s)? Esta ação não pode ser desfeita.`)) return;
     await Promise.all(Array.from(selectedRows).map(id => deleteTransaction.mutateAsync(id)));
     setSelectedRows(new Set());
   };
 
   const markSelectedAsPaid = async () => {
-    const selectedTxs = installmentTransactions.filter(tx => selectedRows.has(tx.transaction_id));
+    const selectedTxs = managedTxs.filter(tx => selectedRows.has(tx.transaction_id));
     const pending = selectedTxs.filter(tx => tx.transaction_status !== 'paid' && tx.transaction_status !== 'received');
     if (pending.length === 0) {
-      alert('Todas as parcelas selecionadas já estão pagas.');
+      alert('Todos os lançamentos selecionados já estão pagos.');
       return;
     }
-    if (!window.confirm(`Marcar ${pending.length} parcela(s) selecionada(s) como pagas?`)) return;
+    if (!window.confirm(`Marcar ${pending.length} lançamento(s) selecionado(s) como pagos?`)) return;
     await Promise.all(pending.map(tx => {
       const newStatus = tx.transaction_type === 'income' ? 'received' : 'paid';
       return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: newStatus } });
@@ -436,7 +464,7 @@ export function AdvancedTransactionModal({
       alert('Selecione pelo menos um campo para alterar.');
       return;
     }
-    if (!window.confirm(`Aplicar alterações em ${selectedRows.size} parcela(s)?`)) return;
+    if (!window.confirm(`Aplicar alterações em ${selectedRows.size} ${bulkEditItemLabel}(s)?`)) return;
     setApplyingBulkEdit(true);
     try {
       await Promise.all(
@@ -458,6 +486,53 @@ export function AdvancedTransactionModal({
     const isOverdue = new Date(tx.transaction_date) < new Date(new Date().toISOString().split('T')[0]);
     if (isOverdue) return { label: 'Vencida', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
     return { label: 'Pendente', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' };
+  };
+
+  // Helpers para gerenciamento da regra de recorrência
+  const getRuleStatusBadge = (status?: string | null) => {
+    switch (status) {
+      case 'active': return { label: 'Ativa', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+      case 'paused': return { label: 'Pausada', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' };
+      case 'canceled': return { label: 'Cancelada', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
+      case 'completed': return { label: 'Concluída', className: 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400' };
+      case 'error': return { label: 'Erro', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
+      default: return { label: 'Desconhecido', className: 'bg-gray-100 text-gray-600' };
+    }
+  };
+
+  const isRuleConfigDirty = Object.keys(ruleEdits).length > 0;
+
+  const getRuleValue = (field: string): unknown =>
+    (ruleEdits as Record<string, unknown>)[field] !== undefined
+      ? (ruleEdits as Record<string, unknown>)[field]
+      : (recurrenceRuleData as Record<string, unknown> | undefined)?.[field];
+
+  const setRuleField = (field: keyof RecurrenceRuleData, value: unknown) =>
+    setRuleEdits(prev => ({ ...prev, [field]: value }));
+
+  const saveRuleConfig = async () => {
+    if (!isRuleConfigDirty) return;
+    if (!window.confirm('Alterar a configuração irá regenerar todos os lançamentos futuros. Continuar?')) return;
+    setSavingRule(true);
+    try {
+      await updateRule.mutateAsync(ruleEdits);
+      setRuleEdits({});
+    } finally {
+      setSavingRule(false);
+    }
+  };
+
+  const deleteRecurrenceTx = async (tx: Transaction) => {
+    if (tx.transaction_status === 'paid' || tx.transaction_status === 'received') {
+      alert('Não é possível excluir um lançamento já pago.');
+      return;
+    }
+    if (recurrenceTransactions.length === 1) {
+      alert('Não é possível excluir o único lançamento da recorrência.');
+      return;
+    }
+    if (!window.confirm(`Excluir lançamento #${tx.recurrence_sequence ?? '?'}? Esta ação não pode ser desfeita.`)) return;
+    await deleteTransaction.mutateAsync(tx.transaction_id);
   };
 
   // Handle currency input with real-time formatting
@@ -671,6 +746,9 @@ export function AdvancedTransactionModal({
     setSelectedRows(new Set());
     setShowBulkEditModal(false);
     setBulkEditData({});
+    setRuleEdits({});
+    setSavingRule(false);
+    setRuleConfigExpanded(true);
     setRecurrenceData({
       enabled: false,
       start_date: new Date().toISOString().split('T')[0],
@@ -714,8 +792,9 @@ export function AdvancedTransactionModal({
   const installmentsTotalAmount = installmentTransactions.reduce((s, t) => s + Number(t.transaction_amount), 0);
   const sumMismatch = !!installmentGroupData?.total_value &&
     Math.abs(installmentsTotalAmount - installmentGroupData.total_value) > 0.01;
-  const allRowsSelected = selectedRows.size === installmentTransactions.length && installmentTransactions.length > 0;
+  const allRowsSelected = selectedRows.size === managedTxs.length && managedTxs.length > 0;
   const someRowsSelected = selectedRows.size > 0 && !allRowsSelected;
+  const bulkEditItemLabel = hasRecurrenceRule && activeTab === 'recurrence' ? 'lançamento' : 'parcela';
 
   const tabs = [
     { id: 'data', label: 'Dados', icon: <Calendar className="w-4 h-4" /> },
@@ -725,11 +804,11 @@ export function AdvancedTransactionModal({
       icon: <CreditCard className="w-4 h-4" />,
       disabled: hasInstallmentGroup ? false : !isInstallment,
     },
-    ...(!isEditing ? [{
+    ...(!isEditing || hasRecurrenceRule ? [{
       id: 'recurrence',
       label: 'Recorrência',
       icon: <Repeat className="w-4 h-4" />,
-      disabled: !isRecurring,
+      disabled: isEditing ? false : !isRecurring,
     }] : []),
   ];
 
@@ -754,6 +833,7 @@ export function AdvancedTransactionModal({
   };
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
@@ -770,7 +850,7 @@ export function AdvancedTransactionModal({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
         {/* Tab Navigation */}
-        {(!isEditing || hasInstallmentGroup) && (
+        {(!isEditing || hasInstallmentGroup || hasRecurrenceRule) && (
           <TabSelector
             tabs={tabs}
             activeTab={activeTab}
@@ -1224,11 +1304,11 @@ export function AdvancedTransactionModal({
                                   <button
                                     type="button"
                                     onClick={() => saveRow(tx)}
-                                    disabled={!dirty || isPaid || updateTransaction.isPending}
-                                    title={isPaid ? 'Parcela paga — edição bloqueada' : 'Salvar alterações'}
+                                    disabled={!dirty || (isPaid && !isSavableEvenWhenPaid(tx.transaction_id)) || updateTransaction.isPending}
+                                    title={isPaid && !isSavableEvenWhenPaid(tx.transaction_id) ? 'Parcela paga — edição bloqueada' : 'Salvar alterações'}
                                     className={cn(
                                       'p-1 rounded transition-colors',
-                                      dirty && !isPaid
+                                      dirty && (!isPaid || isSavableEvenWhenPaid(tx.transaction_id))
                                         ? 'text-accent hover:text-accent-hover'
                                         : 'text-text-muted cursor-not-allowed opacity-40'
                                     )}
@@ -1463,6 +1543,365 @@ export function AdvancedTransactionModal({
             </div>
           )}
 
+          {/* Modo gerenciamento: lançamentos recorrentes existentes */}
+          {activeTab === 'recurrence' && hasRecurrenceRule && (
+            <div className="space-y-4">
+              {/* Painel 1: Configuração da Regra */}
+              <div className="border border-border rounded-lg overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-bg-card flex-wrap gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium text-sm text-text-primary truncate">
+                      {recurrenceRuleData?.description ?? transaction?.transaction_description ?? 'Recorrência'}
+                    </span>
+                    {(() => { const b = getRuleStatusBadge(recurrenceRuleData?.status); return (
+                      <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0', b.className)}>{b.label}</span>
+                    ); })()}
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {recurrenceRuleData?.status === 'active' && (
+                      <button type="button" onClick={() => pauseRule.mutate()} disabled={pauseRule.isPending}
+                        title="Pausar recorrência"
+                        className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border text-text-secondary hover:text-yellow-600 hover:border-yellow-300 transition-colors disabled:opacity-50">
+                        <PauseCircle className="w-3.5 h-3.5" />Pausar
+                      </button>
+                    )}
+                    {recurrenceRuleData?.status === 'paused' && (
+                      <button type="button" onClick={() => resumeRule.mutate()} disabled={resumeRule.isPending}
+                        title="Retomar recorrência"
+                        className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border text-text-secondary hover:text-green-600 hover:border-green-300 transition-colors disabled:opacity-50">
+                        <PlayCircle className="w-3.5 h-3.5" />Retomar
+                      </button>
+                    )}
+                    {recurrenceRuleData?.status !== 'canceled' && recurrenceRuleData?.status !== 'completed' && (
+                      <button type="button" onClick={() => cancelRule.mutate()} disabled={cancelRule.isPending}
+                        title="Cancelar recorrência"
+                        className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border text-text-secondary hover:text-red-600 hover:border-red-300 transition-colors disabled:opacity-50">
+                        <XCircle className="w-3.5 h-3.5" />Cancelar
+                      </button>
+                    )}
+                    <button type="button" onClick={() => setRuleConfigExpanded(v => !v)}
+                      className="p-1 rounded text-text-muted hover:text-text-primary transition-colors ml-1">
+                      {ruleConfigExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Formulário de configuração (colapsável) */}
+                {ruleConfigExpanded && (
+                  <div className="p-4 space-y-3 border-t border-border">
+                    <div className="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+                      <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                        Salvar a configuração irá regenerar todos os lançamentos futuros ainda não pagos.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-medium text-text-secondary mb-1">Descrição</label>
+                        <input type="text"
+                          value={String(getRuleValue('description') ?? '')}
+                          onChange={e => setRuleField('description', e.target.value)}
+                          className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">Valor padrão</label>
+                        <input type="number" step="0.01" min="0.01"
+                          value={Number(getRuleValue('amount') ?? 0)}
+                          onChange={e => setRuleField('amount', Number(e.target.value))}
+                          className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">Tipo de recorrência</label>
+                        <select value={String(getRuleValue('recurrence_type') ?? 'monthly')}
+                          onChange={e => setRuleField('recurrence_type', e.target.value)}
+                          className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent">
+                          {recurrenceTypeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                      </div>
+                      {(getRuleValue('recurrence_type') ?? recurrenceRuleData?.recurrence_type) === 'monthly' && (
+                        <div>
+                          <label className="block text-xs font-medium text-text-secondary mb-1">Dia do mês</label>
+                          <input type="number" min="1" max="31"
+                            value={String(getRuleValue('recurrence_day') ?? '')}
+                            onChange={e => setRuleField('recurrence_day', e.target.value)}
+                            placeholder="Ex: 15"
+                            className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent" />
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">Ajuste de vencimento</label>
+                        <select value={String(getRuleValue('due_adjustment') ?? 'none')}
+                          onChange={e => setRuleField('due_adjustment', e.target.value)}
+                          className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent">
+                          {dueAdjustmentOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">Data de início</label>
+                        <input type="date"
+                          value={String(getRuleValue('start_date') ?? '')}
+                          onChange={e => setRuleField('start_date', e.target.value)}
+                          className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">Data de fim (opcional)</label>
+                        <input type="date"
+                          value={String(getRuleValue('end_date') ?? '')}
+                          onChange={e => setRuleField('end_date', e.target.value || undefined as any)}
+                          className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">Nº de repetições (opcional)</label>
+                        <input type="number" min="1"
+                          value={String(getRuleValue('repeat_count') ?? '')}
+                          onChange={e => setRuleField('repeat_count', e.target.value ? Number(e.target.value) : undefined as any)}
+                          placeholder="Indefinido"
+                          className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">Conta bancária</label>
+                        <select value={String(getRuleValue('account_id') ?? '')}
+                          onChange={e => setRuleField('account_id', e.target.value || undefined as any)}
+                          className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent">
+                          <option value="">Nenhuma</option>
+                          {accounts.map(a => <option key={a.id} value={a.id}>{a.title}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">Categoria</label>
+                        <select value={String(getRuleValue('category_id') ?? '')}
+                          onChange={e => setRuleField('category_id', e.target.value || undefined as any)}
+                          className="text-sm border border-border rounded px-3 py-1.5 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent">
+                          <option value="">Nenhuma</option>
+                          {categories.map(c => <option key={c.category_id} value={c.category_id}>{c.category_name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <button type="button" onClick={saveRuleConfig}
+                        disabled={!isRuleConfigDirty || savingRule}
+                        className={cn(
+                          'flex items-center gap-1.5 text-sm px-3 py-1.5 rounded border transition-colors',
+                          isRuleConfigDirty && !savingRule
+                            ? 'bg-accent text-white border-accent hover:bg-accent-hover'
+                            : 'border-border text-text-muted cursor-not-allowed opacity-50'
+                        )}>
+                        <Save className="w-3.5 h-3.5" />
+                        {savingRule ? 'Salvando...' : 'Salvar configuração'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Painel 2: Lançamentos Gerados */}
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-text-primary">Lançamentos gerados</h3>
+                    <p className="text-xs text-text-secondary mt-0.5">
+                      {recurrenceTransactions.length} lançamento{recurrenceTransactions.length !== 1 ? 's' : ''} gerado{recurrenceTransactions.length !== 1 ? 's' : ''}{recurrenceRuleData?.generation_count != null ? ` · ${recurrenceRuleData.generation_count} gerados no total` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {recurrenceTransactions.length > 0 && (() => {
+                      const paid = recurrenceTransactions.filter(t => t.transaction_status === 'paid' || t.transaction_status === 'received').length;
+                      return (
+                        <span className="text-xs px-2 py-1 rounded-full bg-bg-surface text-text-secondary">
+                          {paid}/{recurrenceTransactions.length} pagos
+                        </span>
+                      );
+                    })()}
+                    <button type="button"
+                      disabled={markingAllPaid || recurrenceTransactions.every(t => t.transaction_status === 'paid' || t.transaction_status === 'received')}
+                      onClick={async () => {
+                        const pending = recurrenceTransactions.filter(t => t.transaction_status !== 'paid' && t.transaction_status !== 'received');
+                        if (pending.length === 0) return;
+                        if (!window.confirm(`Marcar ${pending.length} lançamento(s) pendente(s) como pagos?`)) return;
+                        setMarkingAllPaid(true);
+                        try {
+                          await Promise.all(pending.map(tx => {
+                            const s = tx.transaction_type === 'income' ? 'received' : 'paid';
+                            return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: s } });
+                          }));
+                        } finally { setMarkingAllPaid(false); }
+                      }}
+                      className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border text-text-secondary hover:text-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                      <CheckCheck className="w-3.5 h-3.5" />
+                      Marcar pendentes como pagos
+                    </button>
+                  </div>
+                </div>
+
+                {/* Toolbar de seleção */}
+                {selectedRows.size > 0 && (
+                  <div className="flex items-center justify-between bg-accent/10 border border-accent/20 rounded-lg px-3 py-2 flex-wrap gap-2 mb-3">
+                    <span className="text-sm font-medium text-text-primary">
+                      {selectedRows.size} lançamento{selectedRows.size > 1 ? 's' : ''} selecionado{selectedRows.size > 1 ? 's' : ''}
+                    </span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button type="button" variant="outline" size="sm" onClick={markSelectedAsPaid} disabled={updateTransaction.isPending}>
+                        <CheckCircle className="w-3.5 h-3.5 mr-1.5" />Marcar como pagos
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => { setBulkEditData({}); setShowBulkEditModal(true); }}>
+                        <Edit className="w-3.5 h-3.5 mr-1.5" />Editar em massa
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={deleteSelected} disabled={deleteTransaction.isPending}
+                        className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300">
+                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />Excluir selecionados
+                      </Button>
+                      <button type="button" onClick={() => setSelectedRows(new Set())}
+                        className="p-1 rounded text-text-muted hover:text-text-primary transition-colors" title="Limpar seleção">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tabela */}
+                {loadingRecurrences ? (
+                  <div className="text-center py-8 text-text-muted text-sm">Carregando lançamentos...</div>
+                ) : (
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <div className="max-h-72 overflow-y-auto overflow-x-auto">
+                      <table className="w-full min-w-[680px]">
+                        <thead className="bg-bg-surface sticky top-0">
+                          <tr>
+                            <th className="py-2 px-3 w-8">
+                              <input type="checkbox" checked={allRowsSelected}
+                                ref={(el: HTMLInputElement | null) => { if (el) el.indeterminate = someRowsSelected; }}
+                                onChange={toggleSelectAll}
+                                className="h-3.5 w-3.5 rounded border-border text-accent focus:ring-accent cursor-pointer" />
+                            </th>
+                            <th className="text-left py-2 px-2 text-xs font-medium text-text-secondary w-10">#</th>
+                            <th className="text-left py-2 px-2 text-xs font-medium text-text-secondary">Data</th>
+                            <th className="text-left py-2 px-2 text-xs font-medium text-text-secondary">Descrição</th>
+                            <th className="text-right py-2 px-2 text-xs font-medium text-text-secondary">Valor</th>
+                            <th className="text-left py-2 px-2 text-xs font-medium text-text-secondary">C. Custo</th>
+                            <th className="text-center py-2 px-2 text-xs font-medium text-text-secondary">Status</th>
+                            <th className="text-center py-2 px-2 text-xs font-medium text-text-secondary">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {recurrenceTransactions.map(tx => {
+                            const badge = getInstallmentStatusBadge(tx);
+                            const dirty = isRowDirty(tx.transaction_id);
+                            const isPaid = tx.transaction_status === 'paid' || tx.transaction_status === 'received';
+                            const isSelected = selectedRows.has(tx.transaction_id);
+                            const txDate = String(getRowValue(tx.transaction_id, 'transaction_date', tx.transaction_date));
+                            const isOverdue = !isPaid && txDate < new Date().toISOString().split('T')[0];
+                            return (
+                              <tr key={tx.transaction_id}
+                                className={cn('border-t border-border hover:bg-bg-surface/50', isSelected && 'bg-accent/5')}>
+                                <td className="py-1.5 px-3">
+                                  <input type="checkbox" checked={isSelected}
+                                    onChange={() => toggleRowSelection(tx.transaction_id)}
+                                    className="h-3.5 w-3.5 rounded border-border text-accent focus:ring-accent cursor-pointer" />
+                                </td>
+                                <td className="py-1.5 px-2 text-xs text-text-muted whitespace-nowrap">
+                                  {tx.recurrence_sequence ?? '—'}
+                                </td>
+                                <td className="py-1.5 px-2">
+                                  <input type="date" value={txDate}
+                                    onChange={e => setRowField(tx.transaction_id, 'transaction_date', e.target.value)}
+                                    disabled={isPaid}
+                                    title={isPaid ? 'Lançamento pago — edição bloqueada' : undefined}
+                                    className={cn(
+                                      'text-xs border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent',
+                                      isOverdue ? 'border-red-400 focus:ring-red-500' : 'border-border',
+                                      isPaid && 'opacity-50 cursor-not-allowed'
+                                    )} />
+                                </td>
+                                <td className="py-1.5 px-2">
+                                  <input type="text"
+                                    value={String(getRowValue(tx.transaction_id, 'transaction_description', tx.transaction_description))}
+                                    onChange={e => setRowField(tx.transaction_id, 'transaction_description', e.target.value)}
+                                    disabled={isPaid}
+                                    title={isPaid ? 'Lançamento pago — edição bloqueada' : undefined}
+                                    className={cn(
+                                      'text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent',
+                                      isPaid && 'opacity-50 cursor-not-allowed'
+                                    )} />
+                                </td>
+                                <td className="py-1.5 px-2">
+                                  <input type="number" step="0.01" min="0.01"
+                                    value={Number(getRowValue(tx.transaction_id, 'transaction_amount', tx.transaction_amount))}
+                                    onChange={e => setRowField(tx.transaction_id, 'transaction_amount', Number(e.target.value))}
+                                    disabled={isPaid}
+                                    title={isPaid ? 'Lançamento pago — edição bloqueada' : undefined}
+                                    className={cn(
+                                      'text-xs border border-border rounded px-2 py-1 w-20 text-right bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent',
+                                      isPaid && 'opacity-50 cursor-not-allowed'
+                                    )} />
+                                </td>
+                                <td className="py-1.5 px-2">
+                                  <select
+                                    value={String(getRowValue(tx.transaction_id, 'transaction_cost_center_id', tx.transaction_cost_center_id) ?? '')}
+                                    onChange={e => setRowField(tx.transaction_id, 'transaction_cost_center_id', e.target.value || null)}
+                                    className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent">
+                                    <option value="">Nenhum</option>
+                                    {costCenters.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                                  </select>
+                                </td>
+                                <td className="py-1.5 px-2 text-center">
+                                  <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', badge.className)}>
+                                    {badge.label}
+                                  </span>
+                                </td>
+                                <td className="py-1.5 px-2">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <button type="button" onClick={() => saveRow(tx)}
+                                      disabled={!dirty || (isPaid && !isSavableEvenWhenPaid(tx.transaction_id)) || updateTransaction.isPending}
+                                      title={isPaid && !isSavableEvenWhenPaid(tx.transaction_id) ? 'Lançamento pago — edição bloqueada' : 'Salvar alterações'}
+                                      className={cn('p-1 rounded transition-colors',
+                                        dirty && (!isPaid || isSavableEvenWhenPaid(tx.transaction_id))
+                                          ? 'text-accent hover:text-accent-hover'
+                                          : 'text-text-muted cursor-not-allowed opacity-40')}>
+                                      <Save className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button type="button" onClick={() => togglePaid(tx)} disabled={updateTransaction.isPending}
+                                      title={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+                                      className={cn('p-1 rounded transition-colors',
+                                        isPaid ? 'text-green-600 hover:text-green-700' : 'text-text-muted hover:text-green-600')}>
+                                      <CheckCircle className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button type="button" onClick={() => deleteRecurrenceTx(tx)}
+                                      disabled={deleteTransaction.isPending || isPaid || recurrenceTransactions.length === 1}
+                                      title={isPaid ? 'Não é possível excluir lançamento pago' : recurrenceTransactions.length === 1 ? 'Não é possível excluir o único lançamento' : 'Excluir lançamento'}
+                                      className={cn('p-1 rounded transition-colors',
+                                        isPaid || recurrenceTransactions.length === 1
+                                          ? 'text-text-muted opacity-40 cursor-not-allowed'
+                                          : 'text-text-muted hover:text-red-600')}>
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    {recurrenceTransactions.length > 0 && (
+                      <div className="border-t border-border bg-bg-surface px-3 py-2 flex justify-between items-center">
+                        <span className="text-xs text-text-secondary">
+                          Total — {recurrenceTransactions.length} lançamentos
+                        </span>
+                        <span className="text-sm font-bold text-text-primary">
+                          {formatCurrency(recurrenceTransactions.reduce((s, t) => s + Number(t.transaction_amount), 0))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'recurrence' && !isEditing && isRecurring && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -1623,95 +2062,97 @@ export function AdvancedTransactionModal({
         </div>
       </form>
 
-      {/* Modal de edição em massa */}
-      <Modal
-        isOpen={showBulkEditModal}
-        onClose={() => { setShowBulkEditModal(false); setBulkEditData({}); }}
-        title={`Editar em massa — ${selectedRows.size} parcela${selectedRows.size > 1 ? 's' : ''}`}
-        size="md"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-text-secondary">
-            Os campos preenchidos abaixo serão aplicados a todas as parcelas selecionadas. Campos com "— não alterar —" serão ignorados. Datas e valores só podem ser alterados individualmente.
-          </p>
-
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Centro de Custo</label>
-            <select
-              value={bulkEditData.transaction_cost_center_id ?? ''}
-              onChange={e => setBulkEditData(prev => ({ ...prev, transaction_cost_center_id: e.target.value }))}
-              className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
-            >
-              <option value="">— não alterar —</option>
-              <option value="__clear__">Nenhum (remover)</option>
-              {costCenters.map(c => (
-                <option key={c.id} value={c.id}>{c.title}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Categoria</label>
-            <select
-              value={bulkEditData.transaction_category_id ?? ''}
-              onChange={e => setBulkEditData(prev => ({ ...prev, transaction_category_id: e.target.value }))}
-              className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
-            >
-              <option value="">— não alterar —</option>
-              <option value="__clear__">Nenhuma (remover)</option>
-              {categories.map(c => (
-                <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Conta Bancária / Caixa</label>
-            <select
-              value={bulkEditData.transaction_bank_id ?? ''}
-              onChange={e => setBulkEditData(prev => ({ ...prev, transaction_bank_id: e.target.value }))}
-              className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
-            >
-              <option value="">— não alterar —</option>
-              {accounts.map(a => (
-                <option key={a.id} value={a.id}>{a.title}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Método de Pagamento</label>
-            <select
-              value={bulkEditData.transaction_payment_method ?? ''}
-              onChange={e => setBulkEditData(prev => ({ ...prev, transaction_payment_method: e.target.value }))}
-              className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
-            >
-              <option value="">— não alterar —</option>
-              {paymentMethodOptions.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => { setShowBulkEditModal(false); setBulkEditData({}); }}
-              disabled={applyingBulkEdit}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              loading={applyingBulkEdit}
-              onClick={applyBulkEdit}
-            >
-              Aplicar em {selectedRows.size} parcela{selectedRows.size > 1 ? 's' : ''}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </Modal>
+
+    {/* Modal de edição em massa — fora do Modal principal para evitar problemas de z-index */}
+    <Modal
+      isOpen={showBulkEditModal}
+      onClose={() => { setShowBulkEditModal(false); setBulkEditData({}); }}
+      title={`Editar em massa — ${selectedRows.size} ${bulkEditItemLabel}${selectedRows.size > 1 ? 's' : ''}`}
+      size="md"
+    >
+      <div className="space-y-4">
+        <p className="text-sm text-text-secondary">
+          Os campos preenchidos serão aplicados a todos os {bulkEditItemLabel}s selecionados. Campos com "— não alterar —" serão ignorados. Datas e valores só podem ser alterados individualmente.
+        </p>
+
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">Centro de Custo</label>
+          <select
+            value={bulkEditData.transaction_cost_center_id ?? ''}
+            onChange={e => setBulkEditData(prev => ({ ...prev, transaction_cost_center_id: e.target.value }))}
+            className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+          >
+            <option value="">— não alterar —</option>
+            <option value="__clear__">Nenhum (remover)</option>
+            {costCenters.map(c => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">Categoria</label>
+          <select
+            value={bulkEditData.transaction_category_id ?? ''}
+            onChange={e => setBulkEditData(prev => ({ ...prev, transaction_category_id: e.target.value }))}
+            className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+          >
+            <option value="">— não alterar —</option>
+            <option value="__clear__">Nenhuma (remover)</option>
+            {categories.map(c => (
+              <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">Conta Bancária / Caixa</label>
+          <select
+            value={bulkEditData.transaction_bank_id ?? ''}
+            onChange={e => setBulkEditData(prev => ({ ...prev, transaction_bank_id: e.target.value }))}
+            className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+          >
+            <option value="">— não alterar —</option>
+            {accounts.map(a => (
+              <option key={a.id} value={a.id}>{a.title}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">Método de Pagamento</label>
+          <select
+            value={bulkEditData.transaction_payment_method ?? ''}
+            onChange={e => setBulkEditData(prev => ({ ...prev, transaction_payment_method: e.target.value }))}
+            className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+          >
+            <option value="">— não alterar —</option>
+            {paymentMethodOptions.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-2 border-t border-border">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => { setShowBulkEditModal(false); setBulkEditData({}); }}
+            disabled={applyingBulkEdit}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            loading={applyingBulkEdit}
+            onClick={applyBulkEdit}
+          >
+            Aplicar em {selectedRows.size} {bulkEditItemLabel}{selectedRows.size > 1 ? 's' : ''}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+    </>
   );
 }

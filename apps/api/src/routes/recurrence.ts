@@ -36,6 +36,21 @@ router.get('/', h(async (req, res, next) => {
     } catch (err) { next(err); }
 }));
 
+/** GET /api/v1/workspaces/:wid/recurrence-rules/:id */
+router.get('/:id', h(async (req, res, next) => {
+    try {
+        const { wid, id } = req.params;
+        const { data, error } = await req.supabase
+            .from('recurrence_rules')
+            .select('*')
+            .eq('id', id)
+            .eq('workspace_id', wid)
+            .single();
+        if (error || !data) { res.status(404).json({ error: 'Not found' }); return; }
+        res.json(data);
+    } catch (err) { next(err); }
+}));
+
 /** POST /api/v1/workspaces/:wid/recurrence-rules */
 router.post('/', h(async (req, res, next) => {
     try {

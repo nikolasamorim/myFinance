@@ -54,6 +54,8 @@ export function useUpdateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['installments-by-group'] });
       queryClient.invalidateQueries({ queryKey: ['installment-group'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions-by-rule'] });
+      queryClient.invalidateQueries({ queryKey: ['recurrence-rule'] });
     },
   });
 }
@@ -74,6 +76,8 @@ export function useDeleteTransaction() {
       queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['installments-by-group'] });
       queryClient.invalidateQueries({ queryKey: ['installment-group'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions-by-rule'] });
+      queryClient.invalidateQueries({ queryKey: ['recurrence-rule'] });
     },
   });
 }

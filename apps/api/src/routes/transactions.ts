@@ -18,7 +18,22 @@ router.get('/', h(async (req, res, next) => {
         const {
             page = '1', limit = '10', search, type,
             startDate, endDate, sort = 'transaction_date', order = 'desc',
+            parent_recurrence_rule_id,
         } = req.query as Record<string, string>;
+
+        // Special filter: return all transactions for a recurrence rule (no pagination)
+        if (parent_recurrence_rule_id) {
+            const { data, error } = await req.supabase
+                .from('transactions')
+                .select('*')
+                .eq('transaction_workspace_id', wid)
+                .eq('parent_recurrence_rule_id', parent_recurrence_rule_id)
+                .order('transaction_date', { ascending: true })
+                .limit(500);
+            if (error) throw error;
+            res.json({ data: data ?? [], total: data?.length ?? 0, page: 1, limit: 500 });
+            return;
+        }
 
         const pageNum = parseInt(page, 10);
         const limitNum = parseInt(limit, 10);

@@ -1,4 +1,5 @@
 import { apiClient } from '../lib/apiClient';
+import type { Transaction } from '../types';
 
 export interface RecurrenceRuleData {
   transaction_type: 'income' | 'expense' | 'debt' | 'investment';
@@ -43,5 +44,16 @@ export const recurrenceService = {
 
   async cancelRecurrenceRule(id: string, workspaceId: string) {
     return apiClient!.post<any>(`/workspaces/${workspaceId}/recurrence-rules/${id}/cancel`, {});
+  },
+
+  async getRecurrenceRuleById(workspaceId: string, ruleId: string) {
+    return apiClient!.get<any>(`/workspaces/${workspaceId}/recurrence-rules/${ruleId}`);
+  },
+
+  async getTransactionsByRule(workspaceId: string, ruleId: string): Promise<Transaction[]> {
+    const res = await apiClient!.get<{ data: Transaction[] }>(
+      `/workspaces/${workspaceId}/transactions?parent_recurrence_rule_id=${encodeURIComponent(ruleId)}`
+    );
+    return res.data ?? [];
   },
 };
