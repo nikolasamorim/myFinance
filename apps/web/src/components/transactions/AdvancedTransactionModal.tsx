@@ -761,24 +761,6 @@ export function AdvancedTransactionModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Centro de Custo (opcional)
-                    </label>
-                    <Controller
-                      name="cost_center_id"
-                      control={control}
-                      render={({ field }) => (
-                        <Dropdown
-                          options={costCenterOptions}
-                          value={field.value || ''}
-                          onChange={field.onChange}
-                          placeholder="Selecione um centro"
-                        />
-                      )}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Categoria (opcional)
                     </label>
                     <Controller
@@ -790,6 +772,24 @@ export function AdvancedTransactionModal({
                           value={field.value || ''}
                           onChange={field.onChange}
                           placeholder="Selecione uma categoria"
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                      Centro de Custo (opcional)
+                    </label>
+                    <Controller
+                      name="cost_center_id"
+                      control={control}
+                      render={({ field }) => (
+                        <Dropdown
+                          options={costCenterOptions}
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Selecione um centro"
                         />
                       )}
                     />

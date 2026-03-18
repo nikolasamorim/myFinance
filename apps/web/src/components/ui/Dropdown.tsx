@@ -46,7 +46,7 @@ export function Dropdown({ options, value, onChange, placeholder = 'Selecione...
       >
         <div className="flex items-center min-w-0 flex-1">
           {selectedOption?.icon && (
-            <span className={cn("mr-1 flex-shrink-0", isMobile ? "text-sm" : "text-sm")}>{selectedOption.icon}</span>
+            <span className={cn("mr-1 flex-shrink-0 text-text-secondary", isMobile ? "text-sm" : "text-sm")}>{selectedOption.icon}</span>
           )}
           <span className={cn(
             'block truncate min-w-0',
@@ -84,7 +84,7 @@ export function Dropdown({ options, value, onChange, placeholder = 'Selecione...
                 }}
               >
                 {option.icon && (
-                  <span className={cn("mr-2 flex-shrink-0", isMobile ? "text-sm" : "text-sm")}>{option.icon}</span>
+                  <span className={cn("mr-2 flex-shrink-0 text-text-secondary", isMobile ? "text-sm" : "text-sm")}>{option.icon}</span>
                 )}
                 <span className={cn("block truncate min-w-0", isMobile ? "text-sm font-medium" : "text-sm")}>{option.label}</span>
               </button>

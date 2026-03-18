@@ -8,14 +8,21 @@ export function useAdvancedTransactions() {
   const queryClient = useQueryClient();
 
   const createAdvancedTransaction = useMutation({
-    mutationFn: ({ transactionType, data }: { transactionType: string; data: AdvancedTransactionData }) => 
+    mutationFn: ({ transactionType, data }: { transactionType: string; data: AdvancedTransactionData }) =>
       advancedTransactionService.createAdvancedTransaction(currentWorkspace!.workspace_id, transactionType, data),
     onSuccess: () => {
       // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-data', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['receitas-summary', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['receitas-installments', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['receitas-fixed', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['despesas-installments', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['despesas-fixed', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['installment-groups', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
     },

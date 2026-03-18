@@ -26,6 +26,11 @@ export function useCreateTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['receitas-summary', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
     },
   });
 }
@@ -40,6 +45,11 @@ export function useUpdateTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['receitas-summary', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
     },
   });
 }
@@ -53,6 +63,11 @@ export function useDeleteTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-data', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['receitas', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['receitas-summary', currentWorkspace?.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
     },
   });
 }
