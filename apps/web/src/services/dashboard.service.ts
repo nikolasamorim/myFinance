@@ -8,6 +8,12 @@ interface DashboardFilters {
   search: string;
   startDate?: string;
   endDate?: string;
+  status?: string[];
+  type?: string[];
+  accountId?: string;
+  categoryId?: string;
+  costCenterId?: string;
+  creditCardId?: string;
 }
 
 interface PaidSummary {
@@ -41,6 +47,12 @@ export const dashboardService = {
     if (filters?.search) params.set('search', filters.search);
     if (filters?.startDate) params.set('startDate', filters.startDate);
     if (filters?.endDate) params.set('endDate', filters.endDate);
+    if (filters?.status?.length) params.set('status', filters.status.join(','));
+    if (filters?.type?.length) params.set('type', filters.type.join(','));
+    if (filters?.accountId) params.set('accountId', filters.accountId);
+    if (filters?.categoryId) params.set('categoryId', filters.categoryId);
+    if (filters?.costCenterId) params.set('costCenterId', filters.costCenterId);
+    if (filters?.creditCardId) params.set('creditCardId', filters.creditCardId);
     const qs = params.toString() ? `?${params}` : '';
 
     return apiClient!.get<DashboardData>(`/workspaces/${workspaceId}/dashboard${qs}`);

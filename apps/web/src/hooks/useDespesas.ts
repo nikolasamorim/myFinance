@@ -2,17 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { despesaService } from '../services/despesa.service';
 import type { DespesaData } from '../services/despesa.service';
 import { useWorkspace } from '../context/WorkspaceContext';
+import type { AdvancedFilters } from '../types/filters';
 
-interface DespesaFilters {
-  status: string;
-  type: string;
-  installments: string;
-  period: string;
-  category: string;
-  search: string;
-}
-
-export function useDespesas(filters: DespesaFilters) {
+export function useDespesas(filters: AdvancedFilters) {
   const { currentWorkspace } = useWorkspace();
   const queryClient = useQueryClient();
 

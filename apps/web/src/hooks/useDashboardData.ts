@@ -7,6 +7,12 @@ interface DashboardFilters {
   search: string;
   startDate?: string;
   endDate?: string;
+  status?: string[];
+  type?: string[];
+  accountId?: string;
+  categoryId?: string;
+  costCenterId?: string;
+  creditCardId?: string;
 }
 
 export function useDashboardData(workspaceId?: string, filters?: DashboardFilters) {

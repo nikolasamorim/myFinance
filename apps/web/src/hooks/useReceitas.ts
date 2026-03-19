@@ -2,17 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { receitaService } from '../services/receita.service';
 import type { ReceitaData } from '../services/receita.service';
 import { useWorkspace } from '../context/WorkspaceContext';
+import type { AdvancedFilters } from '../types/filters';
 
-interface ReceitaFilters {
-  status: string;
-  type: string;
-  installments: string;
-  period: string;
-  category: string;
-  search: string;
-}
-
-export function useReceitas(filters: ReceitaFilters) {
+export function useReceitas(filters: AdvancedFilters) {
   const { currentWorkspace } = useWorkspace();
   const queryClient = useQueryClient();
 

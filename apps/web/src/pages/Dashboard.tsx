@@ -39,6 +39,8 @@ const dashboardSortOptions: SortOption[] = [
   { value: 'amount_asc', label: 'Valor (menor primeiro)' },
 ];
 
+const ITEMS_PER_PAGE = 15;
+
 interface MonthlyData {
   month: string;        // yyyy-MM
   monthName: string;    // ex: set. de 2025
@@ -64,6 +66,7 @@ export function Dashboard() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [sortBy, setSortBy] = useState<string>('date_desc');
+  const [currentPage, setCurrentPage] = useState(1);
   const [appliedFilters, setAppliedFilters] = useState<DashboardAdvancedFilters>({
     ...DEFAULT_DASHBOARD_ADVANCED_FILTERS,
   });
@@ -76,6 +79,12 @@ export function Dashboard() {
     search: appliedFilters.search,
     startDate: appliedFilters.date_start,
     endDate: appliedFilters.date_end,
+    status: appliedFilters.status,
+    type: appliedFilters.type,
+    accountId: appliedFilters.account_id,
+    categoryId: appliedFilters.category_id,
+    costCenterId: appliedFilters.cost_center_id,
+    creditCardId: appliedFilters.credit_card_id,
   };
 
   // Dados principais (respeitam os filtros para cards de resumo/tabela)
@@ -213,12 +222,21 @@ export function Dashboard() {
     });
   }, [recentTransactions, sortBy]);
 
+  const totalPages = Math.max(1, Math.ceil(sortedTransactions.length / ITEMS_PER_PAGE));
+
+  const paginatedTransactions = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedTransactions.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedTransactions, currentPage]);
+
   const handleApplyFilters = (newFilters: DashboardAdvancedFilters) => {
     setAppliedFilters(newFilters);
+    setCurrentPage(1);
   };
 
   const handleApplySort = (newSort: string) => {
     setSortBy(newSort);
+    setCurrentPage(1);
   };
 
   const handleMonthClick = (monthKey: string) => {
@@ -250,6 +268,7 @@ export function Dashboard() {
       date_end: endDateStr,
     }));
 
+    setCurrentPage(1);
     // Clear selected month after applying
     setSelectedMonth(null);
   };
@@ -565,8 +584,8 @@ export function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" />
                 </div>
               ) : (
+                <>
                 <div className="w-full overflow-x-auto">
-                  <div className="max-h-[560px] overflow-y-auto">
                     <table className="w-full min-w-[800px]">
                       <thead>
                         <tr className="border-b border-border">
@@ -604,7 +623,7 @@ export function Dashboard() {
                       </thead>
 
                       <tbody>
-                        {sortedTransactions.map((transaction) => (
+                        {paginatedTransactions.map((transaction) => (
                           <tr
                             key={transaction.transaction_id}
                             className="border-b border-border hover:bg-bg-elevated cursor-pointer"
@@ -742,7 +761,6 @@ export function Dashboard() {
                         ))}
                       </tbody>
                     </table>
-                  </div>
 
                   {sortedTransactions.length === 0 && (
                     <div className="text-center py-6 sm:py-8 text-text-muted px-4">
@@ -751,6 +769,31 @@ export function Dashboard() {
                     </div>
                   )}
                 </div>
+
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between px-2 sm:px-4 py-3 border-t border-border bg-bg-page">
+                    <span className="text-xs sm:text-sm text-text-secondary">
+                      {sortedTransactions.length} lançamento{sortedTransactions.length !== 1 ? 's' : ''} — página {currentPage} de {totalPages}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1.5 text-xs sm:text-sm rounded-md border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                      >
+                        ← Anterior
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1.5 text-xs sm:text-sm rounded-md border border-border bg-bg-surface text-text-primary hover:bg-bg-elevated disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                      >
+                        Próxima →
+                      </button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </CardContent>
           </Card>

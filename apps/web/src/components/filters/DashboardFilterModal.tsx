@@ -406,9 +406,9 @@ export function DashboardFilterModal({
               className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-bg-surface text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
             >
               <option value="">Todos os centros de custo</option>
-              {(costCenters as { cost_center_id: string; cost_center_name: string }[] | undefined)?.map((cc) => (
-                <option key={cc.cost_center_id} value={cc.cost_center_id}>
-                  {cc.cost_center_name}
+              {(costCenters as { id: string; title: string }[] | undefined)?.map((cc) => (
+                <option key={cc.id} value={cc.id}>
+                  {cc.title}
                 </option>
               ))}
             </select>
@@ -423,9 +423,9 @@ export function DashboardFilterModal({
               className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-bg-surface text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
             >
               <option value="">Todos os cartões</option>
-              {(creditCards as { credit_card_id: string; credit_card_name: string }[] | undefined)?.map((cc) => (
-                <option key={cc.credit_card_id} value={cc.credit_card_id}>
-                  {cc.credit_card_name}
+              {(creditCards as { id: string; title: string }[] | undefined)?.map((cc) => (
+                <option key={cc.id} value={cc.id}>
+                  {cc.title}
                 </option>
               ))}
             </select>

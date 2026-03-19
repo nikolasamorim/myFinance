@@ -31,7 +31,7 @@ const sum = (arr: any[]) => arr.reduce((a: number, t: any) => a + Number(t.trans
 router.get('/', h(async (req, res, next) => {
     try {
         const { wid } = req.params;
-        const { period, search, startDate, endDate } = req.query as Record<string, string>;
+        const { period, search, startDate, endDate, status, type, accountId, categoryId, costCenterId, creditCardId } = req.query as Record<string, string>;
 
         let query = req.supabase
             .from('transactions')
@@ -42,6 +42,12 @@ router.get('/', h(async (req, res, next) => {
         if (search) query = query.ilike('transaction_description', `%${search}%`);
         const { start, end } = getPeriodRange(period, startDate, endDate);
         if (start && end) query = query.gte('transaction_date', start).lte('transaction_date', end);
+        if (status) query = query.in('transaction_status', status.split(','));
+        if (type) query = query.in('transaction_type', type.split(','));
+        if (accountId) query = query.eq('transaction_bank_id', accountId);
+        if (categoryId) query = query.eq('transaction_category_id', categoryId);
+        if (costCenterId) query = query.eq('transaction_cost_center_id', costCenterId);
+        if (creditCardId) query = query.eq('transaction_card_id', creditCardId);
 
         const { data: transactions, error } = await query;
         if (error) throw error;

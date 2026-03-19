@@ -1,12 +1,136 @@
 import { supabase } from '../lib/supabase';
+import type { AdvancedFilters } from '../types/filters';
 
-interface ReceitaFilters {
-  status: string;
-  type: string;
-  installments: string;
-  period: string;
-  category: string;
-  search: string;
+// ── Period helper ──────────────────────────────────────────────────────────────
+function getPeriodRange(filters: AdvancedFilters): { start: string; end: string } | null {
+  const now = new Date();
+  const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+  switch (filters.period) {
+    case 'this_month':
+    case 'current_month': {
+      return {
+        start: fmt(new Date(now.getFullYear(), now.getMonth(), 1)),
+        end: fmt(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
+      };
+    }
+    case 'last_month': {
+      return {
+        start: fmt(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
+        end: fmt(new Date(now.getFullYear(), now.getMonth(), 0)),
+      };
+    }
+    case 'today': {
+      const today = fmt(now);
+      return { start: today, end: today };
+    }
+    case 'this_week': {
+      const day = now.getDay();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - ((day + 6) % 7));
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      return { start: fmt(monday), end: fmt(sunday) };
+    }
+    case 'quarter': {
+      const q = Math.floor(now.getMonth() / 3);
+      return {
+        start: fmt(new Date(now.getFullYear(), q * 3, 1)),
+        end: fmt(new Date(now.getFullYear(), q * 3 + 3, 0)),
+      };
+    }
+    case 'semester': {
+      const half = now.getMonth() < 6 ? 0 : 6;
+      return {
+        start: fmt(new Date(now.getFullYear(), half, 1)),
+        end: fmt(new Date(now.getFullYear(), half + 6, 0)),
+      };
+    }
+    case 'year': {
+      return {
+        start: fmt(new Date(now.getFullYear(), 0, 1)),
+        end: fmt(new Date(now.getFullYear(), 11, 31)),
+      };
+    }
+    case 'custom': {
+      if (filters.date_start && filters.date_end) {
+        return { start: filters.date_start, end: filters.date_end };
+      }
+      return null;
+    }
+    default:
+      return null;
+  }
+}
+
+// ── Apply all advanced filters to a Supabase query ────────────────────────────
+function applyFilters<T>(query: T, filters: AdvancedFilters): T {
+  let q = query as any;
+
+  if (filters.status?.length) {
+    q = q.in('transaction_status', filters.status);
+  }
+  const range = getPeriodRange(filters);
+  if (range) {
+    q = q.gte('transaction_date', range.start).lte('transaction_date', range.end);
+  }
+  if (filters.category_id) {
+    q = q.eq('transaction_category_id', filters.category_id);
+  }
+  if (filters.cost_center_id) {
+    q = q.eq('transaction_cost_center_id', filters.cost_center_id);
+  }
+  if (filters.credit_card_id) {
+    q = q.eq('transaction_card_id', filters.credit_card_id);
+  }
+  if (filters.account_id) {
+    q = q.eq('transaction_bank_id', filters.account_id);
+  }
+  if (filters.amount_min) {
+    const min = parseFloat(filters.amount_min);
+    if (!isNaN(min)) q = q.gte('transaction_amount', min);
+  }
+  if (filters.amount_max) {
+    const max = parseFloat(filters.amount_max);
+    if (!isNaN(max)) q = q.lte('transaction_amount', max);
+  }
+  if (filters.no_category) {
+    q = q.is('transaction_category_id', null);
+  }
+  if (filters.no_account) {
+    q = q.is('transaction_bank_id', null);
+  }
+  if (filters.only_due_today) {
+    const today = new Date().toISOString().split('T')[0];
+    q = q.eq('transaction_date', today).in('transaction_status', ['pending', 'overdue']);
+  }
+
+  return q as T;
+}
+
+// ── Client-side type filter (fixa / parcelada / avulsa) ───────────────────────
+function applyTypeFilter(items: any[], types: string[]): any[] {
+  if (!types?.length) return items;
+  return items.filter(item => {
+    const isFixa = !!item.parent_recurrence_rule_id;
+    const isParcelada = (item.transaction_description || '').match(/parcela\s+\d+\s*\/\s*\d+/i);
+    const isAvulsa = !isFixa && !isParcelada;
+    return (
+      (types.includes('fixa') && isFixa) ||
+      (types.includes('parcelada') && isParcelada) ||
+      (types.includes('avulsa') && isAvulsa)
+    );
+  });
+}
+
+// ── Client-side only_last_installment filter ──────────────────────────────────
+function applyLastInstallmentFilter(items: any[], enabled: boolean): any[] {
+  if (!enabled) return items;
+  return items.filter(item => {
+    const m = (item.transaction_description || '').match(/parcela\s+(\d+)\s*\/\s*(\d+)/i);
+    if (!m) return false;
+    return Number(m[1]) === Number(m[2]);
+  });
 }
 
 export interface ReceitaData {
@@ -43,7 +167,7 @@ function parseInstallmentMeta(description?: string): { number: number; total: nu
 }
 
 export const receitaService = {
-  async getReceitas(workspaceId: string, filters: ReceitaFilters) {
+  async getReceitas(workspaceId: string, filters: AdvancedFilters) {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw new Error('Authentication failed: ' + userError.message);
@@ -75,36 +199,15 @@ export const receitaService = {
         .eq('transaction_type', 'income')
         .order('transaction_date', { ascending: false });
 
-      if (filters.search) {
-        query = query.ilike('transaction_description', `%${filters.search}%`);
-      }
-
-      // Status (igual despesas)
-      if (filters.status !== 'all') {
-        query = query.eq('transaction_status', filters.status);
-      }
-
-      // Período (igual despesas)
-      if (filters.period === 'current_month') {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        query = query
-          .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
-          .lte('transaction_date', endOfMonth.toISOString().split('T')[0]);
-      } else if (filters.period === 'last_month') {
-        const now = new Date();
-        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-        query = query
-          .gte('transaction_date', startOfLastMonth.toISOString().split('T')[0])
-          .lte('transaction_date', endOfLastMonth.toISOString().split('T')[0]);
-      }
+      query = applyFilters(query, filters);
 
       const { data, error } = await query;
       if (error) throw new Error('Failed to fetch receitas: ' + error.message);
 
-      return (data || []).map(item => {
+      let rows = applyTypeFilter(data || [], filters.type);
+      rows = applyLastInstallmentFilter(rows, filters.only_last_installment);
+
+      return rows.map(item => {
         const parsed = parseInstallmentMeta(item.transaction_description || undefined);
         const isRecurring = !!item.parent_recurrence_rule_id;
         return {
@@ -142,7 +245,7 @@ export const receitaService = {
     }
   },
 
-  async getReceitasSummary(workspaceId: string, filters: ReceitaFilters): Promise<ReceitaSummary> {
+  async getReceitasSummary(workspaceId: string, filters: AdvancedFilters): Promise<ReceitaSummary> {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw new Error('Authentication failed: ' + userError.message);
@@ -154,31 +257,7 @@ export const receitaService = {
         .eq('transaction_workspace_id', workspaceId)
         .eq('transaction_type', 'income');
 
-      if (filters.search) {
-        baseQuery = baseQuery.ilike('transaction_description', `%${filters.search}%`);
-      }
-
-      if (filters.status !== 'all') {
-        baseQuery = baseQuery.eq('transaction_status', filters.status);
-      }
-
-      if (filters.period === 'current_month') {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-        baseQuery = baseQuery
-          .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
-          .lte('transaction_date', endOfMonth.toISOString().split('T')[0]);
-      } else if (filters.period === 'last_month') {
-        const now = new Date();
-        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-        baseQuery = baseQuery
-          .gte('transaction_date', startOfLastMonth.toISOString().split('T')[0])
-          .lte('transaction_date', endOfLastMonth.toISOString().split('T')[0]);
-      }
+      baseQuery = applyFilters(baseQuery, filters);
 
       const { data: incomes, error: baseErr } = await baseQuery;
       if (baseErr) throw new Error('Failed to fetch incomes summary: ' + baseErr.message);
@@ -193,11 +272,8 @@ export const receitaService = {
         .eq('transaction_type', 'income')
         .not('parent_recurrence_rule_id', 'is', null);
 
-      if (filters.search) {
-        recurQuery = recurQuery.ilike('transaction_description', `%${filters.search}%`);
-      }
-      if (filters.status !== 'all') {
-        recurQuery = recurQuery.eq('transaction_status', filters.status);
+      if (filters.status?.length) {
+        recurQuery = recurQuery.in('transaction_status', filters.status);
       }
 
       const { data: recurringRows, error: recurErr } = await recurQuery;
