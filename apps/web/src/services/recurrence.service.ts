@@ -15,6 +15,8 @@ export interface RecurrenceRuleData {
   category_id?: string;
   notes?: string;
   status?: 'active' | 'paused' | 'canceled';
+  /** Data a partir da qual regenerar lançamentos futuros (frontend-only, removido antes de salvar no DB) */
+  from_date?: string;
 }
 
 export const recurrenceService = {

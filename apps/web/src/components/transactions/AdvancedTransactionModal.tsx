@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, CreditCard as Edit, Trash2, Plus, AlertCircle, Repeat, Clock, CheckCircle, CheckCheck, Save, PauseCircle, PlayCircle, XCircle, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { X, Calendar, DollarSign, CreditCard, Building, Tag, Target, Eye, CreditCard as Edit, Trash2, Plus, AlertCircle, Repeat, Clock, CheckCircle, CheckCheck, Save, PauseCircle, PlayCircle, XCircle, ChevronDown, ChevronUp, AlertTriangle, SkipForward, RotateCcw } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,6 +18,8 @@ import { useUpdateTransaction, useDeleteTransaction } from '../../hooks/useTrans
 import { useRecurrenceRule, useTransactionsByRecurrenceRule } from '../../hooks/useRecurrence';
 import type { RecurrenceRuleData } from '../../services/recurrence.service';
 import { formatCurrency, formatDate, cn } from '../../lib/utils';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { EditScopeDialog } from './EditScopeDialog';
 import type { AdvancedTransactionData, InstallmentData, RecurrenceData, Transaction } from '../../types';
 
 const transactionSchema = z.object({
@@ -121,7 +123,18 @@ export function AdvancedTransactionModal({
   // Estado para configuração da regra de recorrência
   const [ruleEdits, setRuleEdits] = useState<Partial<RecurrenceRuleData>>({});
   const [savingRule, setSavingRule] = useState(false);
-  const [ruleConfigExpanded, setRuleConfigExpanded] = useState(true);
+  const [ruleConfigExpanded, setRuleConfigExpanded] = useState(false);
+  // Diálogo de escopo para salvar regra de recorrência
+  const [showScopeDialog, setShowScopeDialog] = useState(false);
+  // Diálogo de confirmação reutilizável
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    description?: string;
+    confirmLabel?: string;
+    destructive?: boolean;
+    alertOnly?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
 
   // Hooks para gerenciamento de parcelas existentes
   const { data: installmentGroupData } = useInstallmentGroup(installmentGroupId);
@@ -349,7 +362,7 @@ export function AdvancedTransactionModal({
     const edits = rowEdits[tx.transaction_id];
     if (!edits || Object.keys(edits).length === 0) return;
     if (edits.transaction_amount !== undefined && Number(edits.transaction_amount) <= 0) {
-      alert('O valor deve ser maior que zero.');
+      setConfirmState({ title: 'Valor inválido', description: 'O valor deve ser maior que zero.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
       return;
     }
     await updateTransaction.mutateAsync({ id: tx.transaction_id, updates: edits });
@@ -370,34 +383,44 @@ export function AdvancedTransactionModal({
     await updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: newStatus } });
   };
 
-  const deleteInstallmentTx = async (tx: Transaction) => {
+  const deleteInstallmentTx = (tx: Transaction) => {
     if (tx.transaction_status === 'paid' || tx.transaction_status === 'received') {
-      alert('Não é possível excluir uma parcela já paga.');
+      setConfirmState({ title: 'Ação bloqueada', description: 'Não é possível excluir uma parcela já paga.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
       return;
     }
     if (installmentTransactions.length === 1) {
-      alert('Não é possível excluir a última parcela do grupo. O grupo ficaria sem parcelas.');
+      setConfirmState({ title: 'Ação bloqueada', description: 'Não é possível excluir a última parcela do grupo.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
       return;
     }
-    if (!window.confirm(`Excluir parcela ${tx.installment_number}/${tx.installment_total}? Esta ação não pode ser desfeita.`)) return;
-    await deleteTransaction.mutateAsync(tx.transaction_id);
+    setConfirmState({
+      title: `Excluir parcela ${tx.installment_number}/${tx.installment_total}?`,
+      description: 'A parcela será removida permanentemente.',
+      confirmLabel: 'Excluir',
+      destructive: true,
+      onConfirm: async () => { setConfirmState(null); await deleteTransaction.mutateAsync(tx.transaction_id); },
+    });
   };
 
-  const markAllPending = async () => {
+  const markAllPending = () => {
     const pending = installmentTransactions.filter(
       tx => tx.transaction_status !== 'paid' && tx.transaction_status !== 'received'
     );
     if (pending.length === 0) return;
-    if (!window.confirm(`Marcar ${pending.length} parcela(s) pendente(s) como pagas? Esta ação pode ser revertida individualmente.`)) return;
-    setMarkingAllPaid(true);
-    try {
-      await Promise.all(pending.map(tx => {
-        const newStatus = tx.transaction_type === 'income' ? 'received' : 'paid';
-        return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: newStatus } });
-      }));
-    } finally {
-      setMarkingAllPaid(false);
-    }
+    setConfirmState({
+      title: `Marcar ${pending.length} parcela(s) como pagas?`,
+      description: 'Esta ação pode ser revertida individualmente.',
+      confirmLabel: 'Confirmar',
+      onConfirm: async () => {
+        setConfirmState(null);
+        setMarkingAllPaid(true);
+        try {
+          await Promise.all(pending.map(tx => {
+            const newStatus = tx.transaction_type === 'income' ? 'received' : 'paid';
+            return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: newStatus } });
+          }));
+        } finally { setMarkingAllPaid(false); }
+      },
+    });
   };
 
   // Lista ativa baseada no tab atual — compartilhada entre installments e recurrence
@@ -422,35 +445,49 @@ export function AdvancedTransactionModal({
     }
   };
 
-  const deleteSelected = async () => {
+  const deleteSelected = () => {
     const selectedTxs = managedTxs.filter(tx => selectedRows.has(tx.transaction_id));
     const paidSelected = selectedTxs.filter(tx => tx.transaction_status === 'paid' || tx.transaction_status === 'received');
     if (paidSelected.length > 0) {
-      alert(`Não é possível excluir ${paidSelected.length} lançamento(s) já pago(s). Desmarque-os e tente novamente.`);
+      setConfirmState({ title: 'Ação bloqueada', description: `Não é possível excluir ${paidSelected.length} lançamento(s) já pago(s). Desmarque-os e tente novamente.`, confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
       return;
     }
     if (managedTxs.length - selectedRows.size === 0) {
-      alert('Não é possível excluir todos os lançamentos. Pelo menos um deve ser mantido.');
+      setConfirmState({ title: 'Ação bloqueada', description: 'Não é possível excluir todos os lançamentos. Pelo menos um deve ser mantido.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
       return;
     }
-    if (!window.confirm(`Excluir ${selectedRows.size} lançamento(s) selecionado(s)? Esta ação não pode ser desfeita.`)) return;
-    await Promise.all(Array.from(selectedRows).map(id => deleteTransaction.mutateAsync(id)));
-    setSelectedRows(new Set());
+    setConfirmState({
+      title: `Excluir ${selectedRows.size} lançamento(s)?`,
+      description: 'Os lançamentos selecionados serão removidos permanentemente.',
+      confirmLabel: 'Excluir',
+      destructive: true,
+      onConfirm: async () => {
+        setConfirmState(null);
+        await Promise.all(Array.from(selectedRows).map(id => deleteTransaction.mutateAsync(id)));
+        setSelectedRows(new Set());
+      },
+    });
   };
 
-  const markSelectedAsPaid = async () => {
+  const markSelectedAsPaid = () => {
     const selectedTxs = managedTxs.filter(tx => selectedRows.has(tx.transaction_id));
     const pending = selectedTxs.filter(tx => tx.transaction_status !== 'paid' && tx.transaction_status !== 'received');
     if (pending.length === 0) {
-      alert('Todos os lançamentos selecionados já estão pagos.');
+      setConfirmState({ title: 'Aviso', description: 'Todos os lançamentos selecionados já estão pagos.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
       return;
     }
-    if (!window.confirm(`Marcar ${pending.length} lançamento(s) selecionado(s) como pagos?`)) return;
-    await Promise.all(pending.map(tx => {
-      const newStatus = tx.transaction_type === 'income' ? 'received' : 'paid';
-      return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: newStatus } });
-    }));
-    setSelectedRows(new Set());
+    setConfirmState({
+      title: `Marcar ${pending.length} lançamento(s) como pagos?`,
+      confirmLabel: 'Confirmar',
+      onConfirm: async () => {
+        setConfirmState(null);
+        await Promise.all(pending.map(tx => {
+          const newStatus = tx.transaction_type === 'income' ? 'received' : 'paid';
+          return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: newStatus } });
+        }));
+        setSelectedRows(new Set());
+      },
+    });
   };
 
   const applyBulkEdit = async () => {
@@ -461,10 +498,9 @@ export function AdvancedTransactionModal({
       updates[key] = value === '__clear__' ? null : value;
     }
     if (Object.keys(updates).length === 0) {
-      alert('Selecione pelo menos um campo para alterar.');
+      setConfirmState({ title: 'Aviso', description: 'Selecione pelo menos um campo para alterar.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
       return;
     }
-    if (!window.confirm(`Aplicar alterações em ${selectedRows.size} ${bulkEditItemLabel}(s)?`)) return;
     setApplyingBulkEdit(true);
     try {
       await Promise.all(
@@ -481,11 +517,34 @@ export function AdvancedTransactionModal({
   };
 
   const getInstallmentStatusBadge = (tx: Transaction) => {
+    if (tx.transaction_status === 'skipped') return { label: 'Pulado', className: 'bg-gray-100 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400' };
     const isPaid = tx.transaction_status === 'paid' || tx.transaction_status === 'received';
     if (isPaid) return { label: tx.transaction_type === 'income' ? 'Recebida' : 'Paga', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
     const isOverdue = new Date(tx.transaction_date) < new Date(new Date().toISOString().split('T')[0]);
     if (isOverdue) return { label: 'Vencida', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
     return { label: 'Pendente', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' };
+  };
+
+  const markAllRecurrencePending = () => {
+    const pending = recurrenceTransactions.filter(
+      t => t.transaction_status !== 'paid' && t.transaction_status !== 'received' && t.transaction_status !== 'skipped'
+    );
+    if (pending.length === 0) return;
+    setConfirmState({
+      title: `Marcar ${pending.length} lançamento(s) como pagos?`,
+      description: 'Esta ação pode ser revertida individualmente.',
+      confirmLabel: 'Confirmar',
+      onConfirm: async () => {
+        setConfirmState(null);
+        setMarkingAllPaid(true);
+        try {
+          await Promise.all(pending.map(tx => {
+            const s = tx.transaction_type === 'income' ? 'received' : 'paid';
+            return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: s } });
+          }));
+        } finally { setMarkingAllPaid(false); }
+      },
+    });
   };
 
   // Helpers para gerenciamento da regra de recorrência
@@ -510,29 +569,54 @@ export function AdvancedTransactionModal({
   const setRuleField = (field: keyof RecurrenceRuleData, value: unknown) =>
     setRuleEdits(prev => ({ ...prev, [field]: value }));
 
-  const saveRuleConfig = async () => {
+  const saveRuleConfig = () => {
     if (!isRuleConfigDirty) return;
-    if (!window.confirm('Alterar a configuração irá regenerar todos os lançamentos futuros. Continuar?')) return;
+    setShowScopeDialog(true);
+  };
+
+  const saveRuleConfigWithDate = async (fromDate: string) => {
     setSavingRule(true);
     try {
-      await updateRule.mutateAsync(ruleEdits);
+      await updateRule.mutateAsync({ ...ruleEdits, from_date: fromDate });
       setRuleEdits({});
+      setShowScopeDialog(false);
     } finally {
       setSavingRule(false);
     }
   };
 
-  const deleteRecurrenceTx = async (tx: Transaction) => {
+  const deleteRecurrenceTx = (tx: Transaction) => {
     if (tx.transaction_status === 'paid' || tx.transaction_status === 'received') {
-      alert('Não é possível excluir um lançamento já pago.');
+      setConfirmState({ title: 'Ação bloqueada', description: 'Não é possível excluir um lançamento já pago.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
       return;
     }
     if (recurrenceTransactions.length === 1) {
-      alert('Não é possível excluir o único lançamento da recorrência.');
+      setConfirmState({ title: 'Ação bloqueada', description: 'Não é possível excluir o único lançamento da recorrência.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
       return;
     }
-    if (!window.confirm(`Excluir lançamento #${tx.recurrence_sequence ?? '?'}? Esta ação não pode ser desfeita.`)) return;
-    await deleteTransaction.mutateAsync(tx.transaction_id);
+    setConfirmState({
+      title: `Excluir lançamento #${tx.recurrence_sequence ?? '?'}?`,
+      description: 'O lançamento será removido permanentemente.',
+      confirmLabel: 'Excluir',
+      destructive: true,
+      onConfirm: async () => { setConfirmState(null); await deleteTransaction.mutateAsync(tx.transaction_id); },
+    });
+  };
+
+  const skipRecurrenceTx = (tx: Transaction) => {
+    if (tx.transaction_status === 'paid' || tx.transaction_status === 'received') {
+      setConfirmState({ title: 'Ação bloqueada', description: 'Não é possível pular um lançamento já pago.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
+      return;
+    }
+    setConfirmState({
+      title: `Pular ocorrência #${tx.recurrence_sequence ?? '?'}?`,
+      description: 'O lançamento será marcado como "Pulado" e não afetará seus totais.',
+      confirmLabel: 'Pular',
+      onConfirm: async () => {
+        setConfirmState(null);
+        await updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: 'skipped' } });
+      },
+    });
   };
 
   // Handle currency input with real-time formatting
@@ -700,7 +784,7 @@ export function AdvancedTransactionModal({
       const isValid = await validateBeforeSave();
       if (!isValid) {
         setIsSaving(false);
-        alert('Por favor, preencha todos os campos obrigatórios e configure as opções selecionadas antes de salvar.');
+        setConfirmState({ title: 'Campos obrigatórios', description: 'Preencha todos os campos obrigatórios e configure as opções selecionadas antes de salvar.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
         return;
       }
 
@@ -728,7 +812,7 @@ export function AdvancedTransactionModal({
       handleClose();
     } catch (error) {
       console.error('Error saving transaction:', error);
-      alert('Erro ao salvar transação. Tente novamente.');
+      setConfirmState({ title: 'Erro ao salvar', description: 'Ocorreu um erro ao salvar a transação. Tente novamente.', confirmLabel: 'OK', alertOnly: true, onConfirm: () => setConfirmState(null) });
     } finally {
       setIsSaving(false);
     }
@@ -748,7 +832,7 @@ export function AdvancedTransactionModal({
     setBulkEditData({});
     setRuleEdits({});
     setSavingRule(false);
-    setRuleConfigExpanded(true);
+    setRuleConfigExpanded(false);
     setRecurrenceData({
       enabled: false,
       start_date: new Date().toISOString().split('T')[0],
@@ -798,12 +882,12 @@ export function AdvancedTransactionModal({
 
   const tabs = [
     { id: 'data', label: 'Dados', icon: <Calendar className="w-4 h-4" /> },
-    {
+    ...(!hasRecurrenceRule ? [{
       id: 'installments',
       label: 'Parcelas',
       icon: <CreditCard className="w-4 h-4" />,
       disabled: hasInstallmentGroup ? false : !isInstallment,
-    },
+    }] : []),
     ...(!isEditing || hasRecurrenceRule ? [{
       id: 'recurrence',
       label: 'Recorrência',
@@ -1717,19 +1801,8 @@ export function AdvancedTransactionModal({
                       );
                     })()}
                     <button type="button"
-                      disabled={markingAllPaid || recurrenceTransactions.every(t => t.transaction_status === 'paid' || t.transaction_status === 'received')}
-                      onClick={async () => {
-                        const pending = recurrenceTransactions.filter(t => t.transaction_status !== 'paid' && t.transaction_status !== 'received');
-                        if (pending.length === 0) return;
-                        if (!window.confirm(`Marcar ${pending.length} lançamento(s) pendente(s) como pagos?`)) return;
-                        setMarkingAllPaid(true);
-                        try {
-                          await Promise.all(pending.map(tx => {
-                            const s = tx.transaction_type === 'income' ? 'received' : 'paid';
-                            return updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: s } });
-                          }));
-                        } finally { setMarkingAllPaid(false); }
-                      }}
+                      disabled={markingAllPaid || recurrenceTransactions.every(t => t.transaction_status === 'paid' || t.transaction_status === 'received' || t.transaction_status === 'skipped')}
+                      onClick={markAllRecurrencePending}
                       className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border text-text-secondary hover:text-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                       <CheckCheck className="w-3.5 h-3.5" />
                       Marcar pendentes como pagos
@@ -1789,14 +1862,14 @@ export function AdvancedTransactionModal({
                         <tbody>
                           {recurrenceTransactions.map(tx => {
                             const badge = getInstallmentStatusBadge(tx);
-                            const dirty = isRowDirty(tx.transaction_id);
                             const isPaid = tx.transaction_status === 'paid' || tx.transaction_status === 'received';
+                            const isSkipped = tx.transaction_status === 'skipped';
                             const isSelected = selectedRows.has(tx.transaction_id);
-                            const txDate = String(getRowValue(tx.transaction_id, 'transaction_date', tx.transaction_date));
-                            const isOverdue = !isPaid && txDate < new Date().toISOString().split('T')[0];
+                            const txDate = tx.transaction_date;
+                            const isOverdue = !isPaid && !isSkipped && txDate < new Date().toISOString().split('T')[0];
                             return (
                               <tr key={tx.transaction_id}
-                                className={cn('border-t border-border hover:bg-bg-surface/50', isSelected && 'bg-accent/5')}>
+                                className={cn('border-t border-border hover:bg-bg-surface/50', isSelected && 'bg-accent/5', isSkipped && 'opacity-50')}>
                                 <td className="py-1.5 px-3">
                                   <input type="checkbox" checked={isSelected}
                                     onChange={() => toggleRowSelection(tx.transaction_id)}
@@ -1805,47 +1878,17 @@ export function AdvancedTransactionModal({
                                 <td className="py-1.5 px-2 text-xs text-text-muted whitespace-nowrap">
                                   {tx.recurrence_sequence ?? '—'}
                                 </td>
-                                <td className="py-1.5 px-2">
-                                  <input type="date" value={txDate}
-                                    onChange={e => setRowField(tx.transaction_id, 'transaction_date', e.target.value)}
-                                    disabled={isPaid}
-                                    title={isPaid ? 'Lançamento pago — edição bloqueada' : undefined}
-                                    className={cn(
-                                      'text-xs border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent',
-                                      isOverdue ? 'border-red-400 focus:ring-red-500' : 'border-border',
-                                      isPaid && 'opacity-50 cursor-not-allowed'
-                                    )} />
+                                <td className={cn('py-1.5 px-2 text-xs whitespace-nowrap', isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-text-secondary', isSkipped && 'line-through')}>
+                                  {formatDate(txDate)}
                                 </td>
-                                <td className="py-1.5 px-2">
-                                  <input type="text"
-                                    value={String(getRowValue(tx.transaction_id, 'transaction_description', tx.transaction_description))}
-                                    onChange={e => setRowField(tx.transaction_id, 'transaction_description', e.target.value)}
-                                    disabled={isPaid}
-                                    title={isPaid ? 'Lançamento pago — edição bloqueada' : undefined}
-                                    className={cn(
-                                      'text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent',
-                                      isPaid && 'opacity-50 cursor-not-allowed'
-                                    )} />
+                                <td className={cn('py-1.5 px-2 text-xs text-text-primary max-w-[160px] truncate', isSkipped && 'line-through')}>
+                                  {tx.transaction_description}
                                 </td>
-                                <td className="py-1.5 px-2">
-                                  <input type="number" step="0.01" min="0.01"
-                                    value={Number(getRowValue(tx.transaction_id, 'transaction_amount', tx.transaction_amount))}
-                                    onChange={e => setRowField(tx.transaction_id, 'transaction_amount', Number(e.target.value))}
-                                    disabled={isPaid}
-                                    title={isPaid ? 'Lançamento pago — edição bloqueada' : undefined}
-                                    className={cn(
-                                      'text-xs border border-border rounded px-2 py-1 w-20 text-right bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent',
-                                      isPaid && 'opacity-50 cursor-not-allowed'
-                                    )} />
+                                <td className={cn('py-1.5 px-2 text-xs text-right font-medium whitespace-nowrap', isSkipped ? 'text-text-muted line-through' : 'text-text-primary')}>
+                                  {formatCurrency(Number(tx.transaction_amount))}
                                 </td>
-                                <td className="py-1.5 px-2">
-                                  <select
-                                    value={String(getRowValue(tx.transaction_id, 'transaction_cost_center_id', tx.transaction_cost_center_id) ?? '')}
-                                    onChange={e => setRowField(tx.transaction_id, 'transaction_cost_center_id', e.target.value || null)}
-                                    className="text-xs border border-border rounded px-2 py-1 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent">
-                                    <option value="">Nenhum</option>
-                                    {costCenters.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-                                  </select>
+                                <td className="py-1.5 px-2 text-xs text-text-secondary truncate max-w-[100px]">
+                                  {costCenters.find(c => c.id === tx.transaction_cost_center_id)?.title ?? '—'}
                                 </td>
                                 <td className="py-1.5 px-2 text-center">
                                   <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', badge.className)}>
@@ -1854,21 +1897,31 @@ export function AdvancedTransactionModal({
                                 </td>
                                 <td className="py-1.5 px-2">
                                   <div className="flex items-center justify-center gap-1">
-                                    <button type="button" onClick={() => saveRow(tx)}
-                                      disabled={!dirty || (isPaid && !isSavableEvenWhenPaid(tx.transaction_id)) || updateTransaction.isPending}
-                                      title={isPaid && !isSavableEvenWhenPaid(tx.transaction_id) ? 'Lançamento pago — edição bloqueada' : 'Salvar alterações'}
-                                      className={cn('p-1 rounded transition-colors',
-                                        dirty && (!isPaid || isSavableEvenWhenPaid(tx.transaction_id))
-                                          ? 'text-accent hover:text-accent-hover'
-                                          : 'text-text-muted cursor-not-allowed opacity-40')}>
-                                      <Save className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button type="button" onClick={() => togglePaid(tx)} disabled={updateTransaction.isPending}
-                                      title={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
-                                      className={cn('p-1 rounded transition-colors',
-                                        isPaid ? 'text-green-600 hover:text-green-700' : 'text-text-muted hover:text-green-600')}>
-                                      <CheckCircle className="w-3.5 h-3.5" />
-                                    </button>
+                                    {isSkipped ? (
+                                      <button type="button"
+                                        onClick={() => updateTransaction.mutateAsync({ id: tx.transaction_id, updates: { transaction_status: 'pending' } })}
+                                        disabled={updateTransaction.isPending}
+                                        title="Desfazer pular"
+                                        className="p-1 rounded transition-colors text-text-muted hover:text-accent">
+                                        <RotateCcw className="w-3.5 h-3.5" />
+                                      </button>
+                                    ) : (
+                                      <>
+                                        <button type="button" onClick={() => togglePaid(tx)} disabled={updateTransaction.isPending}
+                                          title={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+                                          className={cn('p-1 rounded transition-colors',
+                                            isPaid ? 'text-green-600 hover:text-green-700' : 'text-text-muted hover:text-green-600')}>
+                                          <CheckCircle className="w-3.5 h-3.5" />
+                                        </button>
+                                        {!isPaid && (
+                                          <button type="button" onClick={() => skipRecurrenceTx(tx)} disabled={updateTransaction.isPending}
+                                            title="Pular esta ocorrência"
+                                            className="p-1 rounded transition-colors text-text-muted hover:text-yellow-500">
+                                            <SkipForward className="w-3.5 h-3.5" />
+                                          </button>
+                                        )}
+                                      </>
+                                    )}
                                     <button type="button" onClick={() => deleteRecurrenceTx(tx)}
                                       disabled={deleteTransaction.isPending || isPaid || recurrenceTransactions.length === 1}
                                       title={isPaid ? 'Não é possível excluir lançamento pago' : recurrenceTransactions.length === 1 ? 'Não é possível excluir o único lançamento' : 'Excluir lançamento'}
@@ -2076,6 +2129,19 @@ export function AdvancedTransactionModal({
           Os campos preenchidos serão aplicados a todos os {bulkEditItemLabel}s selecionados. Campos com "— não alterar —" serão ignorados. Datas e valores só podem ser alterados individualmente.
         </p>
 
+        {hasRecurrenceRule && activeTab === 'recurrence' && (
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Descrição</label>
+            <input
+              type="text"
+              placeholder="— não alterar —"
+              value={bulkEditData.transaction_description ?? ''}
+              onChange={e => setBulkEditData(prev => ({ ...prev, transaction_description: e.target.value }))}
+              className="text-sm border border-border rounded-md px-3 py-2 w-full bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-text-muted"
+            />
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-2">Centro de Custo</label>
           <select
@@ -2153,6 +2219,25 @@ export function AdvancedTransactionModal({
         </div>
       </div>
     </Modal>
+
+    <ConfirmDialog
+      open={!!confirmState}
+      title={confirmState?.title ?? ''}
+      description={confirmState?.description}
+      confirmLabel={confirmState?.confirmLabel}
+      destructive={confirmState?.destructive}
+      alertOnly={confirmState?.alertOnly}
+      onConfirm={() => confirmState?.onConfirm()}
+      onCancel={() => setConfirmState(null)}
+    />
+
+    <EditScopeDialog
+      open={showScopeDialog}
+      transactionDate={transaction?.transaction_date}
+      loading={savingRule}
+      onConfirm={saveRuleConfigWithDate}
+      onCancel={() => setShowScopeDialog(false)}
+    />
     </>
   );
 }

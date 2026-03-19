@@ -74,9 +74,10 @@ router.post('/', h(async (req, res, next) => {
 router.put('/:id', h(async (req, res, next) => {
     try {
         const { id } = req.params;
-        const todayISO = toISO(new Date());
-        await req.supabase.from('transactions').delete().eq('parent_recurrence_rule_id', id).gte('recurrence_instance_date', todayISO);
-        const { data, error } = await req.supabase.from('recurrence_rules').update({ ...req.body, generated_until: null, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+        const { from_date, ...ruleUpdates } = req.body;
+        const fromDate = from_date ?? toISO(new Date());
+        await req.supabase.from('transactions').delete().eq('parent_recurrence_rule_id', id).gte('recurrence_instance_date', fromDate);
+        const { data, error } = await req.supabase.from('recurrence_rules').update({ ...ruleUpdates, generated_until: null, updated_at: new Date().toISOString() }).eq('id', id).select().single();
         if (error) throw error;
         if (data.status === 'active') await triggerGeneration(req.supabase, id);
         res.json(data);
