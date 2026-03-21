@@ -13,6 +13,7 @@ import {
   Loader2,
   Camera,
   Menu,
+  Upload,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useWorkspace } from '../../context/WorkspaceContext';
@@ -23,10 +24,12 @@ import { workspaceService } from '../../services/workspace.service';
 import { getWorkspaceIcon } from '../../lib/workspaceUtils';
 import { Settings } from '../../pages/Settings';
 import { NotificationSettings } from '../../pages/NotificationSettings';
+import { ImportacaoSection } from './ImportacaoSection';
 
 type Section =
   | 'conta'
   | 'workspace'
+  | 'importacao'
   | 'membros'
   | 'equipes'
   | 'administradores'
@@ -43,6 +46,7 @@ const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode; group?: st
   { id: 'conta', label: 'Conta', icon: <User className="w-4 h-4" />, group: 'Pessoal' },
   { id: 'notificacoes', label: 'Notificações', icon: <Bell className="w-4 h-4" />, group: 'Pessoal' },
   { id: 'workspace', label: 'Workspace', icon: <Building2 className="w-4 h-4" />, group: 'Workspace' },
+  { id: 'importacao', label: 'Importação', icon: <Upload className="w-4 h-4" />, group: 'Workspace' },
   { id: 'membros', label: 'Membros', icon: <Users className="w-4 h-4" />, group: 'Workspace' },
   { id: 'equipes', label: 'Equipes', icon: <UsersRound className="w-4 h-4" />, group: 'Workspace' },
   { id: 'administradores', label: 'Administradores', icon: <ShieldCheck className="w-4 h-4" />, group: 'Workspace' },
@@ -341,6 +345,8 @@ export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: Set
         return <Settings />;
       case 'workspace':
         return <WorkspaceSection />;
+      case 'importacao':
+        return <ImportacaoSection />;
       case 'membros':
         return <MembrosSection />;
       case 'equipes':
