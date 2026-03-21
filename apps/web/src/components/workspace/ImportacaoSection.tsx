@@ -572,11 +572,15 @@ function StepConfirm({ rows, selectedAccountId, onBack, onReset }: StepConfirmPr
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export function ImportacaoSection() {
+interface ImportacaoSectionProps {
+  initialAccountId?: string;
+}
+
+export function ImportacaoSection({ initialAccountId }: ImportacaoSectionProps = {}) {
   const [step, setStep] = useState<WizardStep>(1);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [fileName, setFileName] = useState('');
-  const [selectedAccountId, setSelectedAccountId] = useState('');
+  const [selectedAccountId, setSelectedAccountId] = useState(initialAccountId ?? '');
 
   const handleParsed = (parsedRows: ImportRow[], name: string) => {
     setRows(parsedRows);

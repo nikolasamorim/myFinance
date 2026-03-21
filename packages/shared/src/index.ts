@@ -403,3 +403,48 @@ export interface Visualization {
   visualization_created_at: string;
   visualization_updated_at: string;
 }
+
+// ─── Bank Reconciliation ──────────────────────────────────────────────────────
+
+export type ReconciliationTab = 'pendentes' | 'conciliados' | 'ignorados';
+
+export interface BankReconciliation {
+  id: string;
+  workspace_id: string;
+  imported_transaction_id: string;
+  system_transaction_id: string;
+  reconciled_by_user_id: string;
+  reconciled_at: string;
+  notes: string | null;
+}
+
+/** Par conciliado com os dois lançamentos expandidos */
+export interface ReconciliationRow {
+  reconciliation: BankReconciliation;
+  imported: Transaction;
+  system: Transaction;
+}
+
+/** Candidato retornado pelo endpoint de sugestões, com score de 0-100 */
+export interface ReconciliationSuggestion {
+  transaction: Transaction;
+  score: number;
+}
+
+export interface ReconcilePayload {
+  imported_transaction_id: string;
+  system_transaction_id: string;
+  notes?: string;
+}
+
+export interface ReconciliationFilters {
+  account_id?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+/** Lançamento importado com status de conciliação calculado */
+export interface ImportedTransactionWithStatus {
+  transaction: Transaction;
+  reconciliation: BankReconciliation | null;
+}

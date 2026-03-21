@@ -24,6 +24,7 @@ import { History } from './pages/History';
 import Invoice from './pages/Invoice';
 import { Notifications } from './pages/Notifications';
 import { NotificationSettings } from './pages/NotificationSettings';
+import { Reconciliation } from './pages/Reconciliation';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -195,6 +196,16 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <NotificationSettings />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/reconciliacao"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <Reconciliation />
                         </Layout>
                       </ProtectedRoute>
                     }

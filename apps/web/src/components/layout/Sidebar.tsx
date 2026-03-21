@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   SquareKanban,
   Bell,
+  GitMerge,
 } from 'lucide-react';
 
 import { cn } from '../../lib/utils';
@@ -194,6 +195,15 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
             icon={<SquareKanban className="w-5 h-5 text-text-muted" />}
             label="Fatura"
             isActive={location.pathname === '/invoice'}
+            isCollapsed={isCollapsed}
+            onClick={onAnyNavigate}
+          />
+
+          <SidebarItem
+            to="/reconciliacao"
+            icon={<GitMerge className="w-5 h-5 text-text-muted" />}
+            label="Conciliação"
+            isActive={location.pathname === '/reconciliacao'}
             isCollapsed={isCollapsed}
             onClick={onAnyNavigate}
           />
