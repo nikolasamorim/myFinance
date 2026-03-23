@@ -11,13 +11,6 @@ interface ActivityLogFilters {
 export const activityLogService = {
   async getActivityLogs(workspaceId: string, filters: ActivityLogFilters, page: number = 1, limit: number = 20) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('Error getting user:', userError);
-        throw new Error('Authentication failed: ' + userError.message);
-      }
-      if (!user) throw new Error('User not authenticated');
-
       let query = supabase
         .from('activity_logs')
         .select(`
@@ -78,16 +71,12 @@ export const activityLogService = {
     entity_id: string;
     changes?: any;
     description?: string;
-  }) {
+  }, userId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       const { data, error } = await supabase
         .from('activity_logs')
         .insert([{
-          user_id: user.id,
+          user_id: userId,
           workspace_id: workspaceId,
           action: logData.action,
           entity_type: logData.entity_type,

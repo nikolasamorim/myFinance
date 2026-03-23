@@ -2,15 +2,12 @@ import { supabase } from '../lib/supabase';
 import type { Visualization } from '../types';
 
 export const visualizationService = {
-  async getUserVisualizations(workspaceId: string, screenContext: string): Promise<Visualization[]> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
+  async getUserVisualizations(workspaceId: string, screenContext: string, userId: string): Promise<Visualization[]> {
     const { data, error } = await supabase
       .from('visualizations')
       .select('*')
       .eq('visualization_workspace_id', workspaceId)
-      .eq('visualization_user_id', user.id)
+      .eq('visualization_user_id', userId)
       .eq('visualization_screen_context', screenContext)
       .order('visualization_created_at', { ascending: false });
 
@@ -18,15 +15,12 @@ export const visualizationService = {
     return data || [];
   },
 
-  async getDefaultVisualization(workspaceId: string, screenContext: string): Promise<Visualization | null> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
+  async getDefaultVisualization(workspaceId: string, screenContext: string, userId: string): Promise<Visualization | null> {
     const { data, error } = await supabase
       .from('visualizations')
       .select('*')
       .eq('visualization_workspace_id', workspaceId)
-      .eq('visualization_user_id', user.id)
+      .eq('visualization_user_id', userId)
       .eq('visualization_screen_context', screenContext)
       .eq('visualization_is_default', true)
       .limit(1);
@@ -35,15 +29,12 @@ export const visualizationService = {
     return data && data.length > 0 ? data[0] : null;
   },
 
-  async createVisualization(visualization: Omit<Visualization, 'visualization_id' | 'visualization_created_at' | 'visualization_updated_at'>): Promise<Visualization> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
+  async createVisualization(visualization: Omit<Visualization, 'visualization_id' | 'visualization_created_at' | 'visualization_updated_at'>, userId: string): Promise<Visualization> {
     const { data, error } = await supabase
       .from('visualizations')
       .insert({
         ...visualization,
-        visualization_user_id: user.id,
+        visualization_user_id: userId,
       })
       .select()
       .single();
@@ -64,16 +55,13 @@ export const visualizationService = {
     return data;
   },
 
-  async setDefaultVisualization(workspaceId: string, screenContext: string, visualizationId: string): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
+  async setDefaultVisualization(workspaceId: string, screenContext: string, visualizationId: string, userId: string): Promise<void> {
     // Use a transaction-like approach: first remove all defaults, then set the new one
     const { error: removeError } = await supabase
       .from('visualizations')
       .update({ visualization_is_default: false })
       .eq('visualization_workspace_id', workspaceId)
-      .eq('visualization_user_id', user.id)
+      .eq('visualization_user_id', userId)
       .eq('visualization_screen_context', screenContext);
 
     if (removeError) throw removeError;

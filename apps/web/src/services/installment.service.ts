@@ -14,10 +14,6 @@ export interface InstallmentGroupData {
 export const installmentService = {
   async getInstallmentGroups(workspaceId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       const { data, error } = await supabase
         .from('installment_groups')
         .select('*')
@@ -32,17 +28,13 @@ export const installmentService = {
     }
   },
 
-  async createInstallmentGroup(workspaceId: string, groupData: InstallmentGroupData) {
+  async createInstallmentGroup(workspaceId: string, groupData: InstallmentGroupData, userId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       const { data, error } = await supabase
         .from('installment_groups')
         .insert([{
           workspace_id: workspaceId,
-          user_id: user.id,
+          user_id: userId,
           ...groupData,
         }])
         .select()

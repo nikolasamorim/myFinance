@@ -159,13 +159,6 @@ interface DespesaSummary {
 export const despesaService = {
   async getDespesas(workspaceId: string, filters: AdvancedFilters) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('Error getting user:', userError);
-        throw new Error('Authentication failed: ' + userError.message);
-      }
-      if (!user) throw new Error('User not authenticated');
-
       let query = supabase
         .from('transactions')
         .select(`
@@ -242,10 +235,6 @@ export const despesaService = {
 
   async getDespesasSummary(workspaceId: string, filters: AdvancedFilters): Promise<DespesaSummary> {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       // 1) Consulta principal COM os mesmos filtros da listagem
       let baseQuery = supabase
         .from('transactions')
@@ -317,10 +306,6 @@ export const despesaService = {
 
   async getInstallmentsThisMonth(workspaceId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -353,10 +338,6 @@ export const despesaService = {
 
   async getFixedExpensesThisMonth(workspaceId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -386,12 +367,8 @@ export const despesaService = {
     }
   },
 
-  async createDespesa(workspaceId: string, despesaData: DespesaData) {
+  async createDespesa(workspaceId: string, despesaData: DespesaData, userId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       if (despesaData.is_installment && despesaData.installment_total && despesaData.installment_total > 1) {
         // Create installments
         const installments = [];
@@ -402,7 +379,7 @@ export const despesaService = {
 
           installments.push({
             transaction_workspace_id: workspaceId,
-            transaction_created_by_user_id: user.id,
+            transaction_created_by_user_id: userId,
             transaction_type: 'expense',
             transaction_description: `${despesaData.title} - Parcela ${i}/${despesaData.installment_total}`,
             transaction_amount: despesaData.amount,
@@ -427,7 +404,7 @@ export const despesaService = {
           .from('transactions')
           .insert([{
             transaction_workspace_id: workspaceId,
-            transaction_created_by_user_id: user.id,
+            transaction_created_by_user_id: userId,
             transaction_type: 'expense',
             transaction_description: despesaData.title,
             transaction_amount: despesaData.amount,

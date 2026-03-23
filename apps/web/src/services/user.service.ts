@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { authFetch } from '../lib/apiClient';
 
 export const userService = {
   async getUserProfile(userId: string) {
@@ -93,22 +94,16 @@ export const userService = {
     return data;
   },
 
-  async changeEmail(userId: string, newEmail: string) {
-    // This would typically involve Supabase Auth
-    const { error } = await supabase.auth.updateUser({
-      email: newEmail
-    });
-
-    if (error) throw error;
+  async changeEmail(_userId: string, _newEmail: string) {
+    // TODO: implement when API endpoint is added
+    throw new Error('Change email not yet supported via API');
   },
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
-    // This would typically involve Supabase Auth
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
+  async changePassword(_userId: string, _currentPassword: string, newPassword: string) {
+    await authFetch('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ newPassword }),
     });
-
-    if (error) throw error;
   },
 
   async setup2FA(userId: string) {

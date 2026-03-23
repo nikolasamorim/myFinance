@@ -28,15 +28,13 @@ export interface MigrationResult {
 export const workspaceMigrationService = {
   async previewMigration(
     sourceWorkspaceId: string,
-    targetWorkspaceId: string
+    targetWorkspaceId: string,
+    userId: string
   ): Promise<MigrationPreview> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
     const { data, error } = await supabase.rpc('preview_workspace_migration', {
       p_source_workspace_id: sourceWorkspaceId,
       p_target_workspace_id: targetWorkspaceId,
-      p_user_id: user.id,
+      p_user_id: userId,
     });
 
     if (error) {
@@ -51,14 +49,12 @@ export const workspaceMigrationService = {
     accountIds: string[],
     sourceWorkspaceId: string,
     targetWorkspaceId: string,
+    userId: string,
     options: {
       migrateTransactions?: boolean;
       migrateInstallments?: boolean;
     } = {}
   ): Promise<MigrationResult> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
     const {
       migrateTransactions = true,
       migrateInstallments = true,
@@ -68,7 +64,7 @@ export const workspaceMigrationService = {
       p_account_ids: accountIds,
       p_source_workspace_id: sourceWorkspaceId,
       p_target_workspace_id: targetWorkspaceId,
-      p_user_id: user.id,
+      p_user_id: userId,
       p_migrate_transactions: migrateTransactions,
       p_migrate_installments: migrateInstallments,
     });
@@ -84,6 +80,7 @@ export const workspaceMigrationService = {
   async migrateAllAccounts(
     sourceWorkspaceId: string,
     targetWorkspaceId: string,
+    userId: string,
     options: {
       migrateTransactions?: boolean;
       migrateInstallments?: boolean;
@@ -91,9 +88,6 @@ export const workspaceMigrationService = {
       migrateCostCenters?: boolean;
     } = {}
   ): Promise<MigrationResult> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
     const {
       migrateTransactions = true,
       migrateInstallments = true,
@@ -104,7 +98,7 @@ export const workspaceMigrationService = {
     const { data, error } = await supabase.rpc('migrate_all_accounts_to_workspace', {
       p_source_workspace_id: sourceWorkspaceId,
       p_target_workspace_id: targetWorkspaceId,
-      p_user_id: user.id,
+      p_user_id: userId,
       p_migrate_transactions: migrateTransactions,
       p_migrate_installments: migrateInstallments,
       p_migrate_categories: migrateCategories,
@@ -135,9 +129,6 @@ export const workspaceMigrationService = {
   },
 
   async getWorkspaceDataSummary(workspaceId: string) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
     const [accountsData, transactionsData, categoriesData, costCentersData] = await Promise.all([
       supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('workspace_id', workspaceId),
       supabase.from('transactions').select('transaction_id', { count: 'exact', head: true }).eq('transaction_workspace_id', workspaceId),

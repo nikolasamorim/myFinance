@@ -3,9 +3,11 @@ import { installmentService } from '../services/installment.service';
 import type { InstallmentGroupData } from '../services/installment.service';
 import { advancedTransactionService } from '../services/advancedTransaction.service';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { useAuth } from '../context/AuthContext';
 
 export function useInstallmentGroups() {
   const { currentWorkspace } = useWorkspace();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -27,7 +29,7 @@ export function useInstallmentGroups() {
   });
 
   const createInstallmentGroup = useMutation({
-    mutationFn: (data: InstallmentGroupData) => installmentService.createInstallmentGroup(currentWorkspace!.workspace_id, data),
+    mutationFn: (data: InstallmentGroupData) => installmentService.createInstallmentGroup(currentWorkspace!.workspace_id, data, user!.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['installment-groups', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });

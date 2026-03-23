@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { getAccessToken } from '../lib/authTokens';
 import type { PluggyConnectionWithBalance } from '@myfinance/shared';
 
 // Dev local: usa Express API em VITE_API_URL (ex: http://localhost:3001/api/v1/banking)
@@ -6,15 +6,14 @@ import type { PluggyConnectionWithBalance } from '@myfinance/shared';
 const API_URL = import.meta.env.VITE_API_URL as string | undefined;
 const BANKING_BASE = API_URL ? `${API_URL}/banking` : '/banking';
 
-async function getAuthToken(): Promise<string> {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
+function getAuthToken(): string {
+    const token = getAccessToken();
     if (!token) throw new Error('Usuário não autenticado');
     return token;
 }
 
 async function bankingFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const token = await getAuthToken();
+    const token = getAuthToken();
 
     const response = await fetch(`${BANKING_BASE}${path}`, {
         ...options,

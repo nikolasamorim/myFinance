@@ -169,10 +169,6 @@ function parseInstallmentMeta(description?: string): { number: number; total: nu
 export const receitaService = {
   async getReceitas(workspaceId: string, filters: AdvancedFilters) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       let query = supabase
         .from('transactions')
         .select(`
@@ -247,10 +243,6 @@ export const receitaService = {
 
   async getReceitasSummary(workspaceId: string, filters: AdvancedFilters): Promise<ReceitaSummary> {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       let baseQuery = supabase
         .from('transactions')
         .select('transaction_id, transaction_amount, transaction_status, transaction_description, transaction_date, parent_recurrence_rule_id')
@@ -313,10 +305,6 @@ export const receitaService = {
 
   async getInstallmentsThisMonth(workspaceId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -352,10 +340,6 @@ export const receitaService = {
 
   async getFixedIncomesThisMonth(workspaceId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -385,12 +369,8 @@ export const receitaService = {
     }
   },
 
-  async createReceita(workspaceId: string, receitaData: ReceitaData) {
+  async createReceita(workspaceId: string, receitaData: ReceitaData, userId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       if (receitaData.is_installment && receitaData.installment_total && receitaData.installment_total > 1) {
         const installments = [];
         for (let i = 1; i <= receitaData.installment_total; i++) {
@@ -399,7 +379,7 @@ export const receitaService = {
 
           installments.push({
             transaction_workspace_id: workspaceId,
-            transaction_created_by_user_id: user.id,
+            transaction_created_by_user_id: userId,
             transaction_type: 'income',
             transaction_description: `${receitaData.title} - Parcela ${i}/${receitaData.installment_total}`,
             transaction_amount: receitaData.amount,
@@ -421,7 +401,7 @@ export const receitaService = {
           .from('transactions')
           .insert([{
             transaction_workspace_id: workspaceId,
-            transaction_created_by_user_id: user.id,
+            transaction_created_by_user_id: userId,
             transaction_type: 'income',
             transaction_description: receitaData.title,
             transaction_amount: receitaData.amount,

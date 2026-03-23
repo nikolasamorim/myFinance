@@ -199,16 +199,16 @@ async function getExistingCount(ruleId: string): Promise<number> {
 async function insertTransactionBatch(
   rule: RuleRow,
   dates: string[],
-  startSequence: number
+  startSequence: number,
+  userId?: string
 ): Promise<{ inserted: number; duplicates: number }> {
   if (dates.length === 0) return { inserted: 0, duplicates: 0 };
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const userId = rule.created_by_user_id || user?.id;
+  const effectiveUserId = rule.created_by_user_id || userId || null;
 
   const rows = dates.map((date, i) => ({
     transaction_workspace_id: rule.workspace_id,
-    transaction_created_by_user_id: userId,
+    transaction_created_by_user_id: effectiveUserId,
     transaction_type: rule.transaction_type,
     transaction_description: rule.description,
     transaction_amount: rule.amount || 0,
@@ -319,7 +319,8 @@ async function recordError(ruleId: string, message: string): Promise<void> {
 
 export async function generateRecurrences(
   ruleId: string,
-  mode: GenerationMode
+  mode: GenerationMode,
+  userId?: string
 ): Promise<EngineResult> {
   const result: EngineResult = {
     success: false,
@@ -380,7 +381,7 @@ export async function generateRecurrences(
     }
 
     const existingCount = await getExistingCount(ruleId);
-    const { inserted, duplicates } = await insertTransactionBatch(rule, dates, existingCount);
+    const { inserted, duplicates } = await insertTransactionBatch(rule, dates, existingCount, userId);
 
     result.generated = inserted;
     result.skippedDuplicates = duplicates;

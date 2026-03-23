@@ -3,24 +3,20 @@ import type { AdvancedTransactionData, InstallmentData, RecurrenceData } from '.
 import { generateRecurrences } from './recurrenceEngine.service';
 
 export const advancedTransactionService = {
-  async createAdvancedTransaction(workspaceId: string, transactionType: string, data: AdvancedTransactionData) {
+  async createAdvancedTransaction(workspaceId: string, transactionType: string, data: AdvancedTransactionData, userId: string) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw new Error('Authentication failed: ' + userError.message);
-      if (!user) throw new Error('User not authenticated');
-
       // Handle installment transactions
       if (data.is_installment && data.installments && data.installments.length > 0) {
-        return await this.createInstallmentTransaction(workspaceId, user.id, data.transaction_type, data);
+        return await this.createInstallmentTransaction(workspaceId, userId, data.transaction_type, data);
       }
 
       // Handle recurring transactions
       if (data.is_recurring && data.recurrence) {
-        return await this.createRecurringTransaction(workspaceId, user.id, data.transaction_type, data);
+        return await this.createRecurringTransaction(workspaceId, userId, data.transaction_type, data);
       }
 
       // Handle simple transaction
-      return await this.createSimpleTransaction(workspaceId, user.id, data.transaction_type, data);
+      return await this.createSimpleTransaction(workspaceId, userId, data.transaction_type, data);
     } catch (error) {
       console.error('Error in createAdvancedTransaction:', error);
       throw error;
@@ -130,7 +126,7 @@ export const advancedTransactionService = {
 
     if (ruleError) throw new Error('Failed to create recurrence rule: ' + ruleError.message);
 
-    const engineResult = await generateRecurrences(recurrenceRule.id, 'on_save');
+    const engineResult = await generateRecurrences(recurrenceRule.id, 'on_save', userId);
 
     if (!engineResult.success) {
       throw new Error('Failed to generate recurrence transactions: ' + (engineResult.error || 'unknown'));

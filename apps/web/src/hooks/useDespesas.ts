@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { despesaService } from '../services/despesa.service';
 import type { DespesaData } from '../services/despesa.service';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { useAuth } from '../context/AuthContext';
 import type { AdvancedFilters } from '../types/filters';
 
 export function useDespesas(filters: AdvancedFilters) {
   const { currentWorkspace } = useWorkspace();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -53,7 +55,7 @@ export function useDespesas(filters: AdvancedFilters) {
   });
 
   const createDespesa = useMutation({
-    mutationFn: (data: DespesaData) => despesaService.createDespesa(currentWorkspace!.workspace_id, data),
+    mutationFn: (data: DespesaData) => despesaService.createDespesa(currentWorkspace!.workspace_id, data, user!.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });

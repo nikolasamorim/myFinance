@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { receitaService } from '../services/receita.service';
 import type { ReceitaData } from '../services/receita.service';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { useAuth } from '../context/AuthContext';
 import type { AdvancedFilters } from '../types/filters';
 
 export function useReceitas(filters: AdvancedFilters) {
   const { currentWorkspace } = useWorkspace();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -62,7 +64,7 @@ export function useReceitas(filters: AdvancedFilters) {
   };
 
   const createReceita = useMutation({
-    mutationFn: (data: ReceitaData) => receitaService.createReceita(currentWorkspace!.workspace_id, data),
+    mutationFn: (data: ReceitaData) => receitaService.createReceita(currentWorkspace!.workspace_id, data, user!.id),
     onSuccess: () => {
       invalidateAll();
     },

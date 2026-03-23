@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 
 import healthRouter from './routes/health';
 import authRouter from './routes/auth';
@@ -27,6 +28,12 @@ const allowedOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
     .split(',')
     .map((o) => o.trim());
 
+// Include the API's own origin (needed for the OAuth callback bridge page)
+const apiSelfOrigin = process.env.API_ORIGIN ?? `http://localhost:${process.env.PORT ?? 3001}`;
+if (!allowedOrigins.includes(apiSelfOrigin)) {
+    allowedOrigins.push(apiSelfOrigin);
+}
+
 app.use(
     cors({
         origin: (origin, callback) => {
@@ -43,6 +50,7 @@ app.use(
 
 // ─── Security & Parsing ────────────────────────────────────────────────────────
 app.use(helmet());
+app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 

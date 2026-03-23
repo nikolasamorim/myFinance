@@ -1,15 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { advancedTransactionService } from '../services/advancedTransaction.service';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { useAuth } from '../context/AuthContext';
 import type { AdvancedTransactionData } from '../types';
 
 export function useAdvancedTransactions() {
   const { currentWorkspace } = useWorkspace();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const createAdvancedTransaction = useMutation({
     mutationFn: ({ transactionType, data }: { transactionType: string; data: AdvancedTransactionData }) =>
-      advancedTransactionService.createAdvancedTransaction(currentWorkspace!.workspace_id, transactionType, data),
+      advancedTransactionService.createAdvancedTransaction(currentWorkspace!.workspace_id, transactionType, data, user!.id),
     onSuccess: () => {
       // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });

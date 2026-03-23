@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, supabaseUrl } from '../lib/supabase';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { setAccessToken } from '../lib/authTokens';
+import { authFetch } from '../lib/apiClient';
 
 interface User {
   id: string;
@@ -13,191 +14,166 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loginWithGoogle: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  user: { id: string; email: string; name: string };
+}
+
+interface RefreshResponse {
+  access_token: string;
+  refresh_token: string;
+  user: { id: string; email: string; name: string };
+}
+
+interface MeResponse {
+  id: string;
+  email: string;
+  name: string;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    console.log('🔄 AuthContext: Initializing auth listener');
+  // ─── Silent refresh on mount (replaces supabase.auth.getSession) ───────────
 
-    // In development/Bolt environment, check for existing session first
-    const checkInitialSession = async () => {
+  useEffect(() => {
+    let cancelled = false;
+
+    const silentRefresh = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('❌ AuthContext: Error getting initial session:', error);
+        // Skip silent refresh on the OAuth callback page — the AuthCallback
+        // component handles hydration itself and running both concurrently
+        // causes a race condition where silentRefresh may clear auth state.
+        if (window.location.pathname === '/auth/callback') {
           setLoading(false);
           return;
         }
-        
-        if (session?.user) {
-          console.log('✅ AuthContext: Found existing session');
-          const userData: User = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: session.user.user_metadata?.name || session.user.email || '',
-          };
-          setUser(userData);
+
+        // Try to refresh using the httpOnly cookie.
+        // Use raw fetch to avoid noisy console errors when there is no cookie (expected on login page).
+        const API_URL = import.meta.env.VITE_API_URL as string;
+        const response = await fetch(`${API_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+
+        if (cancelled) return;
+
+        if (response.ok) {
+          const data: RefreshResponse = await response.json();
+          setAccessToken(data.access_token);
+          setUser({
+            id: data.user.id,
+            email: data.user.email || '',
+            name: data.user.name || data.user.email || '',
+          });
           setIsAuthenticated(true);
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error('❌ AuthContext: Error checking initial session:', error);
-        setLoading(false);
-      }
-    };
-
-    // Check for existing session immediately
-    checkInitialSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔄 AuthContext: Auth state changed:', event);
-        
-        try {
-          if (session?.user && event !== 'SIGNED_OUT') {
-            const userData: User = {
-              id: session.user.id,
-              email: session.user.email || '',
-              name: session.user.user_metadata?.name || session.user.email || '',
-            };
-            
-            console.log('✅ AuthContext: User authenticated:', userData.email);
-            setUser(userData);
-            setIsAuthenticated(true);
-          } else if (event === 'SIGNED_OUT') {
-            console.log('🚪 AuthContext: User signed out');
-            setUser(null);
-            setIsAuthenticated(false);
-          } else if (!session) {
-            console.log('❌ AuthContext: No valid session or signed out');
-            // Clear invalid session from local storage
-            const storageKey = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
-            localStorage.removeItem(storageKey);
-            setUser(null);
-            setIsAuthenticated(false);
-          }
-        } catch (error) {
-          console.error('❌ AuthContext: Error processing auth state:', error);
-          // Don't set user to null on network errors, keep current state
-          if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
-            console.log('🌐 AuthContext: Network error detected, keeping current auth state');
-            return;
-          }
+        } else {
+          // No valid refresh token — user is not authenticated (expected on login page)
+          setAccessToken(null);
           setUser(null);
           setIsAuthenticated(false);
-        } finally {
+        }
+      } catch {
+        // Network error
+        if (!cancelled) {
+          setAccessToken(null);
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } finally {
+        if (!cancelled) {
           setLoading(false);
         }
       }
-    );
+    };
+
+    silentRefresh();
 
     return () => {
-      console.log('🧹 AuthContext: Cleaning up auth listener');
-      subscription.unsubscribe();
+      cancelled = true;
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    console.log('🔐 AuthContext: Starting login process');
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+  // ─── Login ─────────────────────────────────────────────────────────────────
 
-      if (error) {
-        console.error('❌ AuthContext: Login error:', error);
-        throw error;
-      }
-
-      if (!data.session?.access_token) {
-        throw new Error('No access token received');
-      }
-      
-      console.log('✅ AuthContext: Login successful');
-    } catch (error) {
-      console.error('❌ AuthContext: Login failed:', error);
-      throw error;
-    }
-  };
-
-  const register = async (email: string, password: string, name: string) => {
-    console.log('📝 AuthContext: Starting registration process');
-    
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name,
-          }
-        }
-      });
-
-      if (error) {
-        console.error('❌ AuthContext: Registration error:', error);
-        throw error;
-      }
-
-      console.log('✅ AuthContext: Registration successful');
-    } catch (error) {
-      console.error('❌ AuthContext: Registration failed:', error);
-      throw error;
-    }
-  };
-
-  const logout = () => {
-    console.log('🚪 AuthContext: Logging out');
-    supabase.auth.signOut();
-    
-    // Clear local storage session data
-    const storageKey = `sb-${supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
-    localStorage.removeItem(storageKey);
-  };
-
-  const loginWithGoogle = async () => {
-    console.log('🔐 AuthContext: Starting Google login');
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` },
+  const login = useCallback(async (email: string, password: string) => {
+    const data = await authFetch<LoginResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
     });
-    if (error) {
-      console.error('❌ AuthContext: Google login error:', error);
-      throw error;
-    }
-  };
 
-  const checkWorkspaces = async (): Promise<boolean> => {
+    setAccessToken(data.access_token);
+    setUser({
+      id: data.user.id,
+      email: data.user.email || '',
+      name: data.user.name || data.user.email || '',
+    });
+    setIsAuthenticated(true);
+  }, []);
+
+  // ─── Register ──────────────────────────────────────────────────────────────
+
+  const register = useCallback(async (email: string, password: string, name: string) => {
+    await authFetch('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name }),
+    });
+    // Registration doesn't auto-login — user must verify email first
+  }, []);
+
+  // ─── Logout ────────────────────────────────────────────────────────────────
+
+  const logout = useCallback(async () => {
     try {
-      console.log('🔍 AuthContext: Checking session validity');
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error || !session) {
-        console.log('❌ AuthContext: Invalid session detected, logging out');
-        logout();
-        return false;
-      }
-      
-      console.log('✅ AuthContext: Session is valid');
-      return true;
-    } catch (error) {
-      console.error('❌ AuthContext: Error checking session:', error);
-      logout();
-      return false;
+      await authFetch('/auth/logout', { method: 'POST' });
+    } catch {
+      // Even if the API call fails, clear local state
     }
-  };
+    setAccessToken(null);
+    setUser(null);
+    setIsAuthenticated(false);
+  }, []);
 
-  const value: AuthContextType = {
+  // ─── Google OAuth ──────────────────────────────────────────────────────────
+
+  const loginWithGoogle = useCallback(async () => {
+    const data = await authFetch<{ url: string }>('/auth/google');
+    if (data?.url) {
+      window.location.href = data.url;
+    }
+  }, []);
+
+  // ─── Hydrate from OAuth callback ──────────────────────────────────────────
+
+  const hydrateFromToken = useCallback(async (accessToken: string) => {
+    setAccessToken(accessToken);
+    try {
+      const me = await authFetch<MeResponse>('/auth/me');
+      setUser({
+        id: me.id,
+        email: me.email || '',
+        name: me.name || me.email || '',
+      });
+      setIsAuthenticated(true);
+    } catch {
+      setAccessToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  }, []);
+
+  const value: AuthContextType & { hydrateFromToken: (token: string) => Promise<void> } = {
     user,
     isAuthenticated,
     loading,
@@ -205,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     loginWithGoogle,
-    checkWorkspaces,
+    hydrateFromToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -217,4 +193,15 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+/**
+ * Extended hook that includes hydrateFromToken (used by AuthCallback page).
+ */
+export function useAuthInternal() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuthInternal must be used within an AuthProvider');
+  }
+  return context as AuthContextType & { hydrateFromToken: (token: string) => Promise<void> };
 }
