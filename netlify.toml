@@ -15,6 +15,12 @@
   to = "/.netlify/functions/api/:splat"
   status = 200
 
+# Banking (Pluggy) — standalone Netlify Functions
+[[redirects]]
+  from = "/banking/*"
+  to = "/.netlify/functions/banking-:splat"
+  status = 200
+
 # SPA fallback — necessário para React Router funcionar em produção
 [[redirects]]
   from = "/*"

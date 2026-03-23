@@ -6,10 +6,9 @@ import { formatCurrency } from '../../lib/utils';
 import { parseOFX } from '../../lib/ofxParser';
 import type { OFXParseResult } from '../../lib/ofxParser';
 import { useWorkspace } from '../../context/WorkspaceContext';
-import { useAuth } from '../../context/AuthContext';
 import { useAccounts } from '../../hooks/useAccounts';
 import { useCategories } from '../../hooks/useCategories';
-import { transactionService } from '../../services/transaction.service';
+import { reconciliationService } from '../../services/reconciliation.service';
 
 // ─── Tipos internos ──────────────────────────────────────────────────────────
 
@@ -391,20 +390,19 @@ function StepReview({
 
 interface StepConfirmProps {
   rows: ImportRow[];
+  fileName: string;
   selectedAccountId: string;
   onBack: () => void;
   onReset: () => void;
 }
 
-function StepConfirm({ rows, selectedAccountId, onBack, onReset }: StepConfirmProps) {
+function StepConfirm({ rows, fileName, selectedAccountId, onBack, onReset }: StepConfirmProps) {
   const { currentWorkspace } = useWorkspace();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: accounts } = useAccounts({ type: 'all', search: '' });
 
   const [importing, setImporting] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [importedCount, setImportedCount] = useState<number | null>(null);
+  const [result, setResult] = useState<{ imported: number; skipped: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const toImport = rows.filter((r) => !r.skip);
@@ -414,69 +412,49 @@ function StepConfirm({ rows, selectedAccountId, onBack, onReset }: StepConfirmPr
   const accountName = accounts?.find((a) => a.id === selectedAccountId)?.title ?? selectedAccountId;
 
   const handleImport = async () => {
-    if (!currentWorkspace || !user) return;
+    if (!currentWorkspace) return;
     setImporting(true);
     setError(null);
-    setProgress(0);
 
-    let count = 0;
     try {
-      for (const row of toImport) {
-        await transactionService.createTransaction({
-          transaction_workspace_id: currentWorkspace.workspace_id,
-          transaction_type: row.type,
-          transaction_description: row.description,
-          transaction_amount: row.amount,
-          transaction_date: row.date,
-          transaction_status: row.type === 'income' ? 'received' : 'paid',
-          transaction_bank_id: selectedAccountId,
-          transaction_category_id: row.categoryId,
-          transaction_origin: 'import',
-          transaction_created_by_user_id: user.id,
-          transaction_payment_method: null,
-          transaction_cost_center_id: null,
-          transaction_card_id: null,
-          transaction_person_id: null,
-          transaction_recurrence: null,
-          recurring: false,
-          recurrence_id: null,
-          recurrence_rule_id: null,
-          recurrence_sequence: null,
-          recurrence_instance_date: null,
-          parent_recurrence_rule_id: null,
-          is_recurrence_generated: false,
-          generated_at: null,
-          version: null,
-          installment_group_id: null,
-          installment_number: null,
-          installment_total: null,
-        });
-        count++;
-        setProgress(count);
-      }
+      const res = await reconciliationService.importOFX(currentWorkspace.workspace_id, {
+        account_id: selectedAccountId,
+        file_name: fileName,
+        transactions: toImport.map((row) => ({
+          fitid: row.fitid,
+          date: row.date,
+          description: row.description,
+          amount: row.amount,
+          type: row.type,
+          category_id: row.categoryId ?? null,
+        })),
+      });
 
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
       await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      setImportedCount(count);
+      await queryClient.invalidateQueries({ queryKey: ['reconciliation-summary'] });
+      setResult({ imported: res.imported, skipped: res.skipped });
     } catch (e) {
       console.error(e);
-      setError(`Erro ao importar: ${(e as Error).message}. ${count} transações foram importadas antes do erro.`);
+      setError(`Erro ao importar: ${(e as Error).message}`);
     } finally {
       setImporting(false);
     }
   };
 
   // Estado de sucesso
-  if (importedCount !== null) {
+  if (result !== null) {
     return (
       <div className="flex flex-col items-center justify-center py-10 gap-4 text-center">
         <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center">
           <CheckCircle2 className="w-8 h-8 text-green-500" />
         </div>
         <div>
-          <p className="text-lg font-semibold text-text-primary">{importedCount} transações importadas</p>
+          <p className="text-lg font-semibold text-text-primary">{result.imported} transações importadas</p>
           <p className="text-sm text-text-muted mt-1">
-            As transações já estão disponíveis no Dashboard.
+            {result.skipped > 0
+              ? `${result.skipped} já existiam e foram ignoradas. As novas transações já estão disponíveis no Dashboard.`
+              : 'As transações já estão disponíveis no Dashboard.'}
           </p>
         </div>
         <button
@@ -528,17 +506,9 @@ function StepConfirm({ rows, selectedAccountId, onBack, onReset }: StepConfirmPr
       )}
 
       {importing && (
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-text-muted">
-            <span>Importando...</span>
-            <span>{progress} / {toImport.length}</span>
-          </div>
-          <div className="w-full bg-bg-elevated rounded-full h-1.5">
-            <div
-              className="bg-accent h-1.5 rounded-full transition-all duration-300"
-              style={{ width: `${(progress / toImport.length) * 100}%` }}
-            />
-          </div>
+        <div className="flex items-center gap-2 text-sm text-text-muted">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Importando {toImport.length} transações...</span>
         </div>
       )}
 
@@ -620,6 +590,7 @@ export function ImportacaoSection({ initialAccountId }: ImportacaoSectionProps =
         {step === 3 && (
           <StepConfirm
             rows={rows}
+            fileName={fileName}
             selectedAccountId={selectedAccountId}
             onBack={() => setStep(2)}
             onReset={handleReset}

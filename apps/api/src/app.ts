@@ -17,6 +17,7 @@ import statementsRouter from './routes/statements';
 import notificationsRouter from './routes/notifications';
 import notificationPreferencesRouter from './routes/notificationPreferences';
 import reconciliationsRouter from './routes/reconciliations';
+import bankingRouter from './routes/banking';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -62,6 +63,9 @@ app.use('/api/v1/workspaces/:wid/credit-cards/:cardId/statements', statementsRou
 app.use('/api/v1/workspaces/:wid/notifications', notificationsRouter);
 app.use('/api/v1/workspaces/:wid/notification-preferences', notificationPreferencesRouter);
 app.use('/api/v1/workspaces/:wid/reconciliations', reconciliationsRouter);
+
+// Banking (Pluggy Open Finance) — standalone, fora do padrão /workspaces/:wid
+app.use('/api/v1/banking', bankingRouter);
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req, res) => {

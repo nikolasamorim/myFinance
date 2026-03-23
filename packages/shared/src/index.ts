@@ -112,6 +112,12 @@ export interface Transaction {
   transaction_issue_date?: string;
   transaction_competence_date?: string;
   transaction_is_paid?: boolean;
+  // Campos de importação
+  import_source?: 'manual' | 'ofx' | 'open_finance' | null;
+  external_id?: string | null;
+  raw_data?: Record<string, unknown> | null;
+  ignore_reason?: string | null;
+  reconciliation_ignored?: boolean | null;
 }
 
 export interface AdvancedTransactionData {
@@ -416,6 +422,45 @@ export interface BankReconciliation {
   reconciled_by_user_id: string;
   reconciled_at: string;
   notes: string | null;
+  match_score?: number | null;
+  amount_difference?: number | null;
+  match_type?: 'auto' | 'manual' | 'rule';
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface ImportBatch {
+  id: string;
+  workspace_id: string;
+  account_id: string | null;
+  source: 'ofx' | 'open_finance';
+  created_by: string;
+  created_at: string;
+  item_count: number;
+  skipped_count: number;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  file_name?: string | null;
+}
+
+export interface OFXImportRow {
+  fitid: string;
+  date: string;
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category_id?: string | null;
+}
+
+export interface OFXImportPayload {
+  account_id: string;
+  transactions: OFXImportRow[];
+  file_name?: string;
+}
+
+export interface OFXImportResult {
+  batch_id: string;
+  imported: number;
+  skipped: number;
 }
 
 /** Par conciliado com os dois lançamentos expandidos */
@@ -429,12 +474,15 @@ export interface ReconciliationRow {
 export interface ReconciliationSuggestion {
   transaction: Transaction;
   score: number;
+  amount_difference: number;
 }
 
 export interface ReconcilePayload {
   imported_transaction_id: string;
   system_transaction_id: string;
   notes?: string;
+  match_score?: number;
+  match_type?: 'auto' | 'manual' | 'rule';
 }
 
 export interface ReconciliationFilters {
@@ -447,4 +495,35 @@ export interface ReconciliationFilters {
 export interface ImportedTransactionWithStatus {
   transaction: Transaction;
   reconciliation: BankReconciliation | null;
+}
+
+// ─── Pluggy / Open Finance ──────────────────────────────────────────────────
+
+export type PluggyConnectionStatus =
+  | 'active'
+  | 'updating'
+  | 'login_error'
+  | 'error'
+  | 'disconnected';
+
+export interface PluggyConnection {
+  id: string;
+  workspace_id: string;
+  account_id: string | null;
+  pluggy_item_id: string;
+  pluggy_account_id: string | null;
+  institution_name: string;
+  status: PluggyConnectionStatus;
+  consent_expires_at: string | null;
+  last_sync_at: string | null;
+  initial_sync_done: boolean;
+  error_message: string | null;
+  retry_count: number;
+  created_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface PluggyConnectionWithBalance extends PluggyConnection {
+  balance: number | null;
 }

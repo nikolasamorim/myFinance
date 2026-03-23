@@ -6,6 +6,8 @@ import type {
   ReconcilePayload,
   ReconciliationFilters,
   ImportedTransactionWithStatus,
+  OFXImportPayload,
+  OFXImportResult,
   Transaction,
 } from '@myfinance/shared';
 
@@ -74,8 +76,15 @@ export const reconciliationService = {
     return apiClient!.delete(`/workspaces/${workspaceId}/reconciliations/${reconciliationId}`);
   },
 
-  async ignore(workspaceId: string, importedId: string): Promise<void> {
-    return apiClient!.patch(`/workspaces/${workspaceId}/reconciliations/ignore/${importedId}`, {});
+  async ignore(
+    workspaceId: string,
+    importedId: string,
+    reason?: string
+  ): Promise<void> {
+    return apiClient!.patch(
+      `/workspaces/${workspaceId}/reconciliations/ignore/${importedId}`,
+      { reason: reason ?? null }
+    );
   },
 
   async unignore(workspaceId: string, importedId: string): Promise<void> {
@@ -87,5 +96,15 @@ export const reconciliationService = {
       `/workspaces/${workspaceId}/reconciliations/summary`
     );
     return res.data ?? [];
+  },
+
+  async importOFX(
+    workspaceId: string,
+    payload: OFXImportPayload
+  ): Promise<OFXImportResult> {
+    return apiClient!.post<OFXImportResult>(
+      `/workspaces/${workspaceId}/reconciliations/import`,
+      payload
+    );
   },
 };

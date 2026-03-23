@@ -5,7 +5,8 @@ const router = Router({ mergeParams: true });
 router.use(requireAuth as RequestHandler);
 
 type H = (req: AuthenticatedRequest, res: Response, next: NextFunction) => Promise<void>;
-const h = (fn: H): RequestHandler => fn as unknown as RequestHandler;
+const h = (fn: H): RequestHandler =>
+    (req, res, next) => fn(req as AuthenticatedRequest, res, next).catch(next) as unknown;
 
 /** GET /api/v1/workspaces/:wid/notifications/count/unread */
 router.get('/count/unread', h(async (req, res, next) => {

@@ -5,7 +5,79 @@ const router = Router({ mergeParams: true });
 router.use(requireAuth as RequestHandler);
 
 type H = (req: AuthenticatedRequest, res: Response, next: NextFunction) => Promise<void>;
-const h = (fn: H): RequestHandler => fn as unknown as RequestHandler;
+const h = (fn: H): RequestHandler =>
+    (req, res, next) => fn(req as AuthenticatedRequest, res, next).catch(next) as unknown;
+
+// ─── Helpers de scoring ───────────────────────────────────────────────────────
+
+/**
+ * Similaridade de Jaccard sobre palavras normalizadas.
+ * Retorna 0–100.
+ */
+function descriptionSimilarity(a: string, b: string): number {
+    const normalize = (s: string) =>
+        s.toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')   // remove acentos
+            .replace(/[^a-z0-9 ]/g, ' ')
+            .split(/\s+/)
+            .filter(Boolean);
+
+    const setA = new Set(normalize(a));
+    const setB = new Set(normalize(b));
+    if (setA.size === 0 || setB.size === 0) return 0;
+
+    let intersection = 0;
+    for (const w of setA) {
+        if (setB.has(w)) intersection++;
+    }
+    const union = setA.size + setB.size - intersection;
+    return Math.round((intersection / union) * 100);
+}
+
+/**
+ * Calcula o score de matching entre uma transação importada e um candidato.
+ * Retorna null se os tipos forem opostos (receita vs despesa) — candidato descartado.
+ *
+ * Pesos: valor 55% | data 25% | conta 5% | descrição 15%
+ */
+function calculateScore(
+    imported: Record<string, any>,
+    candidate: Record<string, any>,
+    importedDate: Date,
+): number | null {
+    // R7: tipos opostos são descartados (income ≠ expense)
+    const typeMismatch =
+        (imported.transaction_type === 'income' && candidate.transaction_type === 'expense') ||
+        (imported.transaction_type === 'expense' && candidate.transaction_type === 'income');
+    if (typeMismatch) return null;
+
+    const importedAmount: number = imported.transaction_amount;
+
+    const candDate = new Date(candidate.transaction_date);
+    const dateDiffDays = Math.abs((candDate.getTime() - importedDate.getTime()) / 86400000);
+    const dateScore = Math.max(0, 100 - dateDiffDays * 10);
+
+    const amountDiff = Math.abs(candidate.transaction_amount - importedAmount);
+    const amountScore = importedAmount > 0
+        ? Math.max(0, 100 - (amountDiff / importedAmount) * 100)
+        : (amountDiff === 0 ? 100 : 0);
+
+    const accountScore = imported.transaction_bank_id &&
+        candidate.transaction_bank_id === imported.transaction_bank_id ? 20 : 0;
+
+    const descScore = descriptionSimilarity(
+        imported.transaction_description ?? '',
+        candidate.transaction_description ?? '',
+    );
+
+    return Math.round(
+        amountScore * 0.55 +
+        dateScore * 0.25 +
+        accountScore * 0.05 +
+        descScore * 0.15,
+    );
+}
 
 // ─── GET /imported ─────────────────────────────────────────────────────────────
 // Lista transações importadas com seu status de conciliação.
@@ -117,13 +189,17 @@ router.get('/', h(async (req, res, next) => {
 }));
 
 // ─── GET /suggestions/:importedId ─────────────────────────────────────────────
-// Sugestões automáticas de lançamentos do sistema para conciliar com o importado
+// Sugestões automáticas de lançamentos do sistema para conciliar com o importado.
+//
+// Melhorias implementadas:
+// - R2: adiciona peso de descrição (Jaccard 15%), redistribui pesos
+// - R5: pré-filtra por faixa de valor antes do limit → garante os melhores candidatos
+// - R7: descarta candidatos com tipo oposto (receita vs despesa)
 
 router.get('/suggestions/:importedId', h(async (req, res, next) => {
     try {
         const { wid, importedId } = req.params;
 
-        // Busca a transação importada
         const { data: imported, error: impErr } = await req.supabase
             .from('transactions')
             .select('*')
@@ -134,7 +210,6 @@ router.get('/suggestions/:importedId', h(async (req, res, next) => {
 
         const importedAmount: number = imported.transaction_amount;
         const importedDate = new Date(imported.transaction_date);
-        const importedAccountId: string | null = imported.transaction_bank_id;
 
         // IDs já conciliados (para excluir)
         const { data: existingRecs } = await req.supabase
@@ -143,41 +218,41 @@ router.get('/suggestions/:importedId', h(async (req, res, next) => {
             .eq('workspace_id', wid);
         const usedSystemIds = new Set((existingRecs ?? []).map((r: any) => r.system_transaction_id));
 
-        // Janela de ±7 dias
+        // Janela temporal ±7 dias
         const windowStart = new Date(importedDate);
         windowStart.setDate(windowStart.getDate() - 7);
         const windowEnd = new Date(importedDate);
         windowEnd.setDate(windowEnd.getDate() + 7);
 
-        const { data: candidates, error: candErr } = await req.supabase
+        // R5: pré-filtra por faixa de valor (±50% do valor importado) antes de aplicar limit
+        // Isso garante que os candidatos mais relevantes não sejam cortados
+        const minAmount = importedAmount > 0 ? importedAmount * 0.5 : 0;
+        const maxAmount = importedAmount > 0 ? importedAmount * 1.5 : importedAmount + 1;
+
+        let candQuery = req.supabase
             .from('transactions')
             .select('*')
             .eq('transaction_workspace_id', wid)
             .neq('transaction_origin', 'import')
             .gte('transaction_date', windowStart.toISOString().split('T')[0])
             .lte('transaction_date', windowEnd.toISOString().split('T')[0])
-            .limit(100);
+            .gte('transaction_amount', minAmount)
+            .lte('transaction_amount', maxAmount)
+            .limit(500); // limite amplo; scoring e slice final controlam os 5 melhores
+
+        const { data: candidates, error: candErr } = await candQuery;
         if (candErr) throw candErr;
 
         const scored = (candidates ?? [])
             .filter((c: any) => !usedSystemIds.has(c.transaction_id) && c.transaction_id !== importedId)
             .map((c: any) => {
-                const candDate = new Date(c.transaction_date);
-                const dateDiffDays = Math.abs((candDate.getTime() - importedDate.getTime()) / 86400000);
-                const dateScore = Math.max(0, 100 - dateDiffDays * 10);
-
+                const score = calculateScore(imported, c, importedDate);
+                if (score === null || score < 30) return null;
                 const amountDiff = Math.abs(c.transaction_amount - importedAmount);
-                const amountScore = importedAmount > 0
-                    ? Math.max(0, 100 - (amountDiff / importedAmount) * 100)
-                    : (amountDiff === 0 ? 100 : 0);
-
-                const accountScore = importedAccountId && c.transaction_bank_id === importedAccountId ? 20 : 0;
-
-                const score = Math.round(amountScore * 0.6 + dateScore * 0.3 + accountScore * 0.1);
-                return { transaction: c, score };
+                return { transaction: c, score, amount_difference: amountDiff };
             })
-            .filter((s: any) => s.score >= 30)
-            .sort((a: any, b: any) => b.score - a.score)
+            .filter((s): s is NonNullable<typeof s> => s !== null)
+            .sort((a, b) => b.score - a.score)
             .slice(0, 5);
 
         res.json({ data: scored });
@@ -229,61 +304,155 @@ router.get('/candidates', h(async (req, res, next) => {
 }));
 
 // ─── GET /summary ─────────────────────────────────────────────────────────────
-// Retorna contagem de conciliações pendentes por conta bancária
+// Retorna contagem de pendentes por conta — usa RPC com LEFT JOIN (P3 otimização)
 
 router.get('/summary', h(async (req, res, next) => {
     try {
         const { wid } = req.params;
 
-        const { data: transactions, error } = await req.supabase
-            .from('transactions')
-            .select('transaction_id, transaction_bank_id')
-            .eq('transaction_workspace_id', wid)
-            .eq('transaction_origin', 'import')
-            .eq('reconciliation_ignored', false);
+        const { data, error } = await req.supabase
+            .rpc('get_reconciliation_summary', { p_workspace_id: wid });
         if (error) throw error;
 
-        const txList = transactions ?? [];
-        if (txList.length === 0) {
-            res.json({ data: [] });
+        res.json({ data: data ?? [] });
+    } catch (err) { next(err); }
+}));
+
+// ─── POST /import ──────────────────────────────────────────────────────────────
+// Importa um lote de transações OFX com deduplicação via external_id (fitid).
+// Cria um registro em import_batches para rastreabilidade.
+
+router.post('/import', h(async (req, res, next) => {
+    try {
+        const { wid } = req.params;
+        const { account_id, transactions, file_name } = req.body as {
+            account_id: string;
+            transactions: Array<{
+                fitid: string;
+                date: string;
+                description: string;
+                amount: number;
+                type: 'income' | 'expense';
+                category_id?: string | null;
+            }>;
+            file_name?: string;
+        };
+
+        if (!account_id || !Array.isArray(transactions) || transactions.length === 0) {
+            res.status(400).json({ error: { message: 'account_id e transactions são obrigatórios.' } });
             return;
         }
 
-        const ids = txList.map((t: any) => t.transaction_id);
-        const { data: recs } = await req.supabase
-            .from('bank_reconciliations')
-            .select('imported_transaction_id')
-            .in('imported_transaction_id', ids);
-        const reconciledIds = new Set((recs ?? []).map((r: any) => r.imported_transaction_id));
+        // Cria o batch para rastreabilidade
+        const { data: batch, error: batchErr } = await req.supabase
+            .from('import_batches')
+            .insert({
+                workspace_id: wid,
+                account_id,
+                source: 'ofx',
+                created_by: req.user.id,
+                item_count: transactions.length,
+                status: 'processing',
+                file_name: file_name ?? null,
+            })
+            .select()
+            .single();
+        if (batchErr) throw batchErr;
 
-        const countByAccount = new Map<string, number>();
-        for (const t of txList) {
-            if (!reconciledIds.has(t.transaction_id) && t.transaction_bank_id) {
-                countByAccount.set(t.transaction_bank_id, (countByAccount.get(t.transaction_bank_id) ?? 0) + 1);
-            }
-        }
-
-        const data = Array.from(countByAccount.entries()).map(([account_id, pending_count]) => ({
-            account_id,
-            pending_count,
+        // Monta os rows para upsert
+        const rows = transactions.map((t) => ({
+            transaction_workspace_id: wid,
+            transaction_type: t.type,
+            transaction_description: t.description,
+            transaction_amount: t.amount,
+            transaction_date: t.date,
+            transaction_status: t.type === 'income' ? 'received' : 'paid',
+            transaction_bank_id: account_id,
+            transaction_category_id: t.category_id ?? null,
+            transaction_origin: 'import',
+            transaction_created_by_user_id: req.user.id,
+            transaction_payment_method: null,
+            transaction_cost_center_id: null,
+            transaction_card_id: null,
+            transaction_person_id: null,
+            transaction_recurrence: null,
+            recurring: false,
+            recurrence_id: null,
+            recurrence_rule_id: null,
+            recurrence_sequence: null,
+            recurrence_instance_date: null,
+            parent_recurrence_rule_id: null,
+            is_recurrence_generated: false,
+            generated_at: null,
+            version: null,
+            installment_group_id: null,
+            installment_number: null,
+            installment_total: null,
+            import_source: 'ofx',
+            external_id: t.fitid,
         }));
 
-        res.json({ data });
+        // Upsert com ignoreDuplicates: insere novas, ignora as que já existem pelo índice único
+        const { data: inserted, error: insertErr } = await req.supabase
+            .from('transactions')
+            .upsert(rows, {
+                onConflict: 'transaction_workspace_id,import_source,external_id',
+                ignoreDuplicates: true,
+            })
+            .select('transaction_id');
+        if (insertErr) throw insertErr;
+
+        const importedCount = (inserted ?? []).length;
+        const skippedCount = transactions.length - importedCount;
+
+        // Atualiza o batch com os resultados
+        await req.supabase
+            .from('import_batches')
+            .update({
+                item_count: importedCount,
+                skipped_count: skippedCount,
+                status: 'completed',
+            })
+            .eq('id', batch.id);
+
+        res.status(201).json({
+            batch_id: batch.id,
+            imported: importedCount,
+            skipped: skippedCount,
+        });
     } catch (err) { next(err); }
 }));
 
 // ─── POST / ───────────────────────────────────────────────────────────────────
-// Concilia um lançamento importado com um do sistema
+// Concilia um lançamento importado com um do sistema.
+// Aceita match_score e match_type para auditoria.
+// O amount_difference é calculado internamente.
 
 router.post('/', h(async (req, res, next) => {
     try {
         const { wid } = req.params;
-        const { imported_transaction_id, system_transaction_id, notes } = req.body;
+        const {
+            imported_transaction_id,
+            system_transaction_id,
+            notes,
+            match_score,
+            match_type,
+        } = req.body;
 
         if (!imported_transaction_id || !system_transaction_id) {
             res.status(400).json({ error: { message: 'imported_transaction_id e system_transaction_id são obrigatórios.' } });
             return;
         }
+
+        // Calcula amount_difference com base nos valores reais das duas transações
+        const [{ data: importedTx }, { data: systemTx }] = await Promise.all([
+            req.supabase.from('transactions').select('transaction_amount').eq('transaction_id', imported_transaction_id).single(),
+            req.supabase.from('transactions').select('transaction_amount').eq('transaction_id', system_transaction_id).single(),
+        ]);
+
+        const amountDifference = importedTx && systemTx
+            ? Math.abs((importedTx as any).transaction_amount - (systemTx as any).transaction_amount)
+            : null;
 
         const { data, error } = await req.supabase
             .from('bank_reconciliations')
@@ -293,6 +462,9 @@ router.post('/', h(async (req, res, next) => {
                 system_transaction_id,
                 reconciled_by_user_id: req.user.id,
                 notes: notes ?? null,
+                match_score: match_score ?? null,
+                amount_difference: amountDifference,
+                match_type: match_type ?? 'manual',
             })
             .select()
             .single();
@@ -321,15 +493,19 @@ router.delete('/:id', h(async (req, res, next) => {
 }));
 
 // ─── PATCH /ignore/:importedId ────────────────────────────────────────────────
-// Marca lançamento importado como ignorado
+// Marca lançamento importado como ignorado, com motivo opcional.
 
 router.patch('/ignore/:importedId', h(async (req, res, next) => {
     try {
         const { wid, importedId } = req.params;
+        const { reason } = req.body as { reason?: string };
 
         const { error } = await req.supabase
             .from('transactions')
-            .update({ reconciliation_ignored: true })
+            .update({
+                reconciliation_ignored: true,
+                ignore_reason: reason ?? null,
+            })
             .eq('transaction_id', importedId)
             .eq('transaction_workspace_id', wid);
         if (error) throw error;
@@ -339,7 +515,7 @@ router.patch('/ignore/:importedId', h(async (req, res, next) => {
 }));
 
 // ─── PATCH /unignore/:importedId ──────────────────────────────────────────────
-// Desmarca o ignorado
+// Desmarca o ignorado e limpa o motivo
 
 router.patch('/unignore/:importedId', h(async (req, res, next) => {
     try {
@@ -347,7 +523,7 @@ router.patch('/unignore/:importedId', h(async (req, res, next) => {
 
         const { error } = await req.supabase
             .from('transactions')
-            .update({ reconciliation_ignored: false })
+            .update({ reconciliation_ignored: false, ignore_reason: null })
             .eq('transaction_id', importedId)
             .eq('transaction_workspace_id', wid);
         if (error) throw error;

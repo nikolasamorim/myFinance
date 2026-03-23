@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Wallet, Plus, Edit, Trash2, Building, Calendar, TreePine, Table } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Wallet, Plus, Edit, Trash2, Building, Calendar, TreePine, Table, Link2, Unlink, RefreshCw, CheckCircle, AlertTriangle, XCircle, Clock, Loader2 } from 'lucide-react';
 import * as Lucide from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { PluggyConnect } from 'react-pluggy-connect';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -18,9 +19,12 @@ import { KanbanBoard } from '../../components/kanban/KanbanBoard';
 import type { FilterField } from '../../components/ui/FiltersPanel';
 import type { SortOption } from '../../components/ui/SortPanel';
 import { useAccounts } from '../../hooks/useAccounts';
+import { useWorkspace } from '../../context/WorkspaceContext';
+import { bankingService } from '../../services/banking.service';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { cn } from '../../lib/utils';
 import type { AccountData } from '../../services/account.service';
+import type { PluggyConnectionWithBalance } from '@myfinance/shared';
 
 interface AccountFilters {
   type: string;
@@ -380,6 +384,7 @@ interface AccountModalProps {
 }
 
 function AccountModal({ isOpen, onClose, account, onSave, bankAccounts }: AccountModalProps) {
+  const [modalTab, setModalTab] = useState<'dados' | 'integracao'>('dados');
   const [formData, setFormData] = useState<AccountFormData>({
     title: '',
     type: 'bank',
@@ -420,6 +425,7 @@ function AccountModal({ isOpen, onClose, account, onSave, bankAccounts }: Accoun
         parent_id: '',
       });
     }
+    setModalTab('dados');
   }, [account]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -449,7 +455,6 @@ function AccountModal({ isOpen, onClose, account, onSave, bankAccounts }: Accoun
   const handleInputChange = (field: keyof AccountFormData, value: any) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
-      // Ao mudar para banco, limpar parent_id
       if (field === 'type' && value === 'bank') {
         updated.parent_id = '';
       }
@@ -464,6 +469,8 @@ function AccountModal({ isOpen, onClose, account, onSave, bankAccounts }: Accoun
 
   const parentOptions = bankAccounts.map(a => ({ value: a.id, label: a.title }));
 
+  const canShowIntegration = !!account && account.type === 'bank';
+
   return (
     <Modal
       isOpen={isOpen}
@@ -471,98 +478,438 @@ function AccountModal({ isOpen, onClose, account, onSave, bankAccounts }: Accoun
       title={account ? 'Editar Conta' : 'Nova Conta'}
       size="lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
+      {/* Tabs */}
+      {account && (
+        <div className="flex space-x-1 bg-bg-elevated p-1 rounded-lg mb-4">
+          <button
+            type="button"
+            onClick={() => setModalTab('dados')}
+            className={cn(
+              'flex items-center space-x-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all',
+              modalTab === 'dados'
+                ? 'bg-bg-page text-text-primary shadow-sm'
+                : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
+            )}
+          >
+            <Edit className="w-4 h-4" />
+            <span>Dados</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setModalTab('integracao')}
+            disabled={!canShowIntegration}
+            className={cn(
+              'flex items-center space-x-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all',
+              modalTab === 'integracao'
+                ? 'bg-bg-page text-text-primary shadow-sm'
+                : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface',
+              !canShowIntegration && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-text-secondary'
+            )}
+            title={!canShowIntegration ? 'Disponível apenas para contas do tipo Banco' : undefined}
+          >
+            <Link2 className="w-4 h-4" />
+            <span>Integração</span>
+          </button>
+        </div>
+      )}
+
+      {/* Dados Tab */}
+      {modalTab === 'dados' && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Input
+                label="Título"
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                placeholder="Ex: Conta Corrente Itaú"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-2">
+                Tipo de conta
+              </label>
+              <Dropdown
+                options={modalTypeOptions}
+                value={formData.type}
+                onChange={(value) => handleInputChange('type', value)}
+              />
+            </div>
+
+            {formData.type === 'cash' && (
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  Banco vinculado <span className="text-red-500">*</span>
+                </label>
+                <Dropdown
+                  options={parentOptions}
+                  value={formData.parent_id}
+                  onChange={(value) => handleInputChange('parent_id', value)}
+                  placeholder="Selecione o banco"
+                />
+                {!formData.parent_id && (
+                  <p className="text-xs text-red-500 mt-1">Contas do tipo Caixa precisam de um banco vinculado.</p>
+                )}
+              </div>
+            )}
+
             <Input
-              label="Título"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Ex: Conta Corrente Itaú"
+              label="Saldo inicial"
+              type="number"
+              step="0.01"
+              value={formData.initial_balance}
+              onChange={(e) => handleInputChange('initial_balance', Number(e.target.value))}
               required
+            />
+
+            <Input
+              label="Data de abertura"
+              type="date"
+              value={formData.opened_at}
+              onChange={(e) => handleInputChange('opened_at', e.target.value)}
+              required
+            />
+
+            <ColorPicker
+              label="Cor da conta"
+              value={formData.color}
+              onChange={(value) => handleInputChange('color', value)}
+            />
+
+            <IconPicker
+              label="Ícone da conta"
+              value={formData.icon}
+              onChange={(value) => handleInputChange('icon', value)}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-2">
-              Tipo de conta
+              Descrição
             </label>
-            <Dropdown
-              options={modalTypeOptions}
-              value={formData.type}
-              onChange={(value) => handleInputChange('type', value)}
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Descrição adicional da conta..."
+              className="w-full px-3 py-2 border border-border rounded-md bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent"
+              rows={3}
             />
           </div>
 
-          {formData.type === 'cash' && (
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Banco vinculado <span className="text-red-500">*</span>
-              </label>
-              <Dropdown
-                options={parentOptions}
-                value={formData.parent_id}
-                onChange={(value) => handleInputChange('parent_id', value)}
-                placeholder="Selecione o banco"
-              />
-              {!formData.parent_id && (
-                <p className="text-xs text-red-500 mt-1">Contas do tipo Caixa precisam de um banco vinculado.</p>
-              )}
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit" loading={isLoading} disabled={formData.type === 'cash' && !formData.parent_id}>
+              {account ? 'Atualizar' : 'Criar'} Conta
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {/* Integração Tab */}
+      {modalTab === 'integracao' && account && (
+        <IntegrationTab accountId={account.id} onClose={onClose} />
+      )}
+    </Modal>
+  );
+}
+
+// ─── Integration Tab ────────────────────────────────────────────────────────
+
+function IntegrationTab({ accountId, onClose }: { accountId: string; onClose: () => void }) {
+  const { currentWorkspace } = useWorkspace();
+  const workspaceId = currentWorkspace?.workspace_id ?? '';
+
+  const [connection, setConnection] = useState<PluggyConnectionWithBalance | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [connectToken, setConnectToken] = useState<string | null>(null);
+  const [showWidget, setShowWidget] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const fetchConnection = useCallback(async () => {
+    if (!workspaceId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await bankingService.getConnections(workspaceId);
+      const match = data.find(c => c.account_id === accountId);
+      setConnection(match ?? null);
+    } catch (err) {
+      console.error('Erro ao buscar conexões:', err);
+      setError('Não foi possível carregar informações de integração.');
+    } finally {
+      setLoading(false);
+    }
+  }, [workspaceId, accountId]);
+
+  React.useEffect(() => {
+    fetchConnection();
+  }, [fetchConnection]);
+
+  const handleConnect = async (itemId?: string) => {
+    setActionLoading(true);
+    setError(null);
+    try {
+      const { accessToken } = await bankingService.getConnectToken(workspaceId, itemId);
+      setConnectToken(accessToken);
+      setShowWidget(true);
+    } catch (err) {
+      setError('Não foi possível iniciar a conexão. Tente novamente.');
+      console.error('Erro ao obter connect token:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!connection) return;
+    if (!window.confirm('Deseja desconectar esta conta bancária? As transações já importadas serão mantidas.')) return;
+
+    setActionLoading(true);
+    setError(null);
+    try {
+      await bankingService.disconnect(workspaceId, connection.id);
+      setConnection(null);
+      setSuccessMsg('Conta desconectada com sucesso.');
+      setTimeout(() => setSuccessMsg(null), 4000);
+    } catch (err) {
+      setError('Erro ao desconectar a conta.');
+      console.error('Erro ao desconectar:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePluggySuccess = useCallback(async () => {
+    setShowWidget(false);
+    setConnectToken(null);
+    setSuccessMsg('Conta conectada com sucesso! As transações serão importadas em instantes.');
+    setTimeout(() => setSuccessMsg(null), 5000);
+    // Aguardar webhook processar e recarregar
+    setTimeout(() => fetchConnection(), 3000);
+  }, [fetchConnection]);
+
+  const handlePluggyError = useCallback((err: { message: string }) => {
+    setShowWidget(false);
+    setConnectToken(null);
+    setError(`Erro na conexão: ${err.message}`);
+  }, []);
+
+  const handlePluggyClose = useCallback(() => {
+    setShowWidget(false);
+    setConnectToken(null);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 text-accent animate-spin mb-3" />
+        <p className="text-sm text-text-muted">Carregando integração...</p>
+      </div>
+    );
+  }
+
+  const statusConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+    active: {
+      icon: <CheckCircle className="w-5 h-5" />,
+      label: 'Conectada',
+      color: 'text-green-600 bg-green-50',
+    },
+    updating: {
+      icon: <RefreshCw className="w-5 h-5 animate-spin" />,
+      label: 'Sincronizando',
+      color: 'text-blue-600 bg-blue-50',
+    },
+    login_error: {
+      icon: <AlertTriangle className="w-5 h-5" />,
+      label: 'Erro de login',
+      color: 'text-amber-600 bg-amber-50',
+    },
+    error: {
+      icon: <XCircle className="w-5 h-5" />,
+      label: 'Erro',
+      color: 'text-red-600 bg-red-50',
+    },
+    disconnected: {
+      icon: <Unlink className="w-5 h-5" />,
+      label: 'Desconectada',
+      color: 'text-gray-600 bg-gray-50',
+    },
+  };
+
+  const consentExpiring = connection?.consent_expires_at
+    ? new Date(connection.consent_expires_at).getTime() - Date.now() < 30 * 24 * 60 * 60 * 1000
+    : false;
+
+  return (
+    <div className="space-y-5">
+      {/* Messages */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700 text-sm">
+          <XCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+      {successMsg && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 text-green-700 text-sm">
+          <CheckCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      {/* Pluggy Connect Widget */}
+      {showWidget && connectToken && (
+        <PluggyConnect
+          connectToken={connectToken}
+          includeSandbox={true}
+          onSuccess={handlePluggySuccess}
+          onError={handlePluggyError}
+          onClose={handlePluggyClose}
+        />
+      )}
+
+      {/* Not connected */}
+      {!connection && (
+        <div className="text-center py-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-bg-elevated mb-4">
+            <Link2 className="w-8 h-8 text-text-muted" />
+          </div>
+          <h3 className="text-lg font-semibold text-text-primary mb-2">Conectar conta bancária</h3>
+          <p className="text-sm text-text-muted mb-6 max-w-sm mx-auto">
+            Conecte sua conta via Open Finance para importar transações automaticamente.
+            Seus dados são protegidos por criptografia de ponta a ponta.
+          </p>
+          <Button
+            onClick={() => handleConnect()}
+            loading={actionLoading}
+            size="lg"
+          >
+            <Link2 className="w-4 h-4 mr-2" />
+            Conectar via Open Finance
+          </Button>
+        </div>
+      )}
+
+      {/* Connected */}
+      {connection && (
+        <>
+          {/* Status header */}
+          <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-bg-elevated">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-bg-page">
+                <Building className="w-5 h-5 text-text-secondary" />
+              </div>
+              <div>
+                <p className="font-semibold text-text-primary">{connection.institution_name}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {(() => {
+                    const cfg = statusConfig[connection.status] ?? statusConfig.error;
+                    return (
+                      <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full', cfg.color)}>
+                        {cfg.icon}
+                        {cfg.label}
+                      </span>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+            {connection.balance != null && (
+              <div className="text-right">
+                <p className="text-xs text-text-muted">Saldo atual</p>
+                <p className="text-lg font-bold text-text-primary">{formatCurrency(connection.balance)}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Details grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg border border-border">
+              <p className="text-xs text-text-muted mb-1">Última sincronização</p>
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-text-muted" />
+                <p className="text-sm font-medium text-text-primary">
+                  {connection.last_sync_at
+                    ? formatDate(connection.last_sync_at)
+                    : 'Aguardando...'}
+                </p>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg border border-border">
+              <p className="text-xs text-text-muted mb-1">Consentimento válido até</p>
+              <div className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-text-muted" />
+                <p className={cn('text-sm font-medium', consentExpiring ? 'text-amber-600' : 'text-text-primary')}>
+                  {connection.consent_expires_at
+                    ? formatDate(connection.consent_expires_at)
+                    : 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Consent expiring warning */}
+          {consentExpiring && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 text-amber-700 text-sm">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">Consentimento expirando</p>
+                <p className="text-xs mt-0.5">
+                  Seu consentimento está próximo de expirar. Reconecte para renovar a autorização.
+                </p>
+              </div>
             </div>
           )}
 
-          <Input
-            label="Saldo inicial"
-            type="number"
-            step="0.01"
-            value={formData.initial_balance}
-            onChange={(e) => handleInputChange('initial_balance', Number(e.target.value))}
-            required
-          />
+          {/* Login error message */}
+          {connection.status === 'login_error' && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 text-amber-700 text-sm">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">Erro de autenticação</p>
+                <p className="text-xs mt-0.5">
+                  {connection.error_message || 'Não foi possível autenticar com o banco. Reconecte para atualizar suas credenciais.'}
+                </p>
+              </div>
+            </div>
+          )}
 
-          <Input
-            label="Data de abertura"
-            type="date"
-            value={formData.opened_at}
-            onChange={(e) => handleInputChange('opened_at', e.target.value)}
-            required
-          />
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
+            {(connection.status === 'login_error' || consentExpiring) && (
+              <Button
+                onClick={() => handleConnect(connection.pluggy_item_id)}
+                loading={actionLoading}
+                size="md"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Reconectar
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={handleDisconnect}
+              loading={actionLoading}
+              size="md"
+            >
+              <Unlink className="w-4 h-4 mr-2" />
+              Desconectar
+            </Button>
+          </div>
+        </>
+      )}
 
-          <ColorPicker
-            label="Cor da conta"
-            value={formData.color}
-            onChange={(value) => handleInputChange('color', value)}
-          />
-
-          <IconPicker
-            label="Ícone da conta"
-            value={formData.icon}
-            onChange={(value) => handleInputChange('icon', value)}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">
-            Descrição
-          </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
-            placeholder="Descrição adicional da conta..."
-            className="w-full px-3 py-2 border border-border rounded-md bg-bg-page text-text-primary focus:outline-none focus:ring-1 focus:ring-accent focus:border-transparent"
-            rows={3}
-          />
-        </div>
-
-        <div className="flex justify-end space-x-3 pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" loading={isLoading} disabled={formData.type === 'cash' && !formData.parent_id}>
-            {account ? 'Atualizar' : 'Criar'} Conta
-          </Button>
-        </div>
-      </form>
-    </Modal>
+      {/* Footer */}
+      <div className="flex justify-end pt-2 border-t border-border">
+        <Button type="button" variant="ghost" onClick={onClose}>
+          Fechar
+        </Button>
+      </div>
+    </div>
   );
 }
