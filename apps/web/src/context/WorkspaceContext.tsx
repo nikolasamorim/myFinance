@@ -61,6 +61,20 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     await fetchWorkspaces();
   };
 
+  const deleteWorkspace = async (workspaceId: string): Promise<void> => {
+    if (workspaces.length <= 1) {
+      throw new Error('Não é possível excluir o único workspace.');
+    }
+    await workspaceService.deleteWorkspace(workspaceId);
+    const remaining = workspaces.filter((ws) => ws.workspace_id !== workspaceId);
+    setWorkspaces(remaining);
+    if (currentWorkspace?.workspace_id === workspaceId) {
+      const next = remaining[0];
+      setCurrentWorkspaceState(next);
+      if (user) setUserRole(deriveRole(next, user.id));
+    }
+  };
+
   useEffect(() => {
     if (!authLoading && isAuthenticated && user && !hasLoadedWorkspaces.current) {
       console.log('🏢 WorkspaceContext: Auth completed, fetching workspaces');
@@ -81,6 +95,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     loading,
     refetchWorkspaces,
     userRole,
+    deleteWorkspace,
   };
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;

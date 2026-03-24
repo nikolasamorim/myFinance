@@ -64,10 +64,18 @@ router.post('/', h(async (req, res, next) => {
 router.put('/:id', h(async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { workspace_name, workspace_icon } = req.body;
+        const { workspace_name, workspace_icon, workspace_type, workspace_color } = req.body;
+        const VALID_TYPES = ['personal', 'family', 'business'];
+        const updates: Record<string, unknown> = {};
+        if (workspace_name !== undefined) updates.workspace_name = workspace_name;
+        if (workspace_icon !== undefined) updates.workspace_icon = workspace_icon;
+        if (workspace_color !== undefined) updates.workspace_color = workspace_color;
+        if (workspace_type !== undefined && VALID_TYPES.includes(workspace_type)) {
+            updates.workspace_type = workspace_type;
+        }
         const { data, error } = await req.supabase
             .from('workspaces')
-            .update({ workspace_name, workspace_icon })
+            .update(updates)
             .eq('workspace_id', id)
             .select()
             .single();

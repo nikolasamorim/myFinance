@@ -19,6 +19,7 @@ import notificationsRouter from './routes/notifications';
 import notificationPreferencesRouter from './routes/notificationPreferences';
 import reconciliationsRouter from './routes/reconciliations';
 import bankingRouter from './routes/banking';
+import usersRouter from './routes/users';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -74,6 +75,8 @@ app.use('/api/v1/workspaces/:wid/reconciliations', reconciliationsRouter);
 
 // Banking (Pluggy Open Finance) — standalone, fora do padrão /workspaces/:wid
 app.use('/api/v1/banking', bankingRouter);
+
+app.use('/api/v1/users', usersRouter);
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req, res) => {

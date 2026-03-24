@@ -10,7 +10,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { AuthCallback } from './pages/AuthCallback';
 import { Dashboard } from './pages/Dashboard';
-import { Onboarding } from './pages/Onboarding';
+import { Overview } from './pages/Overview';
 import { Settings } from './pages/Settings';
 import { Receitas } from './pages/managers/Receitas';
 import { Despesas } from './pages/managers/Despesas';
@@ -165,13 +165,16 @@ function App() {
                     }
                   />
                   <Route
-                    path="/onboarding"
+                    path="/overview"
                     element={
                       <ProtectedRoute>
-                        <Onboarding />
+                        <Layout>
+                          <Overview />
+                        </Layout>
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="/onboarding" element={<Navigate to="/overview" replace />} />
                   <Route
                     path="/settings"
                     element={
@@ -216,7 +219,7 @@ function App() {
                     path="/"
                     element={
                       <ProtectedRoute>
-                        <Navigate to="/dashboard" replace />
+                        <Navigate to="/overview" replace />
                       </ProtectedRoute>
                     }
                   />

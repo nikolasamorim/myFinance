@@ -11,6 +11,7 @@ import {
   Target,
   CreditCard,
   LayoutDashboard,
+  LayoutGrid,
   SquareKanban,
   Bell,
   GitMerge,
@@ -181,6 +182,15 @@ function SidebarContent({ onAnyNavigate, showMobileHeader, onMobileClose }: Side
         onClick={() => setShowNotifications(false)}
       >
         <div className="min-w-0">
+          <SidebarItem
+            to="/overview"
+            icon={<LayoutGrid className="w-5 h-5 text-text-muted" />}
+            label="Visão Geral"
+            isActive={location.pathname === '/overview'}
+            isCollapsed={isCollapsed}
+            onClick={onAnyNavigate}
+          />
+
           <SidebarItem
             to="/dashboard"
             icon={<LayoutDashboard className="w-5 h-5 text-text-muted" />}

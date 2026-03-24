@@ -26,7 +26,7 @@ export const workspaceService = {
     });
   },
 
-  async updateWorkspace(id: string, updates: Partial<Pick<Workspace, 'workspace_name' | 'workspace_icon'>>): Promise<Workspace> {
+  async updateWorkspace(id: string, updates: Partial<Pick<Workspace, 'workspace_name' | 'workspace_icon' | 'workspace_type' | 'workspace_color'>>): Promise<Workspace> {
     return requireApiClient().put<Workspace>(`/workspaces/${id}`, updates);
   },
 

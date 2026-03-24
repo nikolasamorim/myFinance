@@ -14,14 +14,18 @@ import {
   Camera,
   Menu,
   Upload,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspaceMembers } from '../../hooks/useWorkspaceMembers';
 import { useTeams, useCreateTeam, useDeleteTeam } from '../../hooks/useTeams';
+import { useDeleteWorkspace } from '../../hooks/useDeleteWorkspace';
 import { workspaceService } from '../../services/workspace.service';
-import { getWorkspaceIcon } from '../../lib/workspaceUtils';
+import { WorkspaceAvatar, isWorkspacePhotoUrl } from '../../lib/workspaceUtils';
+import { IconPicker } from '../ui/IconPicker';
+import { ColorPicker } from '../ui/ColorPicker';
 import { Settings } from '../../pages/Settings';
 import { NotificationSettings } from '../../pages/NotificationSettings';
 import { ImportacaoSection } from './ImportacaoSection';
@@ -53,25 +57,58 @@ const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode; group?: st
   { id: 'integracoes', label: 'Integrações', icon: <Plug className="w-4 h-4" />, group: 'Workspace' },
 ];
 
-function WorkspaceSection() {
-  const { currentWorkspace, refetchWorkspaces } = useWorkspace();
+function WorkspaceSection({ onClose }: { onClose: () => void }) {
+  const { currentWorkspace, workspaces, refetchWorkspaces, userRole } = useWorkspace();
   const [name, setName] = useState(currentWorkspace?.workspace_name ?? '');
+  const [workspaceType, setWorkspaceType] = useState<'personal' | 'family' | 'business'>(
+    currentWorkspace?.workspace_type ?? 'personal'
+  );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [iconName, setIconName] = useState(
+    !isWorkspacePhotoUrl(currentWorkspace?.workspace_icon) ? (currentWorkspace?.workspace_icon ?? '') : ''
+  );
+  const [workspaceColor, setWorkspaceColor] = useState(currentWorkspace?.workspace_color ?? '');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
   const iconInputRef = useRef<HTMLInputElement>(null);
+  const deleteWorkspaceMutation = useDeleteWorkspace();
+
+  const isOwner = userRole === 'owner';
+  const isLastWorkspace = workspaces.length <= 1;
+  const hasActivePhoto = !!iconPreview || isWorkspacePhotoUrl(currentWorkspace?.workspace_icon);
+
+  // Reflects unsaved changes so the avatar updates live as the user picks icon/color/photo
+  const previewWorkspace = currentWorkspace
+    ? {
+        ...currentWorkspace,
+        workspace_icon: iconPreview ?? (hasActivePhoto ? currentWorkspace.workspace_icon : (iconName || undefined)),
+        workspace_color: workspaceColor || undefined,
+      }
+    : null;
 
   useEffect(() => {
     setName(currentWorkspace?.workspace_name ?? '');
+    setWorkspaceType(currentWorkspace?.workspace_type ?? 'personal');
+    setWorkspaceColor(currentWorkspace?.workspace_color ?? '');
     setIconPreview(null);
+    setIconName(!isWorkspacePhotoUrl(currentWorkspace?.workspace_icon) ? (currentWorkspace?.workspace_icon ?? '') : '');
+    setShowDeleteConfirm(false);
+    setDeleteConfirmName('');
   }, [currentWorkspace?.workspace_id]);
 
   const handleSave = async () => {
     if (!currentWorkspace || !name.trim()) return;
     try {
       setSaving(true);
-      await workspaceService.updateWorkspace(currentWorkspace.workspace_id, { workspace_name: name.trim() });
+      await workspaceService.updateWorkspace(currentWorkspace.workspace_id, {
+        workspace_name: name.trim(),
+        workspace_type: workspaceType,
+        workspace_color: workspaceColor || '',
+        ...(!hasActivePhoto && { workspace_icon: iconName || '' }),
+      });
       await refetchWorkspaces();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -82,7 +119,7 @@ function WorkspaceSection() {
     }
   };
 
-  const handleIconChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !currentWorkspace) return;
 
@@ -103,7 +140,33 @@ function WorkspaceSection() {
     }
   };
 
-  const iconSrc = iconPreview || currentWorkspace?.workspace_icon;
+  const handleRemovePhoto = async () => {
+    if (!currentWorkspace) return;
+    try {
+      setUploadingIcon(true);
+      await workspaceService.updateWorkspace(currentWorkspace.workspace_id, {
+        workspace_icon: iconName || '',
+      });
+      setIconPreview(null);
+      await refetchWorkspaces();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setUploadingIcon(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!currentWorkspace || deleteConfirmName !== currentWorkspace.workspace_name) return;
+    try {
+      await deleteWorkspaceMutation.mutateAsync(currentWorkspace.workspace_id);
+      setShowDeleteConfirm(false);
+      setDeleteConfirmName('');
+      onClose();
+    } catch {
+      // error surfaced via deleteWorkspaceMutation.error
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -113,42 +176,91 @@ function WorkspaceSection() {
       </div>
 
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">Ícone / Foto</label>
-          <div className="flex items-center gap-4">
-            <div className="relative flex-shrink-0">
-              <div
-                className="w-16 h-16 bg-bg-elevated rounded-xl flex items-center justify-center text-2xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => iconInputRef.current?.click()}
-              >
-                {iconSrc ? (
-                  <img src={iconSrc} alt="Workspace icon" className="w-full h-full object-cover" />
-                ) : (
-                  getWorkspaceIcon(currentWorkspace)
+        {/* Preview */}
+        <div className="flex items-start gap-5">
+          <div className="relative flex-shrink-0">
+            <WorkspaceAvatar workspace={previewWorkspace} size="lg" />
+            {uploadingIcon && (
+              <div className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 space-y-3">
+            {/* Photo row */}
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-1.5">Foto</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => iconInputRef.current?.click()}
+                  disabled={uploadingIcon}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-elevated disabled:opacity-50 transition-colors"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  {hasActivePhoto ? 'Trocar foto' : 'Enviar foto'}
+                </button>
+                {hasActivePhoto && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    disabled={uploadingIcon}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Remover foto
+                  </button>
                 )}
               </div>
-              <button
-                className="absolute -bottom-1 -right-1 w-5 h-5 bg-accent rounded-full flex items-center justify-center text-white hover:bg-accent-hover"
-                onClick={() => iconInputRef.current?.click()}
-                disabled={uploadingIcon}
-              >
-                {uploadingIcon ? (
-                  <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Camera className="w-2.5 h-2.5" />
-                )}
-              </button>
+              <p className="text-xs text-text-muted mt-1">PNG, JPG ou GIF. Máx. 2MB.</p>
               <input
                 ref={iconInputRef}
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={handleIconChange}
+                onChange={handlePhotoChange}
               />
             </div>
-            <div className="text-sm text-text-muted">
-              <p>Clique para alterar o ícone do workspace.</p>
-              <p className="text-xs mt-0.5">PNG, JPG ou GIF. Máx. 2MB.</p>
+
+            {/* Icon row */}
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-1.5">
+                Ícone{hasActivePhoto && <span className="text-text-muted font-normal"> — exibido ao remover a foto</span>}
+              </p>
+              <IconPicker
+                value={iconName}
+                onChange={setIconName}
+              />
+              {iconName && (
+                <button
+                  type="button"
+                  onClick={() => setIconName('')}
+                  className="mt-1.5 text-xs text-text-muted hover:text-red-500 transition-colors"
+                >
+                  Remover ícone
+                </button>
+              )}
+            </div>
+
+            {/* Color row */}
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-1.5">
+                Cor{hasActivePhoto && <span className="text-text-muted font-normal"> — exibida ao remover a foto</span>}
+              </p>
+              <ColorPicker
+                value={workspaceColor}
+                onChange={setWorkspaceColor}
+              />
+              {workspaceColor && (
+                <button
+                  type="button"
+                  onClick={() => setWorkspaceColor('')}
+                  className="mt-1.5 text-xs text-text-muted hover:text-red-500 transition-colors"
+                >
+                  Remover cor
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -164,7 +276,15 @@ function WorkspaceSection() {
 
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">Tipo</label>
-          <p className="text-sm text-text-secondary capitalize">{currentWorkspace?.workspace_type}</p>
+          <select
+            value={workspaceType}
+            onChange={(e) => setWorkspaceType(e.target.value as 'personal' | 'family' | 'business')}
+            className="w-full bg-bg-page text-text-primary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+          >
+            <option value="personal">Pessoal</option>
+            <option value="family">Familiar</option>
+            <option value="business">Empresa</option>
+          </select>
         </div>
 
         <button
@@ -175,6 +295,89 @@ function WorkspaceSection() {
           {saving ? 'Salvando...' : saved ? 'Salvo!' : 'Salvar alterações'}
         </button>
       </div>
+
+      {isOwner && (
+        <div className="pt-6 border-t border-border">
+          <h3 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-1">Zona de perigo</h3>
+          <p className="text-xs text-text-muted mb-4">
+            Ações irreversíveis que afetam permanentemente os dados do workspace.
+          </p>
+
+          {!showDeleteConfirm ? (
+            <div className="flex items-center justify-between p-4 border border-red-200 dark:border-red-900/40 rounded-lg bg-red-50 dark:bg-red-950/10">
+              <div>
+                <p className="text-sm font-medium text-text-primary">Excluir workspace</p>
+                <p className="text-xs text-text-muted mt-0.5">
+                  Remove permanentemente todas as transações, contas e dados associados.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isLastWorkspace}
+                title={isLastWorkspace ? 'Crie outro workspace antes de excluir este' : undefined}
+                className="ml-4 flex-shrink-0 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Excluir
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3 p-4 border border-red-300 dark:border-red-700 rounded-lg bg-red-50 dark:bg-red-950/10">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-700 dark:text-red-400">
+                  Todas as transações, contas, categorias, cartões e integrações serão excluídos permanentemente.
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1">
+                  Digite{' '}
+                  <span className="font-semibold text-text-primary">{currentWorkspace?.workspace_name}</span>
+                  {' '}para confirmar
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmName}
+                  onChange={(e) => setDeleteConfirmName(e.target.value)}
+                  autoFocus
+                  placeholder={currentWorkspace?.workspace_name}
+                  className="w-full px-3 py-2 text-sm bg-bg-page border border-border rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
+              </div>
+              {deleteWorkspaceMutation.error && (
+                <p className="text-xs text-red-500">
+                  {(deleteWorkspaceMutation.error as Error).message ?? 'Erro ao excluir. Tente novamente.'}
+                </p>
+              )}
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmName(''); }}
+                  disabled={deleteWorkspaceMutation.isPending}
+                  className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteConfirmName !== currentWorkspace?.workspace_name || deleteWorkspaceMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {deleteWorkspaceMutation.isPending && (
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {deleteWorkspaceMutation.isPending ? 'Excluindo...' : 'Excluir permanentemente'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isLastWorkspace && (
+            <p className="text-xs text-text-muted mt-2 flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+              Crie outro workspace antes de excluir este.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -344,7 +547,7 @@ export function SettingsModal({ isOpen, onClose, initialSection = 'conta' }: Set
       case 'conta':
         return <Settings />;
       case 'workspace':
-        return <WorkspaceSection />;
+        return <WorkspaceSection onClose={onClose} />;
       case 'importacao':
         return <ImportacaoSection />;
       case 'membros':

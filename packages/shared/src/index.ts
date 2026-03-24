@@ -44,6 +44,7 @@ export interface Workspace {
   workspace_name: string;
   workspace_type: 'personal' | 'family' | 'business';
   workspace_icon?: string;
+  workspace_color?: string;
   workspace_owner_user_id: string;
   workspace_created_at: string;
   workspace_updated_at?: string | null;
@@ -395,6 +396,7 @@ export interface WorkspaceContextType {
   loading: boolean;
   refetchWorkspaces: () => Promise<void>;
   userRole: WorkspaceRole | null;
+  deleteWorkspace: (workspaceId: string) => Promise<void>;
 }
 
 export interface Visualization {

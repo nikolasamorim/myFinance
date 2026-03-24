@@ -2,71 +2,28 @@ import { supabase } from '../lib/supabase';
 import { authFetch } from '../lib/apiClient';
 
 export const userService = {
-  async getUserProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('users')
-      .select(`
-        user_id,
-        user_name,
-        user_email,
-        avatar_url,
-        tags,
-        description,
-        gender,
-        birth_date,
-        identification_code,
-        hometown,
-        nationality,
-        languages,
-        marital_status,
-        permanent_address,
-        current_address,
-        two_factor_enabled
-      `)
-      .eq('user_id', userId)
-      .single();
-
-    if (error) throw error;
-    return data;
+  async getUserProfile(_userId: string) {
+    return authFetch('/users/me');
   },
 
-  async updateUserProfile(userId: string, updates: any) {
-    // Map frontend field names to database column names
+  async updateUserProfile(_userId: string, updates: any) {
     const mappedUpdates: any = {};
-    
-    if (updates.name !== undefined) {
-      mappedUpdates.user_name = updates.name;
-    }
-    if (updates.email !== undefined) {
-      mappedUpdates.user_email = updates.email;
-    }
-    
-    // Copy other fields that match database schema
+
+    if (updates.name !== undefined) mappedUpdates.user_name = updates.name;
+
     const directFields = [
       'avatar_url', 'tags', 'description', 'gender', 'birth_date',
       'hometown', 'nationality', 'languages', 'marital_status',
-      'permanent_address', 'current_address', 'two_factor_enabled'
+      'permanent_address', 'current_address', 'two_factor_enabled',
     ];
-    
     directFields.forEach(field => {
-      if (updates[field] !== undefined) {
-        mappedUpdates[field] = updates[field];
-      }
+      if (updates[field] !== undefined) mappedUpdates[field] = updates[field];
     });
 
-    const { data, error } = await supabase
-      .from('users')
-      .update(mappedUpdates)
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return authFetch('/users/me', { method: 'PUT', body: JSON.stringify(mappedUpdates) });
   },
 
   async uploadAvatar(userId: string, file: File) {
-    // Upload file to Supabase Storage
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}.${fileExt}`;
     const filePath = `avatars/${fileName}`;
@@ -77,21 +34,11 @@ export const userService = {
 
     if (uploadError) throw uploadError;
 
-    // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('avatars')
       .getPublicUrl(filePath);
 
-    // Update user profile with avatar URL
-    const { data, error } = await supabase
-      .from('users')
-      .update({ avatar_url: publicUrl })
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return authFetch('/users/me', { method: 'PUT', body: JSON.stringify({ avatar_url: publicUrl }) });
   },
 
   async changeEmail(_userId: string, _newEmail: string) {

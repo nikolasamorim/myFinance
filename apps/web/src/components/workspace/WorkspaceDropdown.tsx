@@ -18,7 +18,7 @@ import { useSidebar } from '../../context/SidebarContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useTheme } from '../../context/ThemeContext';
-import { getWorkspaceIcon } from '../../lib/workspaceUtils';
+import { WorkspaceAvatar } from '../../lib/workspaceUtils';
 import { workspaceService } from '../../services/workspace.service';
 import { SettingsModal } from './SettingsModal';
 
@@ -98,9 +98,7 @@ export function WorkspaceDropdown() {
         )}
         title={isCollapsed ? currentWorkspace?.workspace_name ?? 'Workspace' : undefined}
       >
-        <span className="flex-shrink-0 w-6 h-6 bg-bg-elevated rounded-md flex items-center justify-center overflow-hidden">
-          {getWorkspaceIcon(currentWorkspace)}
-        </span>
+        <WorkspaceAvatar workspace={currentWorkspace} size="sm" />
         {!isCollapsed && (
           <>
             <span className="min-w-0 flex-1 text-left text-sm font-medium text-text-primary truncate">
@@ -122,9 +120,7 @@ export function WorkspaceDropdown() {
           {/* Workspace header */}
           <div className="px-3 pt-3 pb-1 border-b border-border">
             <div className="flex items-center gap-2.5 mb-3">
-              <span className="w-7 h-7 bg-bg-elevated rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {getWorkspaceIcon(currentWorkspace)}
-              </span>
+              <WorkspaceAvatar workspace={currentWorkspace} size="md" />
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-text-primary truncate">
                   {currentWorkspace?.workspace_name ?? 'Workspace'}
@@ -213,9 +209,7 @@ export function WorkspaceDropdown() {
                 onClick={() => { setCurrentWorkspace(ws); setIsOpen(false); }}
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-elevated transition-colors"
               >
-                <span className="w-6 h-6 bg-bg-elevated rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {getWorkspaceIcon(ws)}
-                </span>
+                <WorkspaceAvatar workspace={ws} size="sm" />
                 <span className="flex-1 text-left truncate">{ws.workspace_name}</span>
                 {ws.workspace_id === currentWorkspace?.workspace_id && (
                   <Check className="w-4 h-4 text-accent flex-shrink-0" />
