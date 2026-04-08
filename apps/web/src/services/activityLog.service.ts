@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { apiClient } from '../lib/apiClient';
 
 interface ActivityLogFilters {
   action: string;
@@ -11,54 +11,18 @@ interface ActivityLogFilters {
 export const activityLogService = {
   async getActivityLogs(workspaceId: string, filters: ActivityLogFilters, page: number = 1, limit: number = 20) {
     try {
-      let query = supabase
-        .from('activity_logs')
-        .select(`
-          id,
-          user_id,
-          workspace_id,
-          action,
-          entity_type,
-          entity_id,
-          changes,
-          description,
-          created_at
-        `)
-        .eq('workspace_id', workspaceId)
-        .order('created_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
 
-      if (filters.action !== 'all') {
-        query = query.eq('action', filters.action);
-      }
+      if (filters.action !== 'all') params.set('action', filters.action);
+      if (filters.entity_type !== 'all') params.set('entity_type', filters.entity_type);
+      if (filters.date_from) params.set('date_from', filters.date_from);
+      if (filters.date_to) params.set('date_to', filters.date_to);
+      if (filters.search) params.set('search', filters.search);
 
-      if (filters.entity_type !== 'all') {
-        query = query.eq('entity_type', filters.entity_type);
-      }
-
-      if (filters.date_from) {
-        query = query.gte('created_at', filters.date_from);
-      }
-
-      if (filters.date_to) {
-        query = query.lte('created_at', filters.date_to + 'T23:59:59.999Z');
-      }
-
-      if (filters.search) {
-        query = query.ilike('description', `%${filters.search}%`);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching activity logs:', error);
-        throw new Error('Failed to fetch activity logs: ' + error.message);
-      }
-      
-      return {
-        data: data || [],
-        hasMore: (data?.length || 0) === limit,
-      };
+      return await apiClient!.get<{ data: any[]; hasMore: boolean }>(`/workspaces/${workspaceId}/activity-logs?${params}`);
     } catch (error) {
       console.error('Error in getActivityLogs:', error);
       throw error;
@@ -71,24 +35,9 @@ export const activityLogService = {
     entity_id: string;
     changes?: any;
     description?: string;
-  }, userId: string) {
+  }, _userId: string) {
     try {
-      const { data, error } = await supabase
-        .from('activity_logs')
-        .insert([{
-          user_id: userId,
-          workspace_id: workspaceId,
-          action: logData.action,
-          entity_type: logData.entity_type,
-          entity_id: logData.entity_id,
-          changes: logData.changes,
-          description: logData.description,
-        }])
-        .select()
-        .single();
-
-      if (error) throw new Error('Failed to create activity log: ' + error.message);
-      return data;
+      return await apiClient!.post<any>(`/workspaces/${workspaceId}/activity-logs`, logData);
     } catch (error) {
       console.error('Error in createActivityLog:', error);
       throw error;

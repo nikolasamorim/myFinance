@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { apiClient } from '../lib/apiClient';
 import type { AdvancedFilters } from '../types/filters';
 
 // ── Period helper ──────────────────────────────────────────────────────────────
@@ -63,49 +63,34 @@ function getPeriodRange(filters: AdvancedFilters): { start: string; end: string 
   }
 }
 
-// ── Apply all advanced filters to a Supabase query ────────────────────────────
-function applyFilters<T>(query: T, filters: AdvancedFilters): T {
-  let q = query as any;
+// ── Build query params from AdvancedFilters ──────────────────────────────────
+function buildFilterParams(filters: AdvancedFilters): URLSearchParams {
+  const params = new URLSearchParams();
 
   if (filters.status?.length) {
-    q = q.in('transaction_status', filters.status);
+    params.set('status', filters.status.join(','));
   }
   const range = getPeriodRange(filters);
   if (range) {
-    q = q.gte('transaction_date', range.start).lte('transaction_date', range.end);
+    params.set('startDate', range.start);
+    params.set('endDate', range.end);
   }
-  if (filters.category_id) {
-    q = q.eq('transaction_category_id', filters.category_id);
-  }
-  if (filters.cost_center_id) {
-    q = q.eq('transaction_cost_center_id', filters.cost_center_id);
-  }
-  if (filters.credit_card_id) {
-    q = q.eq('transaction_card_id', filters.credit_card_id);
-  }
-  if (filters.account_id) {
-    q = q.eq('transaction_bank_id', filters.account_id);
-  }
-  if (filters.amount_min) {
-    const min = parseFloat(filters.amount_min);
-    if (!isNaN(min)) q = q.gte('transaction_amount', min);
-  }
-  if (filters.amount_max) {
-    const max = parseFloat(filters.amount_max);
-    if (!isNaN(max)) q = q.lte('transaction_amount', max);
-  }
-  if (filters.no_category) {
-    q = q.is('transaction_category_id', null);
-  }
-  if (filters.no_account) {
-    q = q.is('transaction_bank_id', null);
-  }
+  if (filters.category_id) params.set('category_id', filters.category_id);
+  if (filters.cost_center_id) params.set('cost_center_id', filters.cost_center_id);
+  if (filters.credit_card_id) params.set('credit_card_id', filters.credit_card_id);
+  if (filters.account_id) params.set('account_id', filters.account_id);
+  if (filters.amount_min) params.set('amount_min', filters.amount_min);
+  if (filters.amount_max) params.set('amount_max', filters.amount_max);
+  if (filters.no_category) params.set('no_category', 'true');
+  if (filters.no_account) params.set('no_account', 'true');
   if (filters.only_due_today) {
     const today = new Date().toISOString().split('T')[0];
-    q = q.eq('transaction_date', today).in('transaction_status', ['pending', 'overdue']);
+    params.set('startDate', today);
+    params.set('endDate', today);
+    params.set('status', 'pending,overdue');
   }
 
-  return q as T;
+  return params;
 }
 
 // ── Client-side type filter (fixa / parcelada / avulsa) ───────────────────────
@@ -157,7 +142,6 @@ interface ReceitaSummary {
 // Parser simples para textos "… - Parcela X/Y"
 function parseInstallmentMeta(description?: string): { number: number; total: number } | null {
   if (!description) return null;
-  // procura “Parcela 3/12” insensível a maiúsc./minúsc.
   const m = description.match(/parcela\s+(\d+)\s*\/\s*(\d+)/i);
   if (!m) return null;
   const n = Number(m[1]);
@@ -169,38 +153,16 @@ function parseInstallmentMeta(description?: string): { number: number; total: nu
 export const receitaService = {
   async getReceitas(workspaceId: string, filters: AdvancedFilters) {
     try {
-      let query = supabase
-        .from('transactions')
-        .select(`
-          transaction_id,
-          transaction_workspace_id,
-          transaction_type,
-          transaction_description,
-          transaction_amount,
-          transaction_date,
-          transaction_category_id,
-          transaction_card_id,
-          transaction_cost_center_id,
-          transaction_status,
-          parent_recurrence_rule_id,
-          recurrence_instance_date,
-          recurrence_sequence,
-          transaction_created_at,
-          transaction_updated_at,
-          categories:transaction_category_id ( category_id, category_name, color, icon ),
-          credit_cards:transaction_card_id ( credit_card_id, credit_card_name, color, icon ),
-          cost_centers:transaction_cost_center_id ( cost_center_id, cost_center_name, color, icon )
-        `)
-        .eq('transaction_workspace_id', workspaceId)
-        .eq('transaction_type', 'income')
-        .order('transaction_date', { ascending: false });
+      const params = buildFilterParams(filters);
+      params.set('type', 'income');
+      params.set('noPagination', 'true');
+      params.set('sort', 'transaction_date');
+      params.set('order', 'desc');
+      params.set('select_fields', 'transaction_id,transaction_workspace_id,transaction_type,transaction_description,transaction_amount,transaction_date,transaction_category_id,transaction_card_id,transaction_cost_center_id,transaction_status,parent_recurrence_rule_id,recurrence_instance_date,recurrence_sequence,transaction_created_at,transaction_updated_at,categories:transaction_category_id(category_id,category_name,color,icon),credit_cards:transaction_card_id(credit_card_id,credit_card_name,color,icon),cost_centers:transaction_cost_center_id(cost_center_id,cost_center_name,color,icon)');
 
-      query = applyFilters(query, filters);
+      const result = await apiClient!.get<{ data: any[] }>(`/workspaces/${workspaceId}/transactions?${params}`);
 
-      const { data, error } = await query;
-      if (error) throw new Error('Failed to fetch receitas: ' + error.message);
-
-      let rows = applyTypeFilter(data || [], filters.type);
+      let rows = applyTypeFilter(result.data || [], filters.type);
       rows = applyLastInstallmentFilter(rows, filters.only_last_installment);
 
       return rows.map(item => {
@@ -243,35 +205,26 @@ export const receitaService = {
 
   async getReceitasSummary(workspaceId: string, filters: AdvancedFilters): Promise<ReceitaSummary> {
     try {
-      let baseQuery = supabase
-        .from('transactions')
-        .select('transaction_id, transaction_amount, transaction_status, transaction_description, transaction_date, parent_recurrence_rule_id')
-        .eq('transaction_workspace_id', workspaceId)
-        .eq('transaction_type', 'income');
+      const params = buildFilterParams(filters);
+      params.set('type', 'income');
+      params.set('noPagination', 'true');
+      params.set('select_fields', 'transaction_id,transaction_amount,transaction_status,transaction_description,transaction_date,parent_recurrence_rule_id');
 
-      baseQuery = applyFilters(baseQuery, filters);
-
-      const { data: incomes, error: baseErr } = await baseQuery;
-      if (baseErr) throw new Error('Failed to fetch incomes summary: ' + baseErr.message);
-
-      const allIncomes = incomes || [];
+      const result = await apiClient!.get<{ data: any[] }>(`/workspaces/${workspaceId}/transactions?${params}`);
+      const allIncomes = result.data || [];
       const seenIds = new Set(allIncomes.map(e => e.transaction_id));
 
-      let recurQuery = supabase
-        .from('transactions')
-        .select('transaction_id, transaction_amount, transaction_status, transaction_description, transaction_date, parent_recurrence_rule_id')
-        .eq('transaction_workspace_id', workspaceId)
-        .eq('transaction_type', 'income')
-        .not('parent_recurrence_rule_id', 'is', null);
-
+      const recurParams = new URLSearchParams();
+      recurParams.set('type', 'income');
+      recurParams.set('noPagination', 'true');
+      recurParams.set('has_recurrence', 'true');
+      recurParams.set('select_fields', 'transaction_id,transaction_amount,transaction_status,transaction_description,transaction_date,parent_recurrence_rule_id');
       if (filters.status?.length) {
-        recurQuery = recurQuery.in('transaction_status', filters.status);
+        recurParams.set('status', filters.status.join(','));
       }
 
-      const { data: recurringRows, error: recurErr } = await recurQuery;
-      if (recurErr) throw new Error('Failed to fetch recurring incomes: ' + recurErr.message);
-
-      const recurringOnly = (recurringRows || []).filter(r => !seenIds.has(r.transaction_id));
+      const recurResult = await apiClient!.get<{ data: any[] }>(`/workspaces/${workspaceId}/transactions?${recurParams}`);
+      const recurringOnly = (recurResult.data || []).filter(r => !seenIds.has(r.transaction_id));
 
       const sum = (arr: any[]) => arr.reduce((acc, e) => acc + Number(e.transaction_amount || 0), 0);
 
@@ -286,9 +239,9 @@ export const receitaService = {
 
       const totalInstallments = allIncomes
         .filter(e => parseInstallmentMeta(e.transaction_description || undefined))
-        .reduce((acc, e) => acc + Number(e.transaction_amount), 0);
+        .reduce((acc: number, e: any) => acc + Number(e.transaction_amount), 0);
 
-      const total = allIncomes.reduce((acc, e) => acc + Number(e.transaction_amount), 0);
+      const total = allIncomes.reduce((acc: number, e: any) => acc + Number(e.transaction_amount), 0);
       const monthlyAverage = allIncomes.length > 0 ? total / 12 : 0;
 
       return {
@@ -306,21 +259,20 @@ export const receitaService = {
   async getInstallmentsThisMonth(workspaceId: string) {
     try {
       const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('transaction_workspace_id', workspaceId)
-        .eq('transaction_type', 'income')
-        .gte('transaction_date', startOfMonth.toISOString().split('T')[0])
-        .lte('transaction_date', endOfMonth.toISOString().split('T')[0])
-        .ilike('transaction_description', '%parcela%');
+      const params = new URLSearchParams({
+        type: 'income',
+        startDate: startOfMonth,
+        endDate: endOfMonth,
+        description_like: 'parcela',
+        noPagination: 'true',
+      });
 
-      if (error) throw new Error('Failed to fetch installments: ' + error.message);
+      const result = await apiClient!.get<{ data: any[] }>(`/workspaces/${workspaceId}/transactions?${params}`);
 
-      return (data || []).map(item => {
+      return (result.data || []).map(item => {
         const parsed = parseInstallmentMeta(item.transaction_description || undefined);
         return {
           id: item.transaction_id,
@@ -341,21 +293,20 @@ export const receitaService = {
   async getFixedIncomesThisMonth(workspaceId: string) {
     try {
       const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('transaction_workspace_id', workspaceId)
-        .eq('transaction_type', 'income')
-        .not('parent_recurrence_rule_id', 'is', null)
-        .gte('recurrence_instance_date', startOfMonth.toISOString().split('T')[0])
-        .lte('recurrence_instance_date', endOfMonth.toISOString().split('T')[0]);
+      const params = new URLSearchParams({
+        type: 'income',
+        has_recurrence: 'true',
+        recurrence_date_start: startOfMonth,
+        recurrence_date_end: endOfMonth,
+        noPagination: 'true',
+      });
 
-      if (error) throw new Error('Failed to fetch fixed incomes: ' + error.message);
+      const result = await apiClient!.get<{ data: any[] }>(`/workspaces/${workspaceId}/transactions?${params}`);
 
-      return (data || []).map(item => ({
+      return (result.data || []).map(item => ({
         id: item.transaction_id,
         title: item.transaction_description,
         amount: item.transaction_amount,
@@ -378,7 +329,6 @@ export const receitaService = {
           installmentDate.setMonth(installmentDate.getMonth() + (i - 1));
 
           installments.push({
-            transaction_workspace_id: workspaceId,
             transaction_created_by_user_id: userId,
             transaction_type: 'income',
             transaction_description: `${receitaData.title} - Parcela ${i}/${receitaData.installment_total}`,
@@ -389,31 +339,17 @@ export const receitaService = {
           });
         }
 
-        const { data, error } = await supabase
-          .from('transactions')
-          .insert(installments)
-          .select();
-
-        if (error) throw new Error('Failed to create installments: ' + error.message);
-        return data;
+        return apiClient!.post<any[]>(`/workspaces/${workspaceId}/transactions`, installments);
       } else {
-        const { data, error } = await supabase
-          .from('transactions')
-          .insert([{
-            transaction_workspace_id: workspaceId,
-            transaction_created_by_user_id: userId,
-            transaction_type: 'income',
-            transaction_description: receitaData.title,
-            transaction_amount: receitaData.amount,
-            transaction_date: receitaData.transaction_date,
-            transaction_category_id: receitaData.category_id || null,
-            transaction_status: receitaData.status || 'pending',
-          }])
-          .select()
-          .single();
-
-        if (error) throw new Error('Failed to create receita: ' + error.message);
-        return data;
+        return apiClient!.post<any>(`/workspaces/${workspaceId}/transactions`, {
+          transaction_created_by_user_id: userId,
+          transaction_type: 'income',
+          transaction_description: receitaData.title,
+          transaction_amount: receitaData.amount,
+          transaction_date: receitaData.transaction_date,
+          transaction_category_id: receitaData.category_id || null,
+          transaction_status: receitaData.status || 'pending',
+        });
       }
     } catch (error) {
       console.error('Error in createReceita:', error);
@@ -421,7 +357,7 @@ export const receitaService = {
     }
   },
 
-  async updateReceita(id: string, updates: Partial<ReceitaData>) {
+  async updateReceita(id: string, updates: Partial<ReceitaData>, workspaceId: string) {
     try {
       const updateData: any = {};
       if (updates.title !== undefined) updateData.transaction_description = updates.title;
@@ -430,46 +366,25 @@ export const receitaService = {
       if (updates.category_id !== undefined) updateData.transaction_category_id = updates.category_id;
       if (updates.status !== undefined) updateData.transaction_status = updates.status;
 
-      const { data, error } = await supabase
-        .from('transactions')
-        .update(updateData)
-        .eq('transaction_id', id)
-        .select()
-        .single();
-
-      if (error) throw new Error('Failed to update receita: ' + error.message);
-      return data;
+      return apiClient!.put<any>(`/workspaces/${workspaceId}/transactions/${id}`, updateData);
     } catch (error) {
       console.error('Error in updateReceita:', error);
       throw error;
     }
   },
 
-  async deleteReceita(id: string) {
+  async deleteReceita(id: string, workspaceId: string) {
     try {
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('transaction_id', id);
-
-      if (error) throw new Error('Failed to delete receita: ' + error.message);
+      await apiClient!.delete(`/workspaces/${workspaceId}/transactions/${id}`);
     } catch (error) {
       console.error('Error in deleteReceita:', error);
       throw error;
     }
   },
 
-  async markAsReceived(id: string) {
+  async markAsReceived(id: string, workspaceId: string) {
     try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .update({ transaction_status: 'received' })
-        .eq('transaction_id', id)
-        .select()
-        .single();
-
-      if (error) throw new Error('Failed to mark receita as received: ' + error.message);
-      return data;
+      return apiClient!.put<any>(`/workspaces/${workspaceId}/transactions/${id}`, { transaction_status: 'received' });
     } catch (error) {
       console.error('Error in markAsReceived:', error);
       throw error;

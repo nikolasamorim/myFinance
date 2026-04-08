@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { apiClient } from '../lib/apiClient';
 import type { Transaction, MonthlyData } from '../types';
 
 interface InvoiceFilters {
@@ -36,22 +36,17 @@ export const invoiceService = {
       throw new Error('Workspace ID is required');
     }
 
-    console.log('Fetching invoice data for workspace:', workspaceId);
-
     try {
-      // Get all transactions including recurring expansions
-      let query = supabase
-        .from('transactions')
-        .select('*')
-        .eq('transaction_workspace_id', workspaceId)
-        .order('transaction_date', { ascending: false });
+      const params = new URLSearchParams({
+        noPagination: 'true',
+        sort: 'transaction_date',
+        order: 'desc',
+      });
 
-      // Apply search filter if provided
       if (filters?.search) {
-        query = query.ilike('transaction_description', `%${filters.search}%`);
+        params.set('search', filters.search);
       }
 
-      // Apply period filter
       if (filters?.period && filters.period !== 'custom') {
         const now = new Date();
         let startDate: Date;
@@ -75,27 +70,18 @@ export const invoiceService = {
             endDate = new Date(now.getFullYear(), 11, 31);
         }
 
-        query = query
-          .gte('transaction_date', startDate.toISOString().split('T')[0])
-          .lte('transaction_date', endDate.toISOString().split('T')[0]);
+        params.set('startDate', startDate.toISOString().split('T')[0]);
+        params.set('endDate', endDate.toISOString().split('T')[0]);
       }
 
-      const { data: transactions, error } = await query;
-
-      if (error) {
-        console.error('Error fetching transactions:', error);
-        throw error;
-      }
-
-      console.log('Fetched transactions:', transactions?.length || 0);
-
-      const allTransactions = transactions || [];
+      const result = await apiClient!.get<{ data: any[] }>(`/workspaces/${workspaceId}/transactions?${params}`);
+      const allTransactions = result.data || [];
 
       // Expand recurring transactions for monthly view
-      const expandedTransactions = await this.expandRecurringTransactions(allTransactions);
+      const expandedTransactions = await this.expandRecurringTransactions(allTransactions, workspaceId);
 
       // Calculate paid summary (only paid/received transactions)
-      const paidTransactions = expandedTransactions.filter(t => 
+      const paidTransactions = expandedTransactions.filter(t =>
         t.transaction_status === 'paid' || t.transaction_status === 'received'
       );
 
@@ -118,13 +104,13 @@ export const invoiceService = {
         totalDebts: paidDebts,
       };
 
-      // Calculate monthly breakdown (all transactions, regardless of status, grouped by transaction_date)
+      // Calculate monthly breakdown
       const monthlyBreakdown: MonthlyBreakdown = {};
-      
+
       expandedTransactions.forEach(transaction => {
         const date = new Date(transaction.transaction_date);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        
+
         if (!monthlyBreakdown[monthKey]) {
           monthlyBreakdown[monthKey] = {
             income: 0,
@@ -135,7 +121,7 @@ export const invoiceService = {
         }
 
         const amount = Number(transaction.transaction_amount);
-        
+
         switch (transaction.transaction_type) {
           case 'income':
             monthlyBreakdown[monthKey].income += amount;
@@ -143,32 +129,30 @@ export const invoiceService = {
           case 'expense':
             monthlyBreakdown[monthKey].expense += amount;
             break;
-          case 'debt':
-            // Debt logic: assume debt transactions have a flow indicator
-            // For now, we'll use a simple logic based on description or amount sign
-            // This should be adjusted based on your actual debt flow logic
-            const isDebtIn = transaction.transaction_description?.toLowerCase().includes('receb') || 
+          case 'debt': {
+            const isDebtIn = transaction.transaction_description?.toLowerCase().includes('receb') ||
                            transaction.transaction_description?.toLowerCase().includes('entrada') ||
                            transaction.transaction_status === 'received';
-            
+
             if (isDebtIn) {
               monthlyBreakdown[monthKey].debtIn += amount;
             } else {
               monthlyBreakdown[monthKey].debtOut += amount;
             }
             break;
+          }
         }
       });
 
       // Calculate monthly comparison for charts (last 12 months)
       const monthlyComparison: MonthlyData[] = [];
       const currentDate = new Date();
-      
+
       for (let i = 11; i >= 0; i--) {
         const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         const monthData = monthlyBreakdown[monthKey] || { income: 0, expense: 0, debtIn: 0, debtOut: 0 };
-        
+
         monthlyComparison.push({
           month: date.toLocaleDateString('pt-BR', { month: 'short' }),
           income: monthData.income,
@@ -192,47 +176,40 @@ export const invoiceService = {
     }
   },
 
-  async expandRecurringTransactions(transactions: any[]): Promise<any[]> {
+  async expandRecurringTransactions(transactions: any[], workspaceId: string): Promise<any[]> {
     const expanded = [...transactions];
     const currentDate = new Date();
     const futureLimit = new Date();
-    futureLimit.setFullYear(currentDate.getFullYear() + 2); // Expand 2 years into future
+    futureLimit.setFullYear(currentDate.getFullYear() + 2);
 
     // Find recurring transactions
     const recurringTransactions = transactions.filter(t => t.recurrence_rule_id);
 
     for (const transaction of recurringTransactions) {
       try {
-        // Get recurrence rule
-        const { data: rule, error } = await supabase
-          .from('recurrence_rules')
-          .select('*')
-          .eq('id', transaction.recurrence_rule_id)
-          .single();
+        const rule = await apiClient!.get<any>(`/workspaces/${workspaceId}/recurrence-rules/${transaction.recurrence_rule_id}`);
 
-        if (error || !rule || rule.status !== 'active') continue;
+        if (!rule || rule.status !== 'active') continue;
 
         // Generate future instances
         const startDate = new Date(rule.start_date);
         const endDate = rule.end_date ? new Date(rule.end_date) : futureLimit;
         let currentInstanceDate = new Date(startDate);
         let instanceCount = 0;
-        const maxInstances = rule.repeat_count || 100; // Reasonable limit
+        const maxInstances = rule.repeat_count || 100;
 
         while (currentInstanceDate <= endDate && instanceCount < maxInstances) {
-          // Skip the original transaction date to avoid duplicates
           if (currentInstanceDate.toISOString().split('T')[0] !== transaction.transaction_date) {
             const futureInstance = {
               ...transaction,
               transaction_id: `${transaction.transaction_id}-future-${instanceCount}`,
               transaction_date: currentInstanceDate.toISOString().split('T')[0],
-              transaction_status: 'pending', // Future instances are always pending
-              is_future_instance: true, // Mark as future instance
+              transaction_status: 'pending',
+              is_future_instance: true,
             };
             expanded.push(futureInstance);
           }
 
-          // Calculate next occurrence
           switch (rule.recurrence_type) {
             case 'daily':
               currentInstanceDate.setDate(currentInstanceDate.getDate() + 1);
@@ -252,7 +229,6 @@ export const invoiceService = {
         }
       } catch (error) {
         console.error('Error expanding recurring transaction:', transaction.transaction_id, error);
-        // Continue with other transactions if one fails
       }
     }
 

@@ -1,6 +1,7 @@
 import { Router, Response, NextFunction, RequestHandler } from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { notifyRecurrenceStatusChange } from '../lib/notificationService';
+import { generateRecurrences, runMaintenanceForWorkspace } from '../lib/recurrenceEngine';
 
 const router = Router({ mergeParams: true });
 router.use(requireAuth as RequestHandler);
@@ -128,6 +129,25 @@ router.post('/:id/cancel', h(async (req, res, next) => {
         if (error) throw error;
         notifyRecurrenceStatusChange(req.supabase, req.user.id, wid, id, data.description ?? id, 'canceled');
         res.json(data);
+    } catch (err) { next(err); }
+}));
+
+/** POST /api/v1/workspaces/:wid/recurrence-rules/:id/generate */
+router.post('/:id/generate', h(async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { mode = 'on_save' } = req.body;
+        const result = await generateRecurrences(req.supabase, id, mode, req.user.id);
+        res.json(result);
+    } catch (err) { next(err); }
+}));
+
+/** POST /api/v1/workspaces/:wid/recurrence-rules/maintenance */
+router.post('/maintenance', h(async (req, res, next) => {
+    try {
+        const { wid } = req.params;
+        const result = await runMaintenanceForWorkspace(req.supabase, wid);
+        res.json(result);
     } catch (err) { next(err); }
 }));
 

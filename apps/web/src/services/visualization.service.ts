@@ -1,86 +1,34 @@
-import { supabase } from '../lib/supabase';
+import { apiClient } from '../lib/apiClient';
 import type { Visualization } from '../types';
 
 export const visualizationService = {
-  async getUserVisualizations(workspaceId: string, screenContext: string, userId: string): Promise<Visualization[]> {
-    const { data, error } = await supabase
-      .from('visualizations')
-      .select('*')
-      .eq('visualization_workspace_id', workspaceId)
-      .eq('visualization_user_id', userId)
-      .eq('visualization_screen_context', screenContext)
-      .order('visualization_created_at', { ascending: false });
-
-    if (error) throw error;
+  async getUserVisualizations(workspaceId: string, screenContext: string, _userId: string): Promise<Visualization[]> {
+    const params = new URLSearchParams({ screen_context: screenContext });
+    const data = await apiClient!.get<Visualization[]>(`/workspaces/${workspaceId}/visualizations?${params}`);
     return data || [];
   },
 
-  async getDefaultVisualization(workspaceId: string, screenContext: string, userId: string): Promise<Visualization | null> {
-    const { data, error } = await supabase
-      .from('visualizations')
-      .select('*')
-      .eq('visualization_workspace_id', workspaceId)
-      .eq('visualization_user_id', userId)
-      .eq('visualization_screen_context', screenContext)
-      .eq('visualization_is_default', true)
-      .limit(1);
-
-    if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
+  async getDefaultVisualization(workspaceId: string, screenContext: string, _userId: string): Promise<Visualization | null> {
+    const params = new URLSearchParams({ screen_context: screenContext });
+    return apiClient!.get<Visualization | null>(`/workspaces/${workspaceId}/visualizations/default?${params}`);
   },
 
-  async createVisualization(visualization: Omit<Visualization, 'visualization_id' | 'visualization_created_at' | 'visualization_updated_at'>, userId: string): Promise<Visualization> {
-    const { data, error } = await supabase
-      .from('visualizations')
-      .insert({
-        ...visualization,
-        visualization_user_id: userId,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+  async createVisualization(visualization: Omit<Visualization, 'visualization_id' | 'visualization_created_at' | 'visualization_updated_at'>, _userId: string): Promise<Visualization> {
+    const workspaceId = visualization.visualization_workspace_id;
+    return apiClient!.post<Visualization>(`/workspaces/${workspaceId}/visualizations`, visualization);
   },
 
-  async updateVisualization(id: string, updates: Partial<Visualization>): Promise<Visualization> {
-    const { data, error } = await supabase
-      .from('visualizations')
-      .update(updates)
-      .eq('visualization_id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+  async updateVisualization(id: string, updates: Partial<Visualization>, workspaceId: string): Promise<Visualization> {
+    return apiClient!.put<Visualization>(`/workspaces/${workspaceId}/visualizations/${id}`, updates);
   },
 
-  async setDefaultVisualization(workspaceId: string, screenContext: string, visualizationId: string, userId: string): Promise<void> {
-    // Use a transaction-like approach: first remove all defaults, then set the new one
-    const { error: removeError } = await supabase
-      .from('visualizations')
-      .update({ visualization_is_default: false })
-      .eq('visualization_workspace_id', workspaceId)
-      .eq('visualization_user_id', userId)
-      .eq('visualization_screen_context', screenContext);
-
-    if (removeError) throw removeError;
-
-    // Then set the new default
-    const { error } = await supabase
-      .from('visualizations')
-      .update({ visualization_is_default: true })
-      .eq('visualization_id', visualizationId);
-
-    if (error) throw error;
+  async setDefaultVisualization(workspaceId: string, screenContext: string, visualizationId: string, _userId: string): Promise<void> {
+    await apiClient!.put(`/workspaces/${workspaceId}/visualizations/${visualizationId}/set-default`, {
+      screen_context: screenContext,
+    });
   },
 
-  async deleteVisualization(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('visualizations')
-      .delete()
-      .eq('visualization_id', id);
-
-    if (error) throw error;
+  async deleteVisualization(id: string, workspaceId: string): Promise<void> {
+    await apiClient!.delete(`/workspaces/${workspaceId}/visualizations/${id}`);
   },
 };

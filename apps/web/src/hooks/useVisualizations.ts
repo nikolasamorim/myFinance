@@ -55,7 +55,7 @@ export function useUpdateVisualization() {
 
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Visualization> }) =>
-      visualizationService.updateVisualization(id, updates),
+      visualizationService.updateVisualization(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['visualizations', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['default-visualization', currentWorkspace?.workspace_id] });
@@ -87,7 +87,7 @@ export function useDeleteVisualization() {
   const { currentWorkspace } = useWorkspace();
 
   return useMutation({
-    mutationFn: (id: string) => visualizationService.deleteVisualization(id),
+    mutationFn: (id: string) => visualizationService.deleteVisualization(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['visualizations', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['default-visualization', currentWorkspace?.workspace_id] });

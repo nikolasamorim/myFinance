@@ -72,21 +72,21 @@ export function useReceitas(filters: AdvancedFilters) {
 
   const updateReceita = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<ReceitaData> }) =>
-      receitaService.updateReceita(id, updates),
+      receitaService.updateReceita(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       invalidateAll();
     },
   });
 
   const deleteReceita = useMutation({
-    mutationFn: (id: string) => receitaService.deleteReceita(id),
+    mutationFn: (id: string) => receitaService.deleteReceita(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       invalidateAll();
     },
   });
 
   const markAsReceived = useMutation({
-    mutationFn: (id: string) => receitaService.markAsReceived(id),
+    mutationFn: (id: string) => receitaService.markAsReceived(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       invalidateAll();
       // opcional: força refetch imediato da lista

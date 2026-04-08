@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { apiClient } from '../lib/apiClient';
 import {
   generateRecurrences,
   runMaintenanceForWorkspace,
@@ -32,25 +32,17 @@ export const generateRecurringTransactions = async (
 export const getRecurrenceRulesByWorkspace = async (
   workspaceId: string,
 ) => {
-  const { data, error } = await supabase
-    .from('recurrence_rules')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .order('created_at', { ascending: false });
-
-  if (error) throw new Error(`Failed to fetch recurrence rules: ${error.message}`);
+  const data = await apiClient!.get<any[]>(`/workspaces/${workspaceId}/recurrence-rules`);
   return data || [];
 };
 
 export const getTransactionsByRecurrenceRule = async (
   ruleId: string,
+  workspaceId: string,
 ) => {
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('parent_recurrence_rule_id', ruleId)
-    .order('recurrence_instance_date', { ascending: true });
-
-  if (error) throw new Error(`Failed to fetch transactions for rule: ${error.message}`);
-  return data || [];
+  const params = new URLSearchParams({
+    parent_recurrence_rule_id: ruleId,
+  });
+  const result = await apiClient!.get<{ data: any[] }>(`/workspaces/${workspaceId}/transactions?${params}`);
+  return result.data || [];
 };

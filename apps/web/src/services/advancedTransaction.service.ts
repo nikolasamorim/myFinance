@@ -1,6 +1,5 @@
-import { supabase } from '../lib/supabase';
 import { apiClient } from '../lib/apiClient';
-import type { AdvancedTransactionData, InstallmentData, RecurrenceData, Transaction } from '../types';
+import type { AdvancedTransactionData, Transaction } from '../types';
 import { generateRecurrences } from './recurrenceEngine.service';
 
 export const advancedTransactionService = {
@@ -25,26 +24,18 @@ export const advancedTransactionService = {
   },
 
   async createSimpleTransaction(workspaceId: string, userId: string, transactionType: string, data: AdvancedTransactionData) {
-    const { data: transaction, error } = await supabase
-      .from('transactions')
-      .insert([{
-        transaction_workspace_id: workspaceId,
-        transaction_created_by_user_id: userId,
-        transaction_type: transactionType,
-        transaction_description: data.description,
-        transaction_amount: data.amount,
-        transaction_date: data.due_date,
-        transaction_bank_id: data.account_id,
-        transaction_card_id: data.credit_card_id || null,
-        transaction_cost_center_id: data.cost_center_id || null,
-        transaction_category_id: data.category_id || null,
-        transaction_status: 'pending',
-      }])
-      .select()
-      .single();
-
-    if (error) throw new Error('Failed to create transaction: ' + error.message);
-    return transaction;
+    return apiClient!.post<Transaction>(`/workspaces/${workspaceId}/transactions`, {
+      transaction_created_by_user_id: userId,
+      transaction_type: transactionType,
+      transaction_description: data.description,
+      transaction_amount: data.amount,
+      transaction_date: data.due_date,
+      transaction_bank_id: data.account_id,
+      transaction_card_id: data.credit_card_id || null,
+      transaction_cost_center_id: data.cost_center_id || null,
+      transaction_category_id: data.category_id || null,
+      transaction_status: 'pending',
+    });
   },
 
   async createInstallmentTransaction(workspaceId: string, userId: string, transactionType: string, data: AdvancedTransactionData) {
@@ -53,26 +44,18 @@ export const advancedTransactionService = {
     }
 
     // First, create the installment group
-    const { data: installmentGroup, error: groupError } = await supabase
-      .from('installment_groups')
-      .insert([{
-        workspace_id: workspaceId,
-        user_id: userId,
-        total_value: data.amount,
-        installment_count: data.installments.length,
-        initial_due_date: data.due_date,
-        description: data.description,
-        account_id: data.account_id,
-        card_id: data.credit_card_id || null,
-      }])
-      .select()
-      .single();
-
-    if (groupError) throw new Error('Failed to create installment group: ' + groupError.message);
+    const installmentGroup = await apiClient!.post<any>(`/workspaces/${workspaceId}/installment-groups`, {
+      user_id: userId,
+      total_value: data.amount,
+      installment_count: data.installments.length,
+      initial_due_date: data.due_date,
+      description: data.description,
+      account_id: data.account_id,
+      card_id: data.credit_card_id || null,
+    });
 
     // Then, create individual installment transactions
-    const installmentTransactions = data.installments.map((installment, index) => ({
-      transaction_workspace_id: workspaceId,
+    const installmentTransactions = data.installments.map((installment) => ({
       transaction_created_by_user_id: userId,
       transaction_type: transactionType,
       transaction_description: `${data.description} - Parcela ${installment.number}/${data.installments!.length}`,
@@ -88,12 +71,7 @@ export const advancedTransactionService = {
       installment_total: data.installments!.length,
     }));
 
-    const { data: transactions, error: transactionsError } = await supabase
-      .from('transactions')
-      .insert(installmentTransactions)
-      .select();
-
-    if (transactionsError) throw new Error('Failed to create installment transactions: ' + transactionsError.message);
+    const transactions = await apiClient!.post<Transaction[]>(`/workspaces/${workspaceId}/transactions`, installmentTransactions);
 
     return { installmentGroup, transactions };
   },
@@ -103,31 +81,21 @@ export const advancedTransactionService = {
       throw new Error('Recurrence data is required for recurring transactions');
     }
 
-    const { data: recurrenceRule, error: ruleError } = await supabase
-      .from('recurrence_rules')
-      .insert([{
-        workspace_id: workspaceId,
-        created_by_user_id: userId,
-        transaction_type: transactionType,
-        description: data.description,
-        amount: data.amount,
-        start_date: data.recurrence.start_date,
-        recurrence_type: data.recurrence.recurrence_type,
-        repeat_count: data.recurrence.repeat_count || null,
-        end_date: data.recurrence.end_date || null,
-        due_adjustment: data.recurrence.due_adjustment || 'none',
-        recurrence_day: data.recurrence.recurrence_day?.toString() || null,
-        account_id: data.account_id || null,
-        category_id: data.category_id || null,
-        status: 'active',
-        generation_count: 0,
-      }])
-      .select()
-      .single();
+    const recurrenceRule = await apiClient!.post<any>(`/workspaces/${workspaceId}/recurrence-rules`, {
+      transaction_type: transactionType,
+      description: data.description,
+      amount: data.amount,
+      start_date: data.recurrence.start_date,
+      recurrence_type: data.recurrence.recurrence_type,
+      repeat_count: data.recurrence.repeat_count || null,
+      end_date: data.recurrence.end_date || null,
+      due_adjustment: data.recurrence.due_adjustment || 'none',
+      recurrence_day: data.recurrence.recurrence_day?.toString() || null,
+      account_id: data.account_id || null,
+      category_id: data.category_id || null,
+    });
 
-    if (ruleError) throw new Error('Failed to create recurrence rule: ' + ruleError.message);
-
-    const engineResult = await generateRecurrences(recurrenceRule.id, 'on_save', userId);
+    const engineResult = await generateRecurrences(recurrenceRule.id, 'on_save', userId, workspaceId);
 
     if (!engineResult.success) {
       throw new Error('Failed to generate recurrence transactions: ' + (engineResult.error || 'unknown'));
@@ -136,76 +104,28 @@ export const advancedTransactionService = {
     return { recurrenceRule, generated: engineResult.generated };
   },
 
-  async getInstallmentGroup(groupId: string) {
-    const { data, error } = await supabase
-      .from('installment_groups')
-      .select(`
-        *,
-        transactions:transactions!installment_group_id(*)
-      `)
-      .eq('id', groupId)
-      .single();
-
-    if (error) throw new Error('Failed to fetch installment group: ' + error.message);
-    return data;
+  async getInstallmentGroup(groupId: string, workspaceId: string) {
+    return apiClient!.get<any>(`/workspaces/${workspaceId}/installment-groups/${groupId}`);
   },
 
-  async getRecurrenceRule(ruleId: string) {
-    const { data, error } = await supabase
-      .from('recurrence_rules')
-      .select(`
-        *,
-        transactions:transactions!recurrence_id(*)
-      `)
-      .eq('id', ruleId)
-      .single();
-
-    if (error) throw new Error('Failed to fetch recurrence rule: ' + error.message);
-    return data;
+  async getRecurrenceRule(ruleId: string, workspaceId: string) {
+    return apiClient!.get<any>(`/workspaces/${workspaceId}/recurrence-rules/${ruleId}`);
   },
 
-  async updateInstallmentGroup(groupId: string, updates: Partial<any>) {
-    const { data, error } = await supabase
-      .from('installment_groups')
-      .update(updates)
-      .eq('id', groupId)
-      .select()
-      .single();
-
-    if (error) throw new Error('Failed to update installment group: ' + error.message);
-    return data;
+  async updateInstallmentGroup(groupId: string, updates: Partial<any>, workspaceId: string) {
+    return apiClient!.put<any>(`/workspaces/${workspaceId}/installment-groups/${groupId}`, updates);
   },
 
-  async updateRecurrenceRule(ruleId: string, updates: Partial<any>) {
-    const { data, error } = await supabase
-      .from('recurrence_rules')
-      .update(updates)
-      .eq('id', ruleId)
-      .select()
-      .single();
-
-    if (error) throw new Error('Failed to update recurrence rule: ' + error.message);
-    return data;
+  async updateRecurrenceRule(ruleId: string, updates: Partial<any>, workspaceId: string) {
+    return apiClient!.put<any>(`/workspaces/${workspaceId}/recurrence-rules/${ruleId}`, updates);
   },
 
-  async deleteInstallmentGroup(groupId: string) {
-    // This will cascade delete all related transactions
-    const { error } = await supabase
-      .from('installment_groups')
-      .delete()
-      .eq('id', groupId);
-
-    if (error) throw new Error('Failed to delete installment group: ' + error.message);
+  async deleteInstallmentGroup(groupId: string, workspaceId: string) {
+    await apiClient!.delete(`/workspaces/${workspaceId}/installment-groups/${groupId}`);
   },
 
-  async deleteRecurrenceRule(ruleId: string) {
-    // This will cascade delete all related transactions
-    const { error } = await supabase
-      .from('recurrence_rules')
-      .delete()
-      .eq('id', ruleId);
-
-    if (error) throw new Error('Failed to delete recurrence rule: ' + error.message);
+  async deleteRecurrenceRule(ruleId: string, workspaceId: string) {
+    await apiClient!.delete(`/workspaces/${workspaceId}/recurrence-rules/${ruleId}`);
   },
 
   async markInstallmentAsPaid(transactionId: string, workspaceId: string) {
@@ -215,15 +135,15 @@ export const advancedTransactionService = {
     );
   },
 
-  async pauseRecurrenceRule(ruleId: string) {
-    return await this.updateRecurrenceRule(ruleId, { status: 'paused' });
+  async pauseRecurrenceRule(ruleId: string, workspaceId: string) {
+    return apiClient!.post<any>(`/workspaces/${workspaceId}/recurrence-rules/${ruleId}/pause`, {});
   },
 
-  async resumeRecurrenceRule(ruleId: string) {
-    return await this.updateRecurrenceRule(ruleId, { status: 'active' });
+  async resumeRecurrenceRule(ruleId: string, workspaceId: string) {
+    return apiClient!.post<any>(`/workspaces/${workspaceId}/recurrence-rules/${ruleId}/resume`, {});
   },
 
-  async cancelRecurrenceRule(ruleId: string) {
-    return await this.updateRecurrenceRule(ruleId, { status: 'canceled' });
+  async cancelRecurrenceRule(ruleId: string, workspaceId: string) {
+    return apiClient!.post<any>(`/workspaces/${workspaceId}/recurrence-rules/${ruleId}/cancel`, {});
   },
 };

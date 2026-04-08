@@ -66,15 +66,10 @@ export const userService = {
     // This would verify the 2FA code
     // For now, mock verification
     if (code.length === 6) {
-      const { data, error } = await supabase
-        .from('users')
-        .update({ two_factor_enabled: true })
-        .eq('user_id', userId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return authFetch('/users/me', {
+        method: 'PUT',
+        body: JSON.stringify({ two_factor_enabled: true }),
+      });
     }
     throw new Error('Invalid code');
   },

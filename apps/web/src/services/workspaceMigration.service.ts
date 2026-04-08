@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { apiClient } from '../lib/apiClient';
 
 export interface MigrationPreview {
   source_workspace_id: string;
@@ -29,27 +29,19 @@ export const workspaceMigrationService = {
   async previewMigration(
     sourceWorkspaceId: string,
     targetWorkspaceId: string,
-    userId: string
+    _userId: string
   ): Promise<MigrationPreview> {
-    const { data, error } = await supabase.rpc('preview_workspace_migration', {
-      p_source_workspace_id: sourceWorkspaceId,
-      p_target_workspace_id: targetWorkspaceId,
-      p_user_id: userId,
-    });
-
-    if (error) {
-      console.error('Error previewing migration:', error);
-      throw new Error(`Failed to preview migration: ${error.message}`);
-    }
-
-    return data as MigrationPreview;
+    return apiClient!.post<MigrationPreview>(
+      `/workspaces/${sourceWorkspaceId}/migrations/preview`,
+      { target_workspace_id: targetWorkspaceId }
+    );
   },
 
   async migrateSpecificAccounts(
     accountIds: string[],
     sourceWorkspaceId: string,
     targetWorkspaceId: string,
-    userId: string,
+    _userId: string,
     options: {
       migrateTransactions?: boolean;
       migrateInstallments?: boolean;
@@ -60,27 +52,21 @@ export const workspaceMigrationService = {
       migrateInstallments = true,
     } = options;
 
-    const { data, error } = await supabase.rpc('migrate_accounts_to_workspace', {
-      p_account_ids: accountIds,
-      p_source_workspace_id: sourceWorkspaceId,
-      p_target_workspace_id: targetWorkspaceId,
-      p_user_id: userId,
-      p_migrate_transactions: migrateTransactions,
-      p_migrate_installments: migrateInstallments,
-    });
-
-    if (error) {
-      console.error('Error migrating accounts:', error);
-      throw new Error(`Failed to migrate accounts: ${error.message}`);
-    }
-
-    return data as MigrationResult;
+    return apiClient!.post<MigrationResult>(
+      `/workspaces/${sourceWorkspaceId}/migrations/execute`,
+      {
+        account_ids: accountIds,
+        target_workspace_id: targetWorkspaceId,
+        migrate_transactions: migrateTransactions,
+        migrate_installments: migrateInstallments,
+      }
+    );
   },
 
   async migrateAllAccounts(
     sourceWorkspaceId: string,
     targetWorkspaceId: string,
-    userId: string,
+    _userId: string,
     options: {
       migrateTransactions?: boolean;
       migrateInstallments?: boolean;
@@ -95,52 +81,28 @@ export const workspaceMigrationService = {
       migrateCostCenters = false,
     } = options;
 
-    const { data, error } = await supabase.rpc('migrate_all_accounts_to_workspace', {
-      p_source_workspace_id: sourceWorkspaceId,
-      p_target_workspace_id: targetWorkspaceId,
-      p_user_id: userId,
-      p_migrate_transactions: migrateTransactions,
-      p_migrate_installments: migrateInstallments,
-      p_migrate_categories: migrateCategories,
-      p_migrate_cost_centers: migrateCostCenters,
-    });
-
-    if (error) {
-      console.error('Error migrating all accounts:', error);
-      throw new Error(`Failed to migrate all accounts: ${error.message}`);
-    }
-
-    return data as MigrationResult;
+    return apiClient!.post<MigrationResult>(
+      `/workspaces/${sourceWorkspaceId}/migrations/execute-all`,
+      {
+        target_workspace_id: targetWorkspaceId,
+        migrate_transactions: migrateTransactions,
+        migrate_installments: migrateInstallments,
+        migrate_categories: migrateCategories,
+        migrate_cost_centers: migrateCostCenters,
+      }
+    );
   },
 
   async getAccountsByWorkspace(workspaceId: string) {
-    const { data, error } = await supabase
-      .from('accounts')
-      .select('id, title, type, initial_balance, workspace_id')
-      .eq('workspace_id', workspaceId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching accounts:', error);
-      throw new Error(`Failed to fetch accounts: ${error.message}`);
-    }
-
-    return data || [];
+    return apiClient!.get<any[]>(`/workspaces/${workspaceId}/migrations/accounts`);
   },
 
   async getWorkspaceDataSummary(workspaceId: string) {
-    const [accountsData, transactionsData, categoriesData, costCentersData] = await Promise.all([
-      supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('workspace_id', workspaceId),
-      supabase.from('transactions').select('transaction_id', { count: 'exact', head: true }).eq('transaction_workspace_id', workspaceId),
-      supabase.from('categories').select('category_id', { count: 'exact', head: true }).eq('category_workspace_id', workspaceId),
-      supabase.from('cost_centers').select('cost_center_id', { count: 'exact', head: true }).eq('cost_center_workspace_id', workspaceId),
-    ]);
-
-    return {
-      accountsCount: accountsData.count || 0,
-      transactionsCount: transactionsData.count || 0,
-      categoriesCount: categoriesData.count || 0,
-      costCentersCount: costCentersData.count || 0,
-    };
+    return apiClient!.get<{
+      accountsCount: number;
+      transactionsCount: number;
+      categoriesCount: number;
+      costCentersCount: number;
+    }>(`/workspaces/${workspaceId}/migrations/summary`);
   },
 };

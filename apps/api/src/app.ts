@@ -18,6 +18,10 @@ import statementsRouter from './routes/statements';
 import notificationsRouter from './routes/notifications';
 import notificationPreferencesRouter from './routes/notificationPreferences';
 import reconciliationsRouter from './routes/reconciliations';
+import installmentGroupsRouter from './routes/installmentGroups';
+import visualizationsRouter from './routes/visualizations';
+import activityLogsRouter from './routes/activityLogs';
+import workspaceMigrationsRouter from './routes/workspaceMigrations';
 import bankingRouter from './routes/banking';
 import usersRouter from './routes/users';
 import { errorHandler } from './middleware/errorHandler';
@@ -72,6 +76,10 @@ app.use('/api/v1/workspaces/:wid/credit-cards/:cardId/statements', statementsRou
 app.use('/api/v1/workspaces/:wid/notifications', notificationsRouter);
 app.use('/api/v1/workspaces/:wid/notification-preferences', notificationPreferencesRouter);
 app.use('/api/v1/workspaces/:wid/reconciliations', reconciliationsRouter);
+app.use('/api/v1/workspaces/:wid/installment-groups', installmentGroupsRouter);
+app.use('/api/v1/workspaces/:wid/visualizations', visualizationsRouter);
+app.use('/api/v1/workspaces/:wid/activity-logs', activityLogsRouter);
+app.use('/api/v1/workspaces/:wid/migrations', workspaceMigrationsRouter);
 
 // Banking (Pluggy Open Finance) — standalone, fora do padrão /workspaces/:wid
 app.use('/api/v1/banking', bankingRouter);

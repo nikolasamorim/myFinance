@@ -67,7 +67,7 @@ export function useDespesas(filters: AdvancedFilters) {
 
   const updateDespesa = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<DespesaData> }) =>
-      despesaService.updateDespesa(id, updates),
+      despesaService.updateDespesa(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
@@ -78,7 +78,7 @@ export function useDespesas(filters: AdvancedFilters) {
   });
 
   const deleteDespesa = useMutation({
-    mutationFn: (id: string) => despesaService.deleteDespesa(id),
+    mutationFn: (id: string) => despesaService.deleteDespesa(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });
@@ -89,7 +89,7 @@ export function useDespesas(filters: AdvancedFilters) {
   });
 
   const markAsPaid = useMutation({
-    mutationFn: (id: string) => despesaService.markAsPaid(id),
+    mutationFn: (id: string) => despesaService.markAsPaid(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['despesas', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['despesas-summary', currentWorkspace?.workspace_id] });

@@ -32,21 +32,21 @@ export function useAdvancedTransactions() {
 
   const getInstallmentGroup = (groupId: string) => useQuery({
     queryKey: ['installment-group', groupId],
-    queryFn: () => advancedTransactionService.getInstallmentGroup(groupId),
-    enabled: !!groupId,
+    queryFn: () => advancedTransactionService.getInstallmentGroup(groupId, currentWorkspace!.workspace_id),
+    enabled: !!groupId && !!currentWorkspace?.workspace_id,
     staleTime: 30 * 1000,
   });
 
   const getRecurrenceRule = (ruleId: string) => useQuery({
     queryKey: ['recurrence-rule', ruleId],
-    queryFn: () => advancedTransactionService.getRecurrenceRule(ruleId),
-    enabled: !!ruleId,
+    queryFn: () => advancedTransactionService.getRecurrenceRule(ruleId, currentWorkspace!.workspace_id),
+    enabled: !!ruleId && !!currentWorkspace?.workspace_id,
     staleTime: 30 * 1000,
   });
 
   const updateInstallmentGroup = useMutation({
     mutationFn: ({ groupId, updates }: { groupId: string; updates: any }) =>
-      advancedTransactionService.updateInstallmentGroup(groupId, updates),
+      advancedTransactionService.updateInstallmentGroup(groupId, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['installment-groups', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
@@ -55,7 +55,7 @@ export function useAdvancedTransactions() {
 
   const updateRecurrenceRule = useMutation({
     mutationFn: ({ ruleId, updates }: { ruleId: string; updates: any }) =>
-      advancedTransactionService.updateRecurrenceRule(ruleId, updates),
+      advancedTransactionService.updateRecurrenceRule(ruleId, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
@@ -73,7 +73,7 @@ export function useAdvancedTransactions() {
 
   const pauseRecurrenceRule = useMutation({
     mutationFn: (ruleId: string) =>
-      advancedTransactionService.pauseRecurrenceRule(ruleId),
+      advancedTransactionService.pauseRecurrenceRule(ruleId, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
     },
@@ -81,7 +81,7 @@ export function useAdvancedTransactions() {
 
   const resumeRecurrenceRule = useMutation({
     mutationFn: (ruleId: string) =>
-      advancedTransactionService.resumeRecurrenceRule(ruleId),
+      advancedTransactionService.resumeRecurrenceRule(ruleId, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
     },
@@ -89,7 +89,7 @@ export function useAdvancedTransactions() {
 
   const cancelRecurrenceRule = useMutation({
     mutationFn: (ruleId: string) =>
-      advancedTransactionService.cancelRecurrenceRule(ruleId),
+      advancedTransactionService.cancelRecurrenceRule(ruleId, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurrence-rules', currentWorkspace?.workspace_id] });
     },

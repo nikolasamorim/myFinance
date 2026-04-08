@@ -38,7 +38,7 @@ export function useInstallmentGroups() {
 
   const updateInstallmentGroup = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<InstallmentGroupData> }) =>
-      installmentService.updateInstallmentGroup(id, updates),
+      installmentService.updateInstallmentGroup(id, updates, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['installment-groups', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
@@ -46,7 +46,7 @@ export function useInstallmentGroups() {
   });
 
   const deleteInstallmentGroup = useMutation({
-    mutationFn: (id: string) => installmentService.deleteInstallmentGroup(id),
+    mutationFn: (id: string) => installmentService.deleteInstallmentGroup(id, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['installment-groups', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
@@ -62,20 +62,22 @@ export function useInstallmentGroups() {
 }
 
 export function useInstallmentsByGroup(groupId: string) {
+  const { currentWorkspace } = useWorkspace();
   return useQuery({
     queryKey: ['installments-by-group', groupId],
-    queryFn: () => installmentService.getInstallmentsByGroup(groupId),
-    enabled: !!groupId,
+    queryFn: () => installmentService.getInstallmentsByGroup(groupId, currentWorkspace!.workspace_id),
+    enabled: !!groupId && !!currentWorkspace?.workspace_id,
     staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
   });
 }
 
 export function useInstallmentGroup(groupId?: string | null) {
+  const { currentWorkspace } = useWorkspace();
   return useQuery({
     queryKey: ['installment-group', groupId],
-    queryFn: () => advancedTransactionService.getInstallmentGroup(groupId!),
-    enabled: !!groupId,
+    queryFn: () => advancedTransactionService.getInstallmentGroup(groupId!, currentWorkspace!.workspace_id),
+    enabled: !!groupId && !!currentWorkspace?.workspace_id,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
