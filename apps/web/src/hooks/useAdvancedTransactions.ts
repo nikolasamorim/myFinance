@@ -64,7 +64,7 @@ export function useAdvancedTransactions() {
 
   const markInstallmentAsPaid = useMutation({
     mutationFn: (transactionId: string) =>
-      advancedTransactionService.markInstallmentAsPaid(transactionId),
+      advancedTransactionService.markInstallmentAsPaid(transactionId, currentWorkspace!.workspace_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', currentWorkspace?.workspace_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-data', currentWorkspace?.workspace_id] });

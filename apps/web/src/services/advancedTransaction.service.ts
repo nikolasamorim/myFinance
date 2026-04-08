@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
-import type { AdvancedTransactionData, InstallmentData, RecurrenceData } from '../types';
+import { apiClient } from '../lib/apiClient';
+import type { AdvancedTransactionData, InstallmentData, RecurrenceData, Transaction } from '../types';
 import { generateRecurrences } from './recurrenceEngine.service';
 
 export const advancedTransactionService = {
@@ -207,18 +208,11 @@ export const advancedTransactionService = {
     if (error) throw new Error('Failed to delete recurrence rule: ' + error.message);
   },
 
-  async markInstallmentAsPaid(transactionId: string) {
-    const { data, error } = await supabase
-      .from('transactions')
-      .update({ 
-        transaction_status: 'paid'
-      })
-      .eq('transaction_id', transactionId)
-      .select()
-      .single();
-
-    if (error) throw new Error('Failed to mark installment as paid: ' + error.message);
-    return data;
+  async markInstallmentAsPaid(transactionId: string, workspaceId: string) {
+    return apiClient!.put<Transaction>(
+      `/workspaces/${workspaceId}/transactions/${transactionId}`,
+      { transaction_status: 'paid' }
+    );
   },
 
   async pauseRecurrenceRule(ruleId: string) {
