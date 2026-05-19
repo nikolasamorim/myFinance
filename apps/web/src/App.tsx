@@ -174,7 +174,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  <Route path="/onboarding" element={<Navigate to="/overview" replace />} />
+                  <Route path="/onboarding" element={<Navigate to="/dashboard" replace />} />
                   <Route
                     path="/settings"
                     element={
@@ -219,7 +219,7 @@ function App() {
                     path="/"
                     element={
                       <ProtectedRoute>
-                        <Navigate to="/overview" replace />
+                        <Navigate to="/dashboard" replace />
                       </ProtectedRoute>
                     }
                   />
