@@ -74,14 +74,6 @@ function getDaysUntil(dateStr: string): number {
   return Math.ceil((date.getTime() - today.getTime()) / 86400000);
 }
 
-function getNextClosingDate(closingDay: number): Date {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  let d = new Date(today.getFullYear(), today.getMonth(), closingDay);
-  if (d <= today) d = new Date(today.getFullYear(), today.getMonth() + 1, closingDay);
-  return d;
-}
-
 function Invoice() {
   const navigate = useNavigate();
   const { currentWorkspace } = useWorkspace();
@@ -227,12 +219,12 @@ function Invoice() {
   );
 
   const summaryPaidAmount = useMemo(
-    () => selectedStatements.reduce((s, stmt) => s + (stmt?.paid_amount ?? 0), 0),
+    () => selectedStatements.reduce((s, stmt) => s + (stmt?.total_paid ?? 0), 0),
     [selectedStatements]
   );
 
   const summaryLimit = useMemo(
-    () => selectedCards.reduce((s: number, id: string) => s + ((cardMap.get(id) as any)?.credit_limit ?? 0), 0),
+    () => selectedCards.reduce((s: number, id: string) => s + ((cardMap.get(id) as any)?.limit ?? 0), 0),
     [selectedCards, cardMap]
   );
 
@@ -246,6 +238,11 @@ function Invoice() {
     [selectedCards, cardMap]
   );
 
+  const primaryStatement = useMemo(
+    () => (selectedCards.length === 1 ? statementMap.get(selectedCards[0]) ?? null : null),
+    [selectedCards, statementMap]
+  );
+
   const dueDays = earliestDueDate ? getDaysUntil(earliestDueDate) : null;
   const dueDayColor =
     dueDays === null ? 'text-text-primary'
@@ -253,13 +250,7 @@ function Invoice() {
     : dueDays <= 7 ? 'text-amber-500'
     : 'text-text-primary';
 
-  const closingDays = useMemo(() => {
-    if (!primaryCard?.closing_day) return null;
-    const nextClose = getNextClosingDate(primaryCard.closing_day);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return Math.ceil((nextClose.getTime() - today.getTime()) / 86400000);
-  }, [primaryCard]);
+  const closingDays = primaryStatement?.period_end ? getDaysUntil(primaryStatement.period_end) : null;
 
   // Mutations
   const { registerPayment } = useStatementMutations(activePaymentCard?.cardId);
@@ -438,8 +429,8 @@ function Invoice() {
                   {creditCards.map((card: any) => {
                     const stmt = statementMap.get(card.id);
                     const isSelected = selectedCards.includes(card.id);
-                    const usagePercent = card.credit_limit > 0
-                      ? Math.min(100, ((stmt?.statement_amount ?? 0) / card.credit_limit) * 100)
+                    const usagePercent = card.limit > 0
+                      ? Math.min(100, ((stmt?.statement_amount ?? 0) / card.limit) * 100)
                       : 0;
                     const isOverLimit = usagePercent > 80;
 
@@ -474,12 +465,12 @@ function Invoice() {
                         <p className="text-xl font-bold text-text-primary">
                           {stmt ? formatCurrency(stmt.statement_amount) : '—'}
                         </p>
-                        {card.credit_limit > 0 && (
-                          <p className="text-xs text-text-muted mb-3">de {formatCurrency(card.credit_limit)}</p>
+                        {card.limit > 0 && (
+                          <p className="text-xs text-text-muted mb-3">de {formatCurrency(card.limit)}</p>
                         )}
 
                         {/* Usage bar */}
-                        {card.credit_limit > 0 && (
+                        {card.limit > 0 && (
                           <>
                             <div className="h-1.5 bg-bg-elevated rounded-full overflow-hidden mb-1">
                               <div
@@ -488,7 +479,7 @@ function Invoice() {
                               />
                             </div>
                             <p className="text-[11px] text-text-muted mb-3">
-                              Disponível: {formatCurrency(card.credit_limit - (stmt?.statement_amount ?? 0))}
+                              Disponível: {formatCurrency(card.limit - (stmt?.statement_amount ?? 0))}
                             </p>
                           </>
                         )}
@@ -511,7 +502,7 @@ function Invoice() {
                             <div>
                               <p className="text-[9px] text-text-muted uppercase tracking-wide">Pago</p>
                               <p className="text-[11px] font-medium text-green-600">
-                                {stmt ? formatCurrency(stmt.paid_amount ?? 0) : '—'}
+                                {stmt ? formatCurrency(stmt.total_paid ?? 0) : '—'}
                               </p>
                             </div>
                           </div>
@@ -594,12 +585,14 @@ function Invoice() {
                     {/* Col 3: Closing day */}
                     <div className="px-5 py-4">
                       <p className="text-[10px] text-text-muted uppercase tracking-wide mb-1">Fechamento em</p>
-                      {primaryCard?.closing_day ? (
+                      {closingDays !== null ? (
                         <>
                           <p className="text-2xl font-bold text-text-primary leading-none">
                             {closingDays}<span className="text-base font-semibold">d</span>
                           </p>
-                          <p className="text-[11px] text-text-muted mt-1">dia {primaryCard.closing_day}</p>
+                          {primaryCard?.closing_day && (
+                            <p className="text-[11px] text-text-muted mt-1">dia {primaryCard.closing_day}</p>
+                          )}
                         </>
                       ) : (
                         <p className="text-2xl font-bold text-text-muted">—</p>
