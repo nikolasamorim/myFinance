@@ -8,6 +8,12 @@ type H = (req: AuthenticatedRequest, res: Response, next: NextFunction) => Promi
 const h = (fn: H): RequestHandler =>
     (req, res, next) => fn(req as AuthenticatedRequest, res, next).catch(next) as unknown;
 
+// G12: dia de fechamento/vencimento deve ser inteiro entre 1 e 31.
+const isValidDay = (v: unknown): boolean => {
+    const n = Number(v);
+    return Number.isInteger(n) && n >= 1 && n <= 31;
+};
+
 /** GET /api/v1/workspaces/:wid/credit-cards */
 router.get('/', h(async (req, res, next) => {
     try {
@@ -52,6 +58,14 @@ router.post('/', h(async (req, res, next) => {
             res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'title é obrigatório.' } });
             return;
         }
+        if (!isValidDay(closing_day)) {
+            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'closing_day é obrigatório (inteiro entre 1 e 31).' } });
+            return;
+        }
+        if (!isValidDay(due_day)) {
+            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'due_day é obrigatório (inteiro entre 1 e 31).' } });
+            return;
+        }
         const { data, error } = await req.supabase
             .from('credit_cards')
             .insert([{ credit_card_workspace_id: wid, credit_card_name: title, credit_card_limit: limit, current_balance: initial_balance ?? 0, credit_card_due_day: due_day, credit_card_closing_day: closing_day, color, icon }])
@@ -66,6 +80,14 @@ router.put('/:id', h(async (req, res, next) => {
     try {
         const { id } = req.params;
         const { title, limit, initial_balance, due_day, closing_day, color, icon } = req.body;
+        if (closing_day !== undefined && !isValidDay(closing_day)) {
+            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'closing_day inválido (inteiro entre 1 e 31).' } });
+            return;
+        }
+        if (due_day !== undefined && !isValidDay(due_day)) {
+            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'due_day inválido (inteiro entre 1 e 31).' } });
+            return;
+        }
         const upd: Record<string, unknown> = {};
         if (title !== undefined) upd.credit_card_name = title;
         if (limit !== undefined) upd.credit_card_limit = limit;

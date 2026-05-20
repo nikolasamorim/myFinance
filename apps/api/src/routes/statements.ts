@@ -143,14 +143,24 @@ router.post('/:statementId/payments', h(async (req, res, next) => {
         const { statementId } = req.params;
         const { amount, paid_at, method } = req.body;
 
-        if (!amount || !paid_at || !method) {
-            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'amount, paid_at e method são obrigatórios.' } });
+        const amountNum = Number(amount);
+        const allowedMethods = ['pix', 'boleto', 'ted', 'dda'];
+        if (!Number.isFinite(amountNum) || amountNum <= 0) {
+            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'amount deve ser um número positivo.' } });
+            return;
+        }
+        if (!paid_at || Number.isNaN(Date.parse(paid_at))) {
+            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'paid_at deve ser uma data válida (YYYY-MM-DD).' } });
+            return;
+        }
+        if (!method || !allowedMethods.includes(method)) {
+            res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'method inválido. Use: pix, boleto, ted ou dda.' } });
             return;
         }
 
         const { error } = await req.supabase.rpc('register_statement_payment', {
             p_statement_id: statementId,
-            amount_param: amount,
+            amount_param: amountNum,
             paid_at_param: paid_at,
             method_param: method,
         });
