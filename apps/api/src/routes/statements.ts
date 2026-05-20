@@ -30,26 +30,49 @@ router.get('/', h(async (req, res, next) => {
 
         const window = windowData[0];
 
-        // Ensure statement exists
-        const { data: statementId, error: ensureErr } = await req.supabase.rpc('ensure_open_statement', {
-            card_id: cardId,
-            p_period_start: window.period_start,
-        });
-        if (ensureErr) throw ensureErr;
-
-        // Fetch the statement
+        // G03: read-only — busca uma fatura existente; nunca cria na leitura.
         const { data: statement, error: fetchErr } = await req.supabase
             .from('card_statements')
             .select(`*, credit_card:credit_cards!inner(credit_card_name, credit_card_limit, current_balance, color, icon)`)
-            .eq('id', statementId)
-            .single();
+            .eq('credit_card_id', cardId)
+            .eq('period_start', window.period_start)
+            .maybeSingle();
         if (fetchErr) throw fetchErr;
 
-        // Fetch payments for this statement
+        if (!statement) {
+            // Sem lançamentos ainda para esta janela → fatura sintética (não persistida).
+            const { data: card, error: cardErr } = await req.supabase
+                .from('credit_cards')
+                .select('credit_card_name, credit_card_limit, current_balance, color, icon')
+                .eq('credit_card_id', cardId)
+                .maybeSingle();
+            if (cardErr) throw cardErr;
+
+            res.json({
+                id: null,
+                workspace_id: wid,
+                credit_card_id: cardId,
+                period_start: window.period_start,
+                period_end: window.period_end,
+                due_date: window.due_date,
+                statement_amount: 0,
+                total_paid: 0,
+                min_payment_amount: 0,
+                carry_forward_amount: 0,
+                status: 'open',
+                is_overdue: false,
+                credit_card: card,
+                payments: [],
+                window,
+            });
+            return;
+        }
+
+        // Pagamentos da fatura existente
         const { data: payments, error: paymentsErr } = await req.supabase
             .from('statement_payments')
             .select('*')
-            .eq('card_statement_id', statementId)
+            .eq('card_statement_id', statement.id)
             .order('paid_at', { ascending: false });
         if (paymentsErr) throw paymentsErr;
 

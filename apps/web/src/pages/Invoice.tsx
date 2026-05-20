@@ -509,7 +509,7 @@ function Invoice() {
                         </div>
 
                         {/* Per-card actions */}
-                        {stmt?.status === 'open' && (
+                        {stmt?.id && stmt.status === 'open' && (
                           <div className="flex gap-2 mt-3">
                             <Button
                               variant="outline"
