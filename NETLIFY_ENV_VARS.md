@@ -30,6 +30,8 @@ Configure todas as variáveis abaixo em:
 |---|---|---|
 | `CORS_ORIGINS` | Origens permitidas para a API Express | `http://localhost:5173` |
 | `NODE_ENV` | Ambiente de execução | `production` (configurado automaticamente pelo Netlify) |
+| `SUPABASE_JWT_SECRET` | Segredo HS256 do JWT — habilita verificação local do token na API (sem round-trip ao Auth). Settings → API → JWT Settings → JWT Secret | *(ausente → fallback `getUser` remoto)* |
+| `INTERNAL_FUNCTION_TOKEN` | Token compartilhado que protege a background function de import (`banking-import-background`). Quando setado, o webhook envia e a function exige no header `x-internal-token` | *(ausente → sem proteção)* |
 
 ---
 
