@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { jwtVerify } from 'jose';
 import { getSupabaseForUser, getSupabaseAdmin } from '../lib/supabase';
 
 export interface AuthenticatedRequest extends Request {
@@ -9,6 +10,19 @@ export interface AuthenticatedRequest extends Request {
     supabase: ReturnType<typeof getSupabaseForUser>;
     jwt: string;
 }
+
+/**
+ * Shared HS256 secret used by Supabase Auth to sign JWTs (legacy/symmetric keys).
+ * When configured, tokens are verified locally — no network round-trip per request.
+ * Obtain it in: Supabase Dashboard → Settings → API → JWT Settings → JWT Secret.
+ *
+ * Note: if the project migrates to asymmetric signing keys (JWKS), local
+ * verification here will fail and gracefully fall back to the remote check;
+ * switch this to `jose.createRemoteJWKSet(<.well-known/jwks.json>)` at that point.
+ */
+const jwtSecret = process.env.SUPABASE_JWT_SECRET
+    ? new TextEncoder().encode(process.env.SUPABASE_JWT_SECRET)
+    : null;
 
 /**
  * Middleware that validates the Bearer JWT and attaches:
@@ -34,9 +48,30 @@ export async function requireAuth(
     }
 
     const jwt = authHeader.substring(7);
+    const authReq = req as AuthenticatedRequest;
 
+    // ─── Fast path: verify the signature locally (no round-trip to Auth) ────────
+    if (jwtSecret) {
+        try {
+            const { payload } = await jwtVerify(jwt, jwtSecret, { algorithms: ['HS256'] });
+            if (payload.sub) {
+                authReq.user = {
+                    id: payload.sub,
+                    email: typeof payload.email === 'string' ? payload.email : undefined,
+                };
+                authReq.jwt = jwt;
+                authReq.supabase = getSupabaseForUser(jwt);
+                next();
+                return;
+            }
+        } catch {
+            // Invalid/expired/rotated/asymmetric token: fall through to remote check.
+        }
+    }
+
+    // ─── Fallback: validate remotely via Supabase Auth ──────────────────────────
+    // Also the only path when SUPABASE_JWT_SECRET is not configured.
     try {
-        // Validate the JWT by fetching the user via Supabase Auth
         const { data, error } = await getSupabaseAdmin().auth.getUser(jwt);
 
         if (error || !data.user) {
@@ -49,8 +84,6 @@ export async function requireAuth(
             return;
         }
 
-        // Attach user context and scoped supabase client to the request
-        const authReq = req as AuthenticatedRequest;
         authReq.user = {
             id: data.user.id,
             email: data.user.email,
