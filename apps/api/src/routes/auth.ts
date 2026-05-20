@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { Router, Request, Response, NextFunction, RequestHandler } from 'express';
-import { getSupabaseForUser, getSupabaseAdmin } from '../lib/supabase';
+import { getSupabaseForUser, getSupabaseAdmin, getSupabaseWithSession } from '../lib/supabase';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
@@ -33,7 +33,7 @@ function clearRefreshCookie(res: Response) {
 
 router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, code } = req.body;
         if (!email || !password) {
             res.status(400).json({
                 error: { code: 'VALIDATION_ERROR', message: 'Email e senha são obrigatórios.' },
@@ -51,14 +51,63 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
             return;
         }
 
+        // The signed-in client now holds the session in memory, so the MFA helpers
+        // below operate on this freshly authenticated user.
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        const mfaRequired = aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2';
+
+        let accessToken = data.session?.access_token;
+        let refreshToken = data.session?.refresh_token;
+
+        if (mfaRequired) {
+            if (!code) {
+                // First step: ask the client for the TOTP code. Do not finalize the session.
+                res.json({ mfa_required: true });
+                return;
+            }
+
+            const { data: factorsData } = await supabase.auth.mfa.listFactors();
+            const totp = factorsData?.totp?.[0];
+            if (!totp) {
+                res.status(400).json({
+                    error: { code: 'VALIDATION_ERROR', message: 'Nenhum fator 2FA encontrado.' },
+                });
+                return;
+            }
+
+            const { data: challenge, error: chErr } = await supabase.auth.mfa.challenge({ factorId: totp.id });
+            if (chErr || !challenge) {
+                res.status(400).json({
+                    error: { code: 'VALIDATION_ERROR', message: 'Falha ao iniciar desafio 2FA.' },
+                });
+                return;
+            }
+
+            const { data: verifyData, error: vErr } = await supabase.auth.mfa.verify({
+                factorId: totp.id,
+                challengeId: challenge.id,
+                code,
+            });
+            if (vErr || !verifyData) {
+                res.status(401).json({
+                    error: { code: 'UNAUTHORIZED', message: 'Código 2FA inválido.' },
+                });
+                return;
+            }
+
+            // verify() upgrades the session to AAL2 and issues fresh tokens.
+            accessToken = verifyData.access_token;
+            refreshToken = verifyData.refresh_token;
+        }
+
         // Set httpOnly cookie with refresh token
-        if (data.session?.refresh_token) {
-            setRefreshCookie(res, data.session.refresh_token);
+        if (refreshToken) {
+            setRefreshCookie(res, refreshToken);
         }
 
         res.json({
-            access_token: data.session?.access_token,
-            refresh_token: data.session?.refresh_token, // kept for mobile compatibility
+            access_token: accessToken,
+            refresh_token: refreshToken, // kept for mobile compatibility
             user: {
                 id: data.user?.id,
                 email: data.user?.email,
@@ -329,11 +378,41 @@ router.post('/callback/exchange', async (req: Request, res: Response, next: Next
 router.post('/change-password', requireAuth as RequestHandler, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthenticatedRequest;
-        const { newPassword } = req.body;
+        const { currentPassword, newPassword } = req.body;
 
         if (!newPassword || newPassword.length < 6) {
             res.status(400).json({
                 error: { code: 'VALIDATION_ERROR', message: 'Nova senha deve ter pelo menos 6 caracteres.' },
+            });
+            return;
+        }
+        if (!currentPassword) {
+            res.status(400).json({
+                error: { code: 'VALIDATION_ERROR', message: 'Senha atual é obrigatória.' },
+            });
+            return;
+        }
+
+        let email = authReq.user.email;
+        if (!email) {
+            const { data } = await getSupabaseAdmin().auth.admin.getUserById(authReq.user.id);
+            email = data.user?.email;
+        }
+        if (!email) {
+            res.status(400).json({
+                error: { code: 'VALIDATION_ERROR', message: 'Não foi possível identificar o e-mail da conta.' },
+            });
+            return;
+        }
+
+        // Re-authenticate: confirm the current password before allowing the change.
+        const { error: signInError } = await getSupabaseForUser('').auth.signInWithPassword({
+            email,
+            password: currentPassword,
+        });
+        if (signInError) {
+            res.status(400).json({
+                error: { code: 'VALIDATION_ERROR', message: 'Senha atual incorreta.' },
             });
             return;
         }
@@ -350,6 +429,170 @@ router.post('/change-password', requireAuth as RequestHandler, async (req: Reque
         }
 
         res.json({ message: 'Senha alterada com sucesso.' });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── POST /auth/change-email ─────────────────────────────────────────────────
+
+router.post('/change-email', requireAuth as RequestHandler, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const authReq = req as AuthenticatedRequest;
+        const { newEmail } = req.body;
+
+        if (!newEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newEmail)) {
+            res.status(400).json({
+                error: { code: 'VALIDATION_ERROR', message: 'E-mail inválido.' },
+            });
+            return;
+        }
+
+        const refreshToken = req.cookies?.[REFRESH_COOKIE] ?? req.body.refresh_token;
+        if (!refreshToken) {
+            res.status(401).json({
+                error: { code: 'UNAUTHORIZED', message: 'Sessão inválida. Faça login novamente.' },
+            });
+            return;
+        }
+
+        const client = await getSupabaseWithSession(authReq.jwt, refreshToken);
+        const { error } = await client.auth.updateUser({ email: newEmail });
+
+        if (error) {
+            res.status(400).json({
+                error: { code: 'VALIDATION_ERROR', message: error.message },
+            });
+            return;
+        }
+
+        res.json({ message: 'Enviamos um e-mail de confirmação. A troca será efetivada após a confirmação.' });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── 2FA (TOTP via Supabase MFA) ──────────────────────────────────────────────
+
+/** Builds a session-scoped client from the request, or sends 401 and returns null. */
+async function sessionClientOr401(req: Request, res: Response) {
+    const authReq = req as AuthenticatedRequest;
+    const refreshToken = req.cookies?.[REFRESH_COOKIE] ?? req.body?.refresh_token;
+    if (!refreshToken) {
+        res.status(401).json({
+            error: { code: 'UNAUTHORIZED', message: 'Sessão inválida. Faça login novamente.' },
+        });
+        return null;
+    }
+    return getSupabaseWithSession(authReq.jwt, refreshToken);
+}
+
+/** POST /auth/2fa/enroll — start TOTP enrollment, returns QR code + secret. */
+router.post('/2fa/enroll', requireAuth as RequestHandler, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const client = await sessionClientOr401(req, res);
+        if (!client) return;
+
+        // Drop any leftover unverified TOTP factors to avoid duplicates piling up.
+        const { data: factors } = await client.auth.mfa.listFactors();
+        const stale = (factors?.all ?? []).filter(f => f.factor_type === 'totp' && f.status !== 'verified');
+        for (const f of stale) {
+            await client.auth.mfa.unenroll({ factorId: f.id });
+        }
+
+        const { data, error } = await client.auth.mfa.enroll({ factorType: 'totp' });
+        if (error || !data) {
+            res.status(400).json({
+                error: { code: 'VALIDATION_ERROR', message: error?.message ?? 'Falha ao iniciar 2FA.' },
+            });
+            return;
+        }
+
+        res.json({
+            factor_id: data.id,
+            qr_code: data.totp.qr_code,
+            secret: data.totp.secret,
+            uri: data.totp.uri,
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/** POST /auth/2fa/verify — confirm the TOTP code and activate 2FA. */
+router.post('/2fa/verify', requireAuth as RequestHandler, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const authReq = req as AuthenticatedRequest;
+        const { factor_id, code } = req.body;
+        if (!factor_id || !code) {
+            res.status(400).json({
+                error: { code: 'VALIDATION_ERROR', message: 'Fator e código são obrigatórios.' },
+            });
+            return;
+        }
+
+        const client = await sessionClientOr401(req, res);
+        if (!client) return;
+
+        const { data: challenge, error: chErr } = await client.auth.mfa.challenge({ factorId: factor_id });
+        if (chErr || !challenge) {
+            res.status(400).json({
+                error: { code: 'VALIDATION_ERROR', message: 'Falha ao iniciar desafio 2FA.' },
+            });
+            return;
+        }
+
+        const { data: verifyData, error: vErr } = await client.auth.mfa.verify({
+            factorId: factor_id,
+            challengeId: challenge.id,
+            code,
+        });
+        if (vErr || !verifyData) {
+            res.status(400).json({
+                error: { code: 'VALIDATION_ERROR', message: 'Código inválido.' },
+            });
+            return;
+        }
+
+        await getSupabaseAdmin()
+            .from('users')
+            .update({ two_factor_enabled: true })
+            .eq('user_id', authReq.user.id);
+
+        // verify() rotates the session to AAL2 — propagate the new tokens so the
+        // browser's refresh cookie and in-memory access token stay valid.
+        if (verifyData.refresh_token) {
+            setRefreshCookie(res, verifyData.refresh_token);
+        }
+
+        res.json({
+            message: '2FA ativado com sucesso.',
+            access_token: verifyData.access_token,
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/** POST /auth/2fa/disable — remove all TOTP factors and turn off 2FA. */
+router.post('/2fa/disable', requireAuth as RequestHandler, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const authReq = req as AuthenticatedRequest;
+        const client = await sessionClientOr401(req, res);
+        if (!client) return;
+
+        const { data: factors } = await client.auth.mfa.listFactors();
+        const totpFactors = (factors?.all ?? []).filter(f => f.factor_type === 'totp');
+        for (const f of totpFactors) {
+            await client.auth.mfa.unenroll({ factorId: f.id });
+        }
+
+        await getSupabaseAdmin()
+            .from('users')
+            .update({ two_factor_enabled: false })
+            .eq('user_id', authReq.user.id);
+
+        res.json({ message: '2FA desativado.' });
     } catch (err) {
         next(err);
     }

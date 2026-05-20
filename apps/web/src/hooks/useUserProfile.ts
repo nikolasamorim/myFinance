@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '../services/user.service';
 import { useAuth } from '../context/AuthContext';
+import { setAccessToken } from '../lib/authTokens';
 
 // Transform database user to frontend format
 const transformUser = (dbUser: any) => {
@@ -54,7 +55,17 @@ export function useUserProfile() {
   });
 
   const verify2FA = useMutation({
-    mutationFn: (code: string) => userService.verify2FA(user!.id, code),
+    mutationFn: ({ factorId, code }: { factorId: string; code: string }) =>
+      userService.verify2FA(user!.id, factorId, code),
+    onSuccess: (data) => {
+      // verify() rotated the session — adopt the new access token.
+      if (data?.access_token) setAccessToken(data.access_token);
+      queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
+    },
+  });
+
+  const disable2FA = useMutation({
+    mutationFn: () => userService.disable2FA(user!.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
     },
@@ -68,5 +79,6 @@ export function useUserProfile() {
     changePassword,
     setup2FA,
     verify2FA,
+    disable2FA,
   };
 }

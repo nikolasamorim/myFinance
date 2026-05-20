@@ -31,7 +31,17 @@ type MobileTab = 'perfil' | 'pessoal' | 'conta';
 
 export function Settings() {
   const { user } = useAuth();
-  const { data: profile, isLoading, updateProfile, uploadAvatar } = useUserProfile();
+  const {
+    data: profile,
+    isLoading,
+    updateProfile,
+    uploadAvatar,
+    changeEmail,
+    changePassword,
+    setup2FA,
+    verify2FA,
+    disable2FA,
+  } = useUserProfile();
 
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -41,6 +51,22 @@ export function Settings() {
   const [mobileTab, setMobileTab] = useState<MobileTab>('perfil');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Email change modal
+  const [newEmail, setNewEmail] = useState('');
+  const [emailFeedback, setEmailFeedback] = useState<{ type: 'error' | 'success'; msg: string } | null>(null);
+
+  // Password change modal
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  // 2FA modal
+  const [twoFAData, setTwoFAData] = useState<{ factor_id: string; qr_code: string; secret: string } | null>(null);
+  const [twoFACode, setTwoFACode] = useState('');
+  const [twoFAError, setTwoFAError] = useState('');
 
   const handleEditSection = (section: string) => {
     setEditingSection(section);
@@ -87,6 +113,97 @@ export function Settings() {
     } catch (error) {
       console.error('Error uploading avatar:', error);
       setAvatarPreview(null);
+    }
+  };
+
+  const closeEmailModal = () => {
+    setShowEmailModal(false);
+    setNewEmail('');
+    setEmailFeedback(null);
+  };
+
+  const handleChangeEmail = async () => {
+    setEmailFeedback(null);
+    try {
+      const res = await changeEmail.mutateAsync(newEmail.trim());
+      setEmailFeedback({ type: 'success', msg: res.message });
+      setNewEmail('');
+    } catch (error: any) {
+      setEmailFeedback({ type: 'error', msg: error.message || 'Erro ao alterar e-mail.' });
+    }
+  };
+
+  const closePasswordModal = () => {
+    setShowPasswordModal(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError('');
+    setPasswordSuccess('');
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+    if (newPassword.length < 6) {
+      setPasswordError('Nova senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('As senhas não coincidem.');
+      return;
+    }
+    try {
+      await changePassword.mutateAsync({ currentPassword, newPassword });
+      setPasswordSuccess('Senha alterada com sucesso.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      setPasswordError(error.message || 'Erro ao alterar senha.');
+    }
+  };
+
+  const handleOpen2FA = async () => {
+    setShow2FAModal(true);
+    setTwoFAError('');
+    setTwoFACode('');
+    setTwoFAData(null);
+    if (!profile?.two_factor_enabled) {
+      try {
+        const data = await setup2FA.mutateAsync();
+        setTwoFAData(data);
+      } catch (error: any) {
+        setTwoFAError(error.message || 'Erro ao iniciar configuração do 2FA.');
+      }
+    }
+  };
+
+  const close2FAModal = () => {
+    setShow2FAModal(false);
+    setTwoFAData(null);
+    setTwoFACode('');
+    setTwoFAError('');
+  };
+
+  const handleVerify2FA = async () => {
+    if (!twoFAData) return;
+    setTwoFAError('');
+    try {
+      await verify2FA.mutateAsync({ factorId: twoFAData.factor_id, code: twoFACode.trim() });
+      close2FAModal();
+    } catch (error: any) {
+      setTwoFAError(error.message || 'Código inválido.');
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    setTwoFAError('');
+    try {
+      await disable2FA.mutateAsync();
+      close2FAModal();
+    } catch (error: any) {
+      setTwoFAError(error.message || 'Erro ao desativar 2FA.');
     }
   };
 
@@ -530,7 +647,7 @@ export function Settings() {
           <Button
             variant={profile?.two_factor_enabled ? "outline" : "primary"}
             size="sm"
-            onClick={() => setShow2FAModal(true)}
+            onClick={handleOpen2FA}
             className="flex-shrink-0"
           >
             <Shield className="w-4 h-4 mr-1" />
@@ -588,7 +705,7 @@ export function Settings() {
       {/* Email Change Modal */}
       <Modal
         isOpen={showEmailModal}
-        onClose={() => setShowEmailModal(false)}
+        onClose={closeEmailModal}
         title="Alterar E-mail"
       >
         <div className="space-y-4">
@@ -601,17 +718,37 @@ export function Settings() {
             label="Novo e-mail"
             type="email"
             placeholder="Digite o novo e-mail"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
           />
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <p className="text-sm text-yellow-800">
-              Você receberá um e-mail de confirmação no novo endereço antes da alteração ser efetivada.
-            </p>
-          </div>
+          {emailFeedback ? (
+            <div
+              className={`border rounded-lg p-3 ${
+                emailFeedback.type === 'success'
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-red-50 border-red-200'
+              }`}
+            >
+              <p className={`text-sm ${emailFeedback.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>
+                {emailFeedback.msg}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-800">
+                Você receberá um e-mail de confirmação no novo endereço antes da alteração ser efetivada.
+              </p>
+            </div>
+          )}
           <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={() => setShowEmailModal(false)}>
-              Cancelar
+            <Button variant="outline" onClick={closeEmailModal}>
+              {emailFeedback?.type === 'success' ? 'Fechar' : 'Cancelar'}
             </Button>
-            <Button>
+            <Button
+              onClick={handleChangeEmail}
+              loading={changeEmail.isPending}
+              disabled={!newEmail.trim() || changeEmail.isPending}
+            >
               Enviar confirmação
             </Button>
           </div>
@@ -621,7 +758,7 @@ export function Settings() {
       {/* Password Change Modal */}
       <Modal
         isOpen={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
+        onClose={closePasswordModal}
         title="Alterar Senha"
       >
         <div className="space-y-4">
@@ -629,22 +766,42 @@ export function Settings() {
             label="Senha atual"
             type="password"
             placeholder="Digite sua senha atual"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
           />
           <Input
             label="Nova senha"
             type="password"
             placeholder="Digite a nova senha"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
           />
           <Input
             label="Confirmar nova senha"
             type="password"
             placeholder="Confirme a nova senha"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
+          {passwordError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-800">{passwordError}</p>
+            </div>
+          )}
+          {passwordSuccess && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-sm text-green-800">{passwordSuccess}</p>
+            </div>
+          )}
           <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={() => setShowPasswordModal(false)}>
-              Cancelar
+            <Button variant="outline" onClick={closePasswordModal}>
+              {passwordSuccess ? 'Fechar' : 'Cancelar'}
             </Button>
-            <Button>
+            <Button
+              onClick={handleChangePassword}
+              loading={changePassword.isPending}
+              disabled={!currentPassword || !newPassword || !confirmPassword || changePassword.isPending}
+            >
               Alterar senha
             </Button>
           </div>
@@ -654,7 +811,7 @@ export function Settings() {
       {/* 2FA Setup Modal */}
       <Modal
         isOpen={show2FAModal}
-        onClose={() => setShow2FAModal(false)}
+        onClose={close2FAModal}
         title="Autenticação de 2 Fatores"
         size="lg"
       >
@@ -662,28 +819,48 @@ export function Settings() {
           {!profile?.two_factor_enabled ? (
             <>
               <div className="text-center">
-                <div className="w-40 h-40 sm:w-48 sm:h-48 bg-bg-elevated rounded-lg mx-auto mb-4 flex items-center justify-center">
-                  <p className="text-text-muted">QR Code aqui</p>
+                <div className="w-40 h-40 sm:w-48 sm:h-48 bg-bg-elevated rounded-lg mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                  {setup2FA.isPending ? (
+                    <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                  ) : twoFAData ? (
+                    <img src={twoFAData.qr_code} alt="QR Code 2FA" className="w-full h-full object-contain" />
+                  ) : (
+                    <p className="text-text-muted text-sm px-4">Não foi possível gerar o QR Code</p>
+                  )}
                 </div>
                 <p className="text-sm text-text-secondary mb-4">
                   Escaneie este QR code com seu app autenticador
                 </p>
-                <div className="bg-bg-surface p-3 rounded-lg">
-                  <p className="text-xs font-mono text-text-secondary break-all">
-                    Chave secreta: ABCD-EFGH-IJKL-MNOP
-                  </p>
-                </div>
+                {twoFAData && (
+                  <div className="bg-bg-surface p-3 rounded-lg">
+                    <p className="text-xs font-mono text-text-secondary break-all">
+                      Chave secreta: {twoFAData.secret}
+                    </p>
+                  </div>
+                )}
               </div>
               <Input
                 label="Código de verificação"
                 placeholder="Digite o código de 6 dígitos"
                 maxLength={6}
+                inputMode="numeric"
+                value={twoFACode}
+                onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               />
+              {twoFAError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-800">{twoFAError}</p>
+                </div>
+              )}
               <div className="flex justify-end space-x-3">
-                <Button variant="outline" onClick={() => setShow2FAModal(false)}>
+                <Button variant="outline" onClick={close2FAModal}>
                   Cancelar
                 </Button>
-                <Button>
+                <Button
+                  onClick={handleVerify2FA}
+                  loading={verify2FA.isPending}
+                  disabled={!twoFAData || twoFACode.length !== 6 || verify2FA.isPending}
+                >
                   Ativar 2FA
                 </Button>
               </div>
@@ -697,11 +874,21 @@ export function Settings() {
               <p className="text-text-secondary">
                 Sua conta está protegida com autenticação de dois fatores.
               </p>
+              {twoFAError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-800">{twoFAError}</p>
+                </div>
+              )}
               <div className="flex justify-center space-x-3">
-                <Button variant="outline" onClick={() => setShow2FAModal(false)}>
+                <Button variant="outline" onClick={close2FAModal}>
                   Fechar
                 </Button>
-                <Button variant="outline">
+                <Button
+                  variant="outline"
+                  onClick={handleDisable2FA}
+                  loading={disable2FA.isPending}
+                  disabled={disable2FA.isPending}
+                >
                   Desativar 2FA
                 </Button>
               </div>

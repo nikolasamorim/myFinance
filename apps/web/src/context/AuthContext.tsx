@@ -12,7 +12,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, code?: string) => Promise<{ mfaRequired: boolean }>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   loginWithGoogle: () => Promise<void>;
@@ -107,11 +107,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ─── Login ─────────────────────────────────────────────────────────────────
 
-  const login = useCallback(async (email: string, password: string) => {
-    const data = await authFetch<LoginResponse>('/auth/login', {
+  const login = useCallback(async (email: string, password: string, code?: string) => {
+    const data = await authFetch<LoginResponse & { mfa_required?: boolean }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, code }),
     });
+
+    if (data.mfa_required) {
+      return { mfaRequired: true };
+    }
 
     setAccessToken(data.access_token);
     setUser({
@@ -120,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       name: data.user.name || data.user.email || '',
     });
     setIsAuthenticated(true);
+    return { mfaRequired: false };
   }, []);
 
   // ─── Register ──────────────────────────────────────────────────────────────

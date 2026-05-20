@@ -41,36 +41,37 @@ export const userService = {
     return authFetch('/users/me', { method: 'PUT', body: JSON.stringify({ avatar_url: publicUrl }) });
   },
 
-  async changeEmail(_userId: string, _newEmail: string) {
-    // TODO: implement when API endpoint is added
-    throw new Error('Change email not yet supported via API');
-  },
-
-  async changePassword(_userId: string, _currentPassword: string, newPassword: string) {
-    await authFetch('/auth/change-password', {
+  async changeEmail(_userId: string, newEmail: string) {
+    return authFetch<{ message: string }>('/auth/change-email', {
       method: 'POST',
-      body: JSON.stringify({ newPassword }),
+      body: JSON.stringify({ newEmail }),
     });
   },
 
-  async setup2FA(userId: string) {
-    // This would integrate with a 2FA service
-    // For now, return mock data
-    return {
-      qr_code: 'data:image/png;base64,mock-qr-code',
-      secret: 'ABCD-EFGH-IJKL-MNOP'
-    };
+  async changePassword(_userId: string, currentPassword: string, newPassword: string) {
+    await authFetch('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
   },
 
-  async verify2FA(userId: string, code: string) {
-    // This would verify the 2FA code
-    // For now, mock verification
-    if (code.length === 6) {
-      return authFetch('/users/me', {
-        method: 'PUT',
-        body: JSON.stringify({ two_factor_enabled: true }),
-      });
-    }
-    throw new Error('Invalid code');
+  async setup2FA(_userId: string) {
+    return authFetch<{ factor_id: string; qr_code: string; secret: string; uri: string }>(
+      '/auth/2fa/enroll',
+      { method: 'POST' },
+    );
+  },
+
+  async verify2FA(_userId: string, factorId: string, code: string) {
+    return authFetch<{ message: string; access_token?: string }>('/auth/2fa/verify', {
+      method: 'POST',
+      body: JSON.stringify({ factor_id: factorId, code }),
+    });
+  },
+
+  async disable2FA(_userId: string) {
+    return authFetch<{ message: string }>('/auth/2fa/disable', {
+      method: 'POST',
+    });
   },
 };

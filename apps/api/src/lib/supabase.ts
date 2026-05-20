@@ -33,6 +33,27 @@ export function getSupabaseForUser(jwt: string) {
 }
 
 /**
+ * Returns a Supabase client carrying a full user session (access + refresh token).
+ * Required for GoTrue operations that read the session internally — e.g.
+ * `auth.updateUser` and `auth.mfa.*` — which the header-only client does not satisfy.
+ */
+export async function getSupabaseWithSession(accessToken: string, refreshToken: string) {
+    const { url, anonKey } = getConfig();
+    const client = createClient(url, anonKey, {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+        },
+    });
+    const { error } = await client.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+    });
+    if (error) throw error;
+    return client;
+}
+
+/**
  * Admin client using service_role key — bypasses RLS.
  * Use ONLY for internal jobs, maintenance, and admin operations.
  * NEVER use for user-originated requests.

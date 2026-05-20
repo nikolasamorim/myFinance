@@ -221,6 +221,10 @@ export function Login() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaSubmitting, setMfaSubmitting] = useState(false);
+  const [pendingCreds, setPendingCreds] = useState<{ email: string; password: string } | null>(null);
 
   // Sync tab from URL params
   useEffect(() => {
@@ -241,7 +245,13 @@ export function Login() {
   const handleSignIn = async (data: SignInFormData) => {
     try {
       setError('');
-      await login(data.email.trim(), data.password);
+      const email = data.email.trim();
+      const res = await login(email, data.password);
+      if (res.mfaRequired) {
+        setPendingCreds({ email, password: data.password });
+        setMfaRequired(true);
+        return;
+      }
       navigate('/', { replace: true });
     } catch (err: any) {
       if (err.message?.includes('Invalid login credentials') || err.code === 'invalid_credentials') {
@@ -250,6 +260,32 @@ export function Login() {
         setError(err.message || 'Erro ao fazer login. Tente novamente.');
       }
     }
+  };
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingCreds || mfaCode.trim().length !== 6) return;
+    try {
+      setError('');
+      setMfaSubmitting(true);
+      const res = await login(pendingCreds.email, pendingCreds.password, mfaCode.trim());
+      if (res.mfaRequired) {
+        setError('Código inválido. Tente novamente.');
+        return;
+      }
+      navigate('/', { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Código 2FA inválido.');
+    } finally {
+      setMfaSubmitting(false);
+    }
+  };
+
+  const handleCancelMfa = () => {
+    setMfaRequired(false);
+    setMfaCode('');
+    setPendingCreds(null);
+    setError('');
   };
 
   const handleSignUp = async (data: SignUpFormData) => {
@@ -314,32 +350,36 @@ export function Login() {
             {/* Heading */}
             <div className="mb-7">
               <h1 className="text-[1.6rem] font-bold text-text-primary leading-tight tracking-tight">
-                {tab === 'signin' ? 'Bem-vindo de volta' : 'Criar sua conta'}
+                {mfaRequired ? 'Verificação em duas etapas' : tab === 'signin' ? 'Bem-vindo de volta' : 'Criar sua conta'}
               </h1>
               <p className="mt-1.5 text-sm text-text-muted">
-                {tab === 'signin'
+                {mfaRequired
+                  ? 'Confirme sua identidade para continuar'
+                  : tab === 'signin'
                   ? 'Entre para acessar seu painel financeiro'
                   : 'Comece a controlar suas finanças hoje'}
               </p>
             </div>
 
             {/* Tab toggle */}
-            <div className="flex bg-bg-elevated rounded-xl p-1 mb-7">
-              {(['signin', 'signup'] as AuthTab[]).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => handleTabChange(t)}
-                  className={`flex-1 text-sm font-medium py-2 px-4 rounded-lg transition-all duration-200 ${
-                    tab === t
-                      ? 'bg-bg-page text-text-primary shadow-sm'
-                      : 'text-text-muted hover:text-text-secondary'
-                  }`}
-                >
-                  {t === 'signin' ? 'Entrar' : 'Cadastrar'}
-                </button>
-              ))}
-            </div>
+            {!mfaRequired && (
+              <div className="flex bg-bg-elevated rounded-xl p-1 mb-7">
+                {(['signin', 'signup'] as AuthTab[]).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => handleTabChange(t)}
+                    className={`flex-1 text-sm font-medium py-2 px-4 rounded-lg transition-all duration-200 ${
+                      tab === t
+                        ? 'bg-bg-page text-text-primary shadow-sm'
+                        : 'text-text-muted hover:text-text-secondary'
+                    }`}
+                  >
+                    {t === 'signin' ? 'Entrar' : 'Cadastrar'}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Alerts */}
             {error && (
@@ -359,6 +399,45 @@ export function Login() {
               </div>
             )}
 
+            {mfaRequired ? (
+              <form onSubmit={handleMfaSubmit} className="space-y-4" noValidate>
+                <p className="text-sm text-text-secondary">
+                  Digite o código de 6 dígitos do seu aplicativo autenticador.
+                </p>
+                <AuthInput
+                  label="Código de verificação"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="000000"
+                  icon={<LockIcon />}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                />
+                <div className="pt-1 space-y-2">
+                  <button
+                    type="submit"
+                    disabled={mfaSubmitting || mfaCode.length !== 6}
+                    className="w-full bg-accent hover:bg-accent-hover active:bg-accent-hover disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-150 text-sm disabled:cursor-not-allowed"
+                  >
+                    {mfaSubmitting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <SpinnerIcon /> Verificando...
+                      </span>
+                    ) : 'Verificar e entrar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelMfa}
+                    className="w-full text-sm text-text-muted hover:text-text-secondary py-2 transition-colors"
+                  >
+                    Voltar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
             {/* ── Sign In Form ── */}
             {tab === 'signin' && (
               <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4" noValidate>
@@ -472,6 +551,8 @@ export function Login() {
                 {googleLoading ? <SpinnerIcon /> : <GoogleIcon />}
               </button>
             </div>
+              </>
+            )}
           </div>
         </div>
 
