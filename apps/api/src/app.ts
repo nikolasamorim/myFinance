@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 
 import healthRouter from './routes/health';
 import authRouter from './routes/auth';
@@ -59,8 +60,32 @@ app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// ─── Rate limiting ─────────────────────────────────────────────────────────────
+// Baseline contra brute-force/abuso nas rotas de autenticação.
+// NOTA: em serverless o store é em memória (por container, reseta no cold start e
+// não é compartilhado entre instâncias). Para proteção robusta em escala, usar um
+// store compartilhado (ex.: Redis/Upstash) ou o rate limiting na borda da Netlify.
+const authLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 30,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    validate: false, // serverless: keyGenerator próprio em vez do trust-proxy padrão
+    keyGenerator: (req) => {
+        const fwd = req.headers['x-nf-client-connection-ip'] ?? req.headers['x-forwarded-for'];
+        const raw = Array.isArray(fwd) ? fwd[0] : fwd;
+        return raw?.split(',')[0].trim() || req.ip || 'unknown';
+    },
+    handler: (_req, res) => {
+        res.status(429).json({
+            error: { code: 'RATE_LIMITED', message: 'Muitas requisições. Tente novamente em instantes.' },
+        });
+    },
+});
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/v1/health', healthRouter);
+app.use('/api/v1/auth', authLimiter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/workspaces', workspacesRouter);
 

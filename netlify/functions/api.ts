@@ -13,13 +13,6 @@ console.log('[api] function loaded — env check:', {
 const serverlessHandler = serverless(app);
 
 export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
-    console.log('[api] called:', event.httpMethod, event.path);
-    console.log('[api] env check:', {
-        hasSupabaseUrl: !!process.env.SUPABASE_URL,
-        hasAnonKey: !!process.env.SUPABASE_ANON_KEY,
-        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    });
-
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
         console.error('[api] FATAL: SUPABASE_URL ou SUPABASE_ANON_KEY não configuradas');
         return {

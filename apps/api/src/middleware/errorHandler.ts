@@ -12,7 +12,7 @@ interface ApiError extends Error {
  */
 export function errorHandler(
     err: ApiError,
-    _req: Request,
+    req: Request,
     res: Response,
     _next: NextFunction
 ): void {
@@ -39,7 +39,21 @@ export function errorHandler(
         message = 'Não autenticado.';
     }
 
-    console.error(`[${new Date().toISOString()}] ${status} ${code}: ${err.message}`);
+    // Logging estruturado (ponto de integração para Sentry/error tracking)
+    const entry = {
+        ts: new Date().toISOString(),
+        status,
+        code,
+        method: req.method,
+        path: req.originalUrl,
+        message: err.message,
+    };
+    if (status >= 500) {
+        console.error('[error]', JSON.stringify(entry), err.stack ?? '');
+        // TODO(observabilidade): Sentry.captureException(err) quando integrado
+    } else {
+        console.warn('[warn]', JSON.stringify(entry));
+    }
 
     res.status(status).json({
         error: { code, message },

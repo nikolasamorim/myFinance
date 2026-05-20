@@ -104,6 +104,10 @@ async function clearApiKeyCache(): Promise<void> {
 // ─── API Key com cache no banco ──────────────────────────────────────────────
 
 export async function getApiKey(): Promise<string> {
+    if (!PLUGGY_CLIENT_ID || !PLUGGY_CLIENT_SECRET) {
+        throw new Error('Pluggy não configurada: defina PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET nas variáveis de ambiente.');
+    }
+
     const admin = getSupabaseAdmin();
 
     // Buscar cache existente (com buffer de 5 min)

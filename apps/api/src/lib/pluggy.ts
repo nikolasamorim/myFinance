@@ -1,10 +1,10 @@
 import { getSupabaseAdmin } from './supabase';
 
-// Credenciais — mesmos valores de netlify/functions/_lib/pluggy.constants.ts
-const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID ?? '335f8e72-ccff-4c70-93e1-563d762bab10';
-const PLUGGY_CLIENT_SECRET = process.env.PLUGGY_CLIENT_SECRET ?? 'a2866860-f581-426e-9e92-84fcd50c968e';
+// Credenciais — apenas de variáveis de ambiente (NUNCA hardcoded).
+const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID ?? '';
+const PLUGGY_CLIENT_SECRET = process.env.PLUGGY_CLIENT_SECRET ?? '';
 const PLUGGY_WEBHOOK_URL = process.env.PLUGGY_WEBHOOK_URL ?? 'https://azami-app.netlify.app/.netlify/functions/banking-webhook';
-const PLUGGY_API_BASE = 'https://api.pluggy.ai';
+const PLUGGY_API_BASE = process.env.PLUGGY_API_BASE ?? 'https://api.pluggy.ai';
 
 // IDs de conectores permitidos — em trial, use "0" (Pluggy Bank sandbox).
 // Em produção, remova a variável para liberar todos os conectores.
@@ -65,6 +65,10 @@ async function clearApiKeyCache(): Promise<void> {
 // ─── API Key com cache no banco ─────────────────────────────────────────────
 
 async function getApiKey(): Promise<string> {
+    if (!PLUGGY_CLIENT_ID || !PLUGGY_CLIENT_SECRET) {
+        throw new Error('Pluggy não configurada: defina PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET nas variáveis de ambiente.');
+    }
+
     const admin = getSupabaseAdmin();
 
     const { data } = await admin

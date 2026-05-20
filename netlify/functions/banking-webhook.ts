@@ -13,6 +13,20 @@ export const handler: Handler = async (event) => {
         return { statusCode: 200, body: JSON.stringify({ received: true }) };
     }
 
+    // Validação por segredo compartilhado: defina WEBHOOK_SECRET e registre a URL de
+    // webhook na Pluggy com ?token=<secret> (ou header x-webhook-token). Se WEBHOOK_SECRET
+    // não estiver setado, a verificação é pulada (graceful).
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+    if (webhookSecret) {
+        const provided =
+            event.queryStringParameters?.token ??
+            (event.headers['x-webhook-token'] as string | undefined);
+        if (provided !== webhookSecret) {
+            console.error('[webhook] token inválido — requisição ignorada');
+            return { statusCode: 200, body: JSON.stringify({ received: true }) };
+        }
+    }
+
     let payload: any;
     try {
         payload = JSON.parse(event.body || '{}');
