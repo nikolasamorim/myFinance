@@ -9,6 +9,21 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# ── Cutover: domínio antigo (azami-app.netlify.app) → domínio próprio ─────────
+# Mantém os Functions acessíveis no domínio antigo para NÃO derrubar os webhooks
+# da Pluggy de conexões já existentes (que ainda apontam para o netlify.app).
+[[redirects]]
+  from = "https://azami-app.netlify.app/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Todo o resto do domínio antigo é redirecionado (301) para o domínio próprio.
+[[redirects]]
+  from = "https://azami-app.netlify.app/*"
+  to = "https://app.azamifinanceiro.com/:splat"
+  status = 301
+  force = true
+
 # Rotas da API → Netlify Functions
 [[redirects]]
   from = "/api/*"

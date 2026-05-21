@@ -5,7 +5,7 @@
 export const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID ?? '';
 export const PLUGGY_CLIENT_SECRET = process.env.PLUGGY_CLIENT_SECRET ?? '';
 export const PLUGGY_WEBHOOK_URL =
-    process.env.PLUGGY_WEBHOOK_URL ?? 'https://azami-app.netlify.app/.netlify/functions/banking-webhook';
+    process.env.PLUGGY_WEBHOOK_URL ?? 'https://app.azamifinanceiro.com/.netlify/functions/banking-webhook';
 export const PLUGGY_API_BASE = process.env.PLUGGY_API_BASE ?? 'https://api.pluggy.ai';
 
 // IDs de conectores permitidos — em trial, use "0" (Pluggy Bank sandbox).

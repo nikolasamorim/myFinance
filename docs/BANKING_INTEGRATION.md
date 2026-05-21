@@ -212,7 +212,7 @@ Lista conexões com consentimento próximo de expirar (< 30 dias).
 3. **Credenciais sandbox padrão:** user `user-ok`, password `password-ok`
 4. **URL do webhook (produção):**
    ```
-   https://azami-app.netlify.app/.netlify/functions/banking-webhook
+   https://app.azamifinanceiro.com/.netlify/functions/banking-webhook
    ```
 
 ---
@@ -224,7 +224,7 @@ Lista conexões com consentimento próximo de expirar (< 30 dias).
   - `PLUGGY_CLIENT_SECRET`
   - `SUPABASE_SERVICE_ROLE_KEY`
 - [ ] Migration aplicada no Supabase de produção
-- [ ] Webhook URL cadastrada na Pluggy: `https://azami-app.netlify.app/.netlify/functions/banking-webhook`
+- [ ] Webhook URL cadastrada na Pluggy: `https://app.azamifinanceiro.com/.netlify/functions/banking-webhook`
 - [ ] Testar fluxo completo em sandbox (connectorId=0)
 - [ ] Testar reconexão (passar `itemId` no connect-token)
 - [ ] Testar disconnect (verificar que transações são mantidas)

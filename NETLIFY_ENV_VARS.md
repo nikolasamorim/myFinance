@@ -28,14 +28,16 @@ Configure todas as variáveis abaixo em:
 
 | Variável | Descrição | Valor padrão |
 |---|---|---|
-| `CORS_ORIGINS` | Origens permitidas para a API Express | `http://localhost:5173` |
+| `CORS_ORIGINS` | Origens permitidas para a API Express (lista separada por vírgula) | `https://app.azamifinanceiro.com,http://localhost:5173` |
+| `API_ORIGIN` | URL pública desta API — monta o `redirect_to` do OAuth Google. **Necessária em produção** (sem ela o fluxo cai em `localhost`) | `https://app.azamifinanceiro.com` |
+| `WEB_ORIGIN` | URL do frontend — destino do redirect após o OAuth. **Necessária em produção** | `https://app.azamifinanceiro.com` |
 | `NODE_ENV` | Ambiente de execução | `production` (configurado automaticamente pelo Netlify) |
 | `SUPABASE_JWT_SECRET` | Segredo HS256 do JWT — habilita verificação local do token na API (sem round-trip ao Auth). Settings → API → JWT Settings → JWT Secret | *(ausente → fallback `getUser` remoto)* |
 | `INTERNAL_FUNCTION_TOKEN` | Token compartilhado que protege a background function de import (`banking-import-background`). Quando setado, o webhook envia e a function exige no header `x-internal-token` | *(ausente → sem proteção)* |
 | `WEBHOOK_SECRET` | Segredo para validar o webhook da Pluggy. Registre a URL do webhook com `?token=<secret>`. Quando setado, requisições sem o token correto são ignoradas | *(ausente → validação pulada)* |
 | `PLUGGY_CLIENT_ID` | Client ID da Pluggy — **obrigatória para Open Finance**. Antes hardcoded no código (removido) | *(painel da Pluggy)* |
 | `PLUGGY_CLIENT_SECRET` | Client Secret da Pluggy — **obrigatória para Open Finance**. ⚠️ rotacione o secret antigo (estava versionado) | *(painel da Pluggy)* |
-| `PLUGGY_WEBHOOK_URL` | URL do webhook registrada na Pluggy | `https://azami-app.netlify.app/.netlify/functions/banking-webhook` |
+| `PLUGGY_WEBHOOK_URL` | URL do webhook registrada na Pluggy | `https://app.azamifinanceiro.com/.netlify/functions/banking-webhook` |
 | `PLUGGY_CONNECTOR_IDS` | IDs de conectores permitidos (trial: `0`) | *(vazio → todos)* |
 
 ---

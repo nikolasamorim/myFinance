@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from './supabase';
 // Credenciais — apenas de variáveis de ambiente (NUNCA hardcoded).
 const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID ?? '';
 const PLUGGY_CLIENT_SECRET = process.env.PLUGGY_CLIENT_SECRET ?? '';
-const PLUGGY_WEBHOOK_URL = process.env.PLUGGY_WEBHOOK_URL ?? 'https://azami-app.netlify.app/.netlify/functions/banking-webhook';
+const PLUGGY_WEBHOOK_URL = process.env.PLUGGY_WEBHOOK_URL ?? 'https://app.azamifinanceiro.com/.netlify/functions/banking-webhook';
 const PLUGGY_API_BASE = process.env.PLUGGY_API_BASE ?? 'https://api.pluggy.ai';
 
 // IDs de conectores permitidos — em trial, use "0" (Pluggy Bank sandbox).
